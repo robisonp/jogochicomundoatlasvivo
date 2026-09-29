@@ -66,6 +66,9 @@ interface Plataforma {
   amp: number;
   periodo: number;
   fase: number;
+  /** Posição do corpo no quadro anterior (para carregar o Chico junto). */
+  ultimoX: number;
+  ultimoY: number;
 }
 
 interface Bicho {
@@ -98,6 +101,8 @@ export class LevelScene extends Phaser.Scene {
   private escadas!: Phaser.Physics.Arcade.StaticGroup;
   private pegadas!: Phaser.Physics.Arcade.StaticGroup;
   private plataformas: Plataforma[] = [];
+  /** Página voando em que o Chico está em pé (ele anda junto com ela). */
+  private montado: Plataforma | null = null;
   private placas: Placa[] = [];
   private checkpoints: { img: Phaser.GameObjects.Image; x: number; y: number; indice: number; ativo: boolean }[] = [];
   private inicio = { x: 0, y: 0 };
@@ -201,7 +206,10 @@ export class LevelScene extends Phaser.Scene {
     this.physics.add.collider(
       this.player.sprite,
       this.plataformas.map((p) => p.img),
-      apoiar,
+      (_p, img) => {
+        this.player.apoiar();
+        this.montado = this.plataformas.find((p) => p.img === img) ?? null;
+      },
       this.podePisar,
       this,
     );
@@ -541,6 +549,8 @@ export class LevelScene extends Phaser.Scene {
             const img = this.physics.add.image(cx, y + 14, this.tema.plataforma ?? 'pagina').setDepth(5) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
             img.body.setAllowGravity(false);
             img.body.setImmovable(true);
+            // quem carrega o Chico é a cena (carregarMontado), sem o atrito automático da física (que falhava)
+            img.body.setFriction(0, 0);
             this.soDeCima(img.body);
             const n = this.plataformas.length;
             this.plataformas.push({
@@ -551,6 +561,8 @@ export class LevelScene extends Phaser.Scene {
               amp: TILE * 2.5,
               periodo: 3.2,
               fase: n % 2 === 0 ? 0 : Math.PI,
+              ultimoX: img.body.x,
+              ultimoY: img.body.y,
             });
             break;
           }
@@ -655,7 +667,39 @@ export class LevelScene extends Phaser.Scene {
     if (this.player.estado === 'escalando') return false;
     const pb = (p as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
     const lb = (plat as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
-    return pb.velocity.y >= 0 && pb.prev.y + pb.height <= lb.top + 12;
+    // Página que se move: compara com a velocidade e a posição anterior dela (subindo, ela vem de encontro ao Chico).
+    const vPlat = lb.velocity?.y ?? 0;
+    const topoAntes = 'prev' in lb && lb.prev ? lb.prev.y : lb.top;
+    const folga = 12 + Math.abs(lb.top - topoAntes);
+    return pb.velocity.y - vPlat >= -20 && pb.prev.y + pb.height <= Math.max(lb.top, topoAntes) + folga;
+  }
+
+  /** Quem está em pé numa página voando anda junto com ela (de lado e descendo). */
+  private carregarMontado() {
+    for (const p of this.plataformas) {
+      const b = p.img.body;
+      const dx = b.x - p.ultimoX;
+      const dy = b.y - p.ultimoY;
+      p.ultimoX = b.x;
+      p.ultimoY = b.y;
+      if (p !== this.montado) continue;
+      const pb = this.player.body;
+      const emCima =
+        (this.player.estado === 'normal' || this.player.estado === 'bola') &&
+        pb.right > b.left + 2 &&
+        pb.left < b.right - 2 &&
+        Math.abs(pb.bottom - (b.top - dy)) < 24 &&
+        pb.velocity.y >= b.velocity.y - 60;
+      if (!emCima) {
+        this.montado = null;
+        continue;
+      }
+      // anda junto de lado e fica encostado no topo da página (subindo ou descendo), com a mesma velocidade dela
+      pb.position.x += dx;
+      pb.position.y = b.y - pb.height;
+      pb.velocity.y = b.velocity.y;
+      this.player.apoiar();
+    }
   }
 
   // ------------------------------------------------------------------ loop
@@ -669,6 +713,7 @@ export class LevelScene extends Phaser.Scene {
     if (!this.terminou) this.tempo += deltaMs;
 
     this.moverPlataformas(dt);
+    this.carregarMontado();
 
     // Escada sob o Chico?
     let escadaX: number | null = null;
@@ -1371,6 +1416,7 @@ export class LevelScene extends Phaser.Scene {
 
   private morrer(motivo?: 'gelada') {
     if (this.player.estado === 'caido' || this.terminou) return;
+    this.montado = null;
     if (motivo === 'gelada') {
       AudioManager.tocar('splash');
       this.respingos.explode(14, this.player.x, this.aguaSuperficie(this.player.x, this.player.y) ?? this.player.y);
