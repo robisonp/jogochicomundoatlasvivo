@@ -17,6 +17,7 @@ npm run build      # gera dist/
 
 Parâmetros de URL úteis:
 - `?fase=caatinga-2` abre direto uma fase (ids em `src/levels/`);
+- `?atlas` abre direto o Atlas;
 - `?toque` mostra os controles de toque no computador;
 - `?debug` mostra as caixas de colisão.
 
@@ -29,6 +30,8 @@ Parâmetros de URL úteis:
 | Ação (ouvir placa) | Botão ✋ | X ou E | X / B |
 | Poder do Bicho | Botão 🐾 (só quando houver) | C ou Shift | Y / RB / LB |
 | Pausa | ⏸ no canto | Esc ou P | Start |
+
+Atlas: **toque no livro roxo da tela de título**. Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
 Área dos adultos: **segure a engrenagem por 2 segundos** (no título ou na pausa). Lá ficam o lado do direcional, os volumes, "reduzir movimento" e os códigos de save.
 

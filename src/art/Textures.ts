@@ -42,6 +42,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarObjetos(scene);
   gerarBichos(scene);
   gerarUI(scene);
+  gerarAtlas(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -752,8 +753,17 @@ function gerarObjetos(scene: Phaser.Scene) {
 // ------------------------------------------------------------------ Bichos da Caatinga
 
 function gerarBichos(scene: Phaser.Scene) {
+  // Cada bicho também ganha uma versão "-hd" (3x) para aparecer grande no Atlas sem pixelar.
+  const texBicho = (key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) => {
+    tex(scene, key, w, h, draw);
+    tex(scene, `${key}-hd`, w * 3, h * 3, (c) => {
+      c.scale(3, 3);
+      draw(c, w, h);
+    });
+  };
+
   // Mocó (Kerodon rupestris): roedor cinza-amarronzado, sem cauda aparente, olhos grandes.
-  tex(scene, 'moco', 76, 52, (c) => {
+  texBicho('moco', 76, 52, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // patas
@@ -799,7 +809,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Tatu-bola (Tolypeutes tricinctus) andando: carapaça amarelada com três faixas móveis.
-  tex(scene, 'tatu', 84, 50, (c) => {
+  texBicho('tatu', 84, 50, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     c.fillStyle = '#8a6a44';
@@ -907,7 +917,7 @@ function gerarBichos(scene: Phaser.Scene) {
   bola('chico-bola', 64, true);
 
   // Asa-branca (Patagioenas picazuro): pombo grande cinza-amarronzado, cabeça acinzentada, faixa branca na asa.
-  tex(scene, 'asa-branca', 64, 48, (c) => {
+  texBicho('asa-branca', 64, 48, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // cauda
@@ -967,7 +977,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Carcará (Caracara plancus): boné escuro, rosto claro com pele alaranjada, corpo escuro, pernas amarelas.
-  tex(scene, 'carcara', 64, 76, (c) => {
+  texBicho('carcara', 64, 76, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // pernas
@@ -1034,7 +1044,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Preá (Galea spixii): roedor pequeno, pelo cinza-amarronzado, quase sem cauda.
-  tex(scene, 'prea', 52, 34, (c) => {
+  texBicho('prea', 52, 34, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     c.fillStyle = '#6e5a48';
@@ -1301,6 +1311,224 @@ function gerarUI(scene: Phaser.Scene) {
     c.fillStyle = 'rgba(29,43,58,1)';
     c.beginPath();
     c.arc(32, 32, 8, 0, Math.PI * 2);
+    c.fill();
+  });
+}
+
+// ------------------------------------------------------------------ Atlas
+
+// Contornos aproximados (longitude, latitude). Simplificados, mas com a forma real do continente.
+const AMERICA_DO_SUL: [number, number][] = [
+  [-77, 8.5], [-72, 12], [-63, 10.7], [-60, 8.5], [-57, 6], [-52, 5], [-50, 1.5], [-48, -1], [-44, -2.5],
+  [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39, -17.5], [-40.5, -21], [-43, -23],
+  [-48, -25.5], [-48.5, -28.5], [-51, -31.5], [-53.4, -33.7], [-56, -34.9], [-58, -34.5], [-57, -38],
+  [-62, -39], [-65, -41], [-65, -45], [-67.5, -47], [-69, -51], [-68.5, -52.5], [-70, -55], [-74, -52.5],
+  [-75, -47], [-73.5, -42], [-73.5, -37], [-71.5, -30], [-70.3, -18.5], [-76, -14], [-79.5, -7], [-81, -4.5],
+  [-80, -1], [-79, 1.5], [-77.5, 4], [-77.5, 7.5],
+];
+const BRASIL: [number, number][] = [
+  [-60, 5], [-51.5, 4.3], [-50, 1.5], [-48, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5],
+  [-35.5, -9.5], [-38.5, -13], [-39, -17.5], [-40.5, -21], [-43, -23], [-48, -25.5], [-48.5, -28.5],
+  [-51, -31.5], [-53.4, -33.7], [-57.6, -30.2], [-54.6, -25.6], [-58, -22.5], [-57.8, -19.9], [-60, -16.3],
+  [-65.3, -10], [-70.5, -11], [-73.8, -7.4], [-70, -4.2], [-69.4, 1], [-66.8, 1.2], [-63.5, 2.2],
+];
+const NORDESTE: [number, number][] = [
+  [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
+  [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
+];
+
+function gerarAtlas(scene: Phaser.Scene) {
+  // Mapinha: América do Sul, Brasil e a região do bicho em destaque.
+  const proj = (lon: number, lat: number): [number, number] => [(lon + 83) * 3.3, (14 - lat) * 3.3];
+  const poligono = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = proj(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['nordeste', 'brasil', 'america-do-sul'] as const) {
+    tex(scene, `mapa-${regiao}`, 170, 240, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'america-do-sul' ? '#f2a93b' : '#e9dcb8';
+      poligono(c, AMERICA_DO_SUL);
+      c.fill();
+      c.stroke();
+      c.fillStyle = regiao === 'america-do-sul' ? '#e08e2b' : regiao === 'brasil' ? '#f2a93b' : '#d8c79b';
+      poligono(c, BRASIL);
+      c.fill();
+      c.stroke();
+      if (regiao === 'nordeste') {
+        c.fillStyle = '#f2a93b';
+        poligono(c, NORDESTE);
+        c.fill();
+        c.stroke();
+      }
+    });
+  }
+
+  // Livro aberto (duas páginas)
+  tex(scene, 'livro', 1120, 620, (c, w, h) => {
+    c.fillStyle = '#7b3f8c';
+    rrect(c, 0, 0, w, h, 26);
+    c.fill();
+    c.fillStyle = '#5e2c6c';
+    rrect(c, 10, 10, w - 20, h - 20, 20);
+    c.fill();
+    for (const x0 of [24, w / 2 + 4]) {
+      const g = c.createLinearGradient(x0, 0, x0 + w / 2 - 28, 0);
+      const esquerda = x0 === 24;
+      g.addColorStop(0, esquerda ? '#f6ecd0' : '#e8dcb8');
+      g.addColorStop(0.08, '#fff8e6');
+      g.addColorStop(0.92, '#fff8e6');
+      g.addColorStop(1, esquerda ? '#e8dcb8' : '#f6ecd0');
+      c.fillStyle = g;
+      rrect(c, x0, 22, w / 2 - 28, h - 44, 14);
+      c.fill();
+    }
+    c.fillStyle = 'rgba(0,0,0,0.12)';
+    c.fillRect(w / 2 - 6, 22, 12, h - 44);
+  });
+
+  const carta = (key: string, borda: string, espessura: number) =>
+    tex(scene, key, 160, 140, (c, w, h) => {
+      c.fillStyle = 'rgba(0,0,0,0.12)';
+      rrect(c, 4, 6, w - 8, h - 8, 16);
+      c.fill();
+      c.fillStyle = '#fffdf5';
+      c.strokeStyle = borda;
+      c.lineWidth = espessura;
+      rrect(c, 4, 2, w - 8, h - 8, 16);
+      c.fill();
+      c.stroke();
+    });
+  carta('carta', '#d8c79b', 3);
+  carta('carta-on', '#f2a93b', 7);
+
+  const icone = (key: string, cor: string, desenho: (c: Ctx) => void) =>
+    tex(scene, key, 100, 100, (c) => {
+      c.fillStyle = 'rgba(0,0,0,0.18)';
+      c.beginPath();
+      c.arc(50, 53, 44, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = cor;
+      c.strokeStyle = '#fff';
+      c.lineWidth = 5;
+      c.beginPath();
+      c.arc(50, 49, 44, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+      c.fillStyle = '#fff';
+      c.strokeStyle = '#fff';
+      desenho(c);
+    });
+
+  icone('ic-mapa', '#5bb0e8', (c) => {
+    c.lineWidth = 4;
+    c.lineJoin = 'round';
+    c.beginPath();
+    c.moveTo(26, 34);
+    c.lineTo(40, 28);
+    c.lineTo(58, 34);
+    c.lineTo(74, 28);
+    c.lineTo(74, 66);
+    c.lineTo(58, 72);
+    c.lineTo(40, 66);
+    c.lineTo(26, 72);
+    c.closePath();
+    c.stroke();
+    c.beginPath();
+    c.moveTo(40, 28);
+    c.lineTo(40, 66);
+    c.moveTo(58, 34);
+    c.lineTo(58, 72);
+    c.stroke();
+    c.fillStyle = '#e8553f';
+    c.beginPath();
+    c.arc(50, 44, 7, Math.PI, 0);
+    c.lineTo(50, 58);
+    c.closePath();
+    c.fill();
+  });
+  icone('ic-comida', '#5cc26a', (c) => {
+    c.beginPath();
+    c.ellipse(44, 46, 20, 11, -0.7, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#5cc26a';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(30, 60);
+    c.lineTo(58, 32);
+    c.stroke();
+    c.fillStyle = '#e8553f';
+    for (const [x, y] of [
+      [62, 60],
+      [72, 54],
+      [70, 66],
+    ]) {
+      c.beginPath();
+      c.arc(x, y, 7, 0, Math.PI * 2);
+      c.fill();
+    }
+  });
+  icone('ic-regua', '#f2a93b', (c) => {
+    c.save();
+    c.translate(50, 49);
+    c.rotate(-0.6);
+    rrect(c, -32, -11, 64, 22, 4);
+    c.fill();
+    c.strokeStyle = '#f2a93b';
+    c.lineWidth = 3;
+    for (let i = -24; i <= 24; i += 8) {
+      c.beginPath();
+      c.moveTo(i, -11);
+      c.lineTo(i, i % 16 === 0 ? 2 : -3);
+      c.stroke();
+    }
+    c.restore();
+  });
+  icone('ic-estrela', '#c77dff', (c) => {
+    c.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const r = i % 2 === 0 ? 28 : 12;
+      const x = 50 + Math.cos(a) * r;
+      const y = 50 + Math.sin(a) * r;
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    }
+    c.closePath();
+    c.fill();
+  });
+  icone('ic-som', '#e8553f', (c) => desenharAltoFalante(c, 52, 49, 20, '#fff'));
+
+  // Botão do Atlas (livro) para a tela de título
+  tex(scene, 'btn-voltar', 84, 84, (c) => {
+    c.fillStyle = 'rgba(0,0,0,0.25)';
+    c.beginPath();
+    c.arc(42, 45, 38, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#5bb0e8';
+    c.strokeStyle = '#fff';
+    c.lineWidth = 5;
+    c.beginPath();
+    c.arc(42, 42, 36, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#fff';
+    c.beginPath();
+    c.moveTo(24, 42);
+    c.lineTo(46, 24);
+    c.lineTo(46, 34);
+    c.lineTo(62, 34);
+    c.lineTo(62, 50);
+    c.lineTo(46, 50);
+    c.lineTo(46, 60);
+    c.closePath();
     c.fill();
   });
 }
