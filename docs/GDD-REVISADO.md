@@ -76,11 +76,11 @@ Animais: tatu-bola, mocó, carcará, asa-branca, preá.
 4. **Chuva no Sertão** ◆ a Caatinga fica verde; primeiras zonas de vento.
 5. **Selo do Sertão** — combina tudo.
 
-### Mundo 2 — Amazônia (Brasil)
+### Mundo 2 — Amazônia (Brasil) — completo (fases 6 a 10 jogáveis)
 Animais: onça-pintada, arara-vermelha-grande, preguiça-de-garganta-marrom, boto-cor-de-rosa, perereca-leiteira.
 6. **O Dossel Verde** — cipós (escalada vertical). Tia Kelly e Tia Laura ligam.
 7. **O Rio** ◆ nado básico em água rasa.
-8. **Nado da Onça** ★ atravessar rios e água funda (a onça-pintada é excelente nadadora).
+8. **Nado da Onça** ★ atravessar rios e água funda (a onça-pintada é excelente nadadora). Poder passivo: sem botão; permite entrar na água escura e mergulhar (passar por baixo de troncos).
 9. **Vozes da Floresta** — seguir sons com ondas visuais.
 10. **Tempestade no Rio** — combina cipó, nado e vento.
 

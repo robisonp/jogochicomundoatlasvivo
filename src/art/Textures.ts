@@ -3,10 +3,11 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { CHICO_VISUAL as V, CAATINGA as C } from '../data/visual';
+import { gerarAmazonia } from './Amazonia';
 
-type Ctx = CanvasRenderingContext2D;
+export type Ctx = CanvasRenderingContext2D;
 
-function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) {
+export function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) {
   if (scene.textures.exists(key)) return;
   const t = scene.textures.createCanvas(key, w, h);
   if (!t) return;
@@ -15,13 +16,13 @@ function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: C
   t.refresh();
 }
 
-function rrect(c: Ctx, x: number, y: number, w: number, h: number, r: number) {
+export function rrect(c: Ctx, x: number, y: number, w: number, h: number, r: number) {
   c.beginPath();
   c.roundRect(x, y, w, h, r);
 }
 
 // Gerador pseudoaleatório determinístico (arte igual a cada carregamento).
-function rng(seed: number) {
+export function rng(seed: number) {
   let s = seed >>> 0;
   return () => {
     s = (s * 1664525 + 1013904223) >>> 0;
@@ -29,7 +30,7 @@ function rng(seed: number) {
   };
 }
 
-const OUTLINE = '#2a1c14';
+export const OUTLINE = '#2a1c14';
 
 export function gerarTexturas(scene: Phaser.Scene): void {
   tex(scene, 'px', 4, 4, (c) => {
@@ -43,6 +44,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarBichos(scene);
   gerarUI(scene);
   gerarAtlas(scene);
+  gerarAmazonia(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -1332,6 +1334,10 @@ const BRASIL: [number, number][] = [
   [-51, -31.5], [-53.4, -33.7], [-57.6, -30.2], [-54.6, -25.6], [-58, -22.5], [-57.8, -19.9], [-60, -16.3],
   [-65.3, -10], [-70.5, -11], [-73.8, -7.4], [-70, -4.2], [-69.4, 1], [-66.8, 1.2], [-63.5, 2.2],
 ];
+const AMAZONIA: [number, number][] = [
+  [-79, 1], [-75, 4], [-70, 5], [-64, 6.5], [-60, 5], [-52, 4], [-50, 1], [-48, -1], [-50, -5], [-52, -10],
+  [-56, -13], [-62, -15], [-68, -16], [-72, -13], [-76, -10], [-78, -6], [-80, -3],
+];
 const NORDESTE: [number, number][] = [
   [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
   [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
@@ -1349,7 +1355,7 @@ function gerarAtlas(scene: Phaser.Scene) {
     });
     c.closePath();
   };
-  for (const regiao of ['nordeste', 'brasil', 'america-do-sul'] as const) {
+  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul'] as const) {
     tex(scene, `mapa-${regiao}`, 170, 240, (c) => {
       c.lineJoin = 'round';
       c.strokeStyle = '#6b5a3a';
@@ -1362,9 +1368,9 @@ function gerarAtlas(scene: Phaser.Scene) {
       poligono(c, BRASIL);
       c.fill();
       c.stroke();
-      if (regiao === 'nordeste') {
-        c.fillStyle = '#f2a93b';
-        poligono(c, NORDESTE);
+      if (regiao === 'nordeste' || regiao === 'amazonia') {
+        c.fillStyle = regiao === 'amazonia' ? '#5cc26a' : '#f2a93b';
+        poligono(c, regiao === 'amazonia' ? AMAZONIA : NORDESTE);
         c.fill();
         c.stroke();
       }

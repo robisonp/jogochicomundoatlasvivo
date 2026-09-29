@@ -21,9 +21,19 @@ export class AtlasScene extends Phaser.Scene {
   private ficha: Phaser.GameObjects.GameObject[] = [];
   private paginaDireita = { x: 0, y: 0 };
   private topo = 0;
+  private mundoId = 'caatinga';
+  /** Na primeira abertura fala a saudação; ao trocar de aba, só o nome do mundo. */
+  private trocouAba = false;
 
   constructor() {
     super('Atlas');
+  }
+
+  init(data: { mundo?: string }) {
+    this.trocouAba = !!data.mundo;
+    // Abre no mundo pedido, ou no último mundo em que o Chico encontrou um bicho.
+    const ultimo = [...ANIMAIS].reverse().find((a) => SaveManager.data.animais.includes(a.id));
+    this.mundoId = data.mundo ?? ultimo?.mundo ?? 'caatinga';
   }
 
   create() {
@@ -43,7 +53,8 @@ export class AtlasScene extends Phaser.Scene {
     this.topo = livro.y - 310 * escala;
     const s = escala;
 
-    const mundo = MUNDOS_ATLAS[0];
+    const mundo = MUNDOS_ATLAS.find((m) => m.id === this.mundoId) ?? MUNDOS_ATLAS[0];
+    const animais = ANIMAIS.filter((a) => a.mundo === mundo.id);
     const titulo = this.add.text(esquerdaX - 60 * s, this.topo + 70 * s, mundo.nome, estiloPagina(Math.round(44 * s))).setOrigin(0.5);
     this.tocavel(titulo, () => VoiceManager.falar(mundo.abertura, 'narrador'));
 
@@ -54,10 +65,10 @@ export class AtlasScene extends Phaser.Scene {
     if (temSelo) {
       const selo = this.add.image(seloX, seloY, mundo.texturaSelo).setScale(0.75 * s);
       this.tweens.add({ targets: selo, angle: { from: -6, to: 6 }, yoyo: true, repeat: -1, duration: 1400, ease: 'Sine.easeInOut' });
-      this.tocavel(selo, () => VoiceManager.falar('Selo do Sertão! Você completou a Caatinga!', 'narrador'));
+      this.tocavel(selo, () => VoiceManager.falar(`${mundo.nomeSelo}! Você completou a ${mundo.nome}!`, 'narrador'));
     } else {
       const vazio = this.add.circle(seloX, seloY, 40 * s, 0xe8dcb8).setStrokeStyle(4, 0xd8c79b);
-      this.tocavel(vazio, () => VoiceManager.falar('Complete todas as aventuras da Caatinga para ganhar este selo.', 'narrador'));
+      this.tocavel(vazio, () => VoiceManager.falar(`Complete todas as aventuras da ${mundo.nome} para ganhar este selo.`, 'narrador'));
     }
 
     // Figurinhas: 3 em cima, 2 embaixo
@@ -69,7 +80,7 @@ export class AtlasScene extends Phaser.Scene {
       [85, 160],
     ];
     const encontrados = SaveManager.data.animais;
-    ANIMAIS.forEach((ficha, i) => {
+    animais.forEach((ficha, i) => {
       const [dx, dy] = posicoes[i];
       const x = esquerdaX + dx * s;
       const y = this.topo + (225 + dy) * s;
@@ -83,7 +94,7 @@ export class AtlasScene extends Phaser.Scene {
       }
       this.tocavel(fundo, () => {
         if (achou) this.abrirFicha(ficha);
-        else VoiceManager.falar('Esse bicho ainda está escondido numa aventura da Caatinga!', 'narrador');
+        else VoiceManager.falar(`Esse bicho ainda está escondido numa aventura da ${mundo.nome}!`, 'narrador');
       });
       this.cartas.push({ ficha, fundo });
     });
@@ -91,8 +102,25 @@ export class AtlasScene extends Phaser.Scene {
     const voltar = this.add.image(60, 58, 'btn-voltar');
     this.tocavel(voltar, () => this.scene.start('Titulo'));
 
-    const qtd = ANIMAIS.filter((a) => encontrados.includes(a.id)).length;
-    if (qtd === 0) {
+    // Abas dos mundos, no pé da página esquerda: o selo de cada mundo (apagado se ainda não conquistado).
+    MUNDOS_ATLAS.forEach((m, i) => {
+      const x = esquerdaX + (i - (MUNDOS_ATLAS.length - 1) / 2) * 130 * s;
+      const y = this.topo + 530 * s;
+      const atual = m.id === mundo.id;
+      if (atual) this.add.circle(x, y, 46 * s, 0xf2a93b, 0.35);
+      const aba = this.add.image(x, y, m.texturaSelo).setScale(0.55 * s);
+      if (!SaveManager.data.selos.includes(m.selo)) aba.setTint(0xb8ab8a).setTintMode(Phaser.TintModes.MULTIPLY);
+      this.tocavel(aba, () => {
+        if (atual) VoiceManager.falar(m.nome, 'narrador');
+        else this.scene.restart({ mundo: m.id });
+      });
+    });
+
+    const qtd = animais.filter((a) => encontrados.includes(a.id)).length;
+    if (this.trocouAba) {
+      this.textoEspera(qtd ? 'Toque em um bicho' : 'O Atlas está esperando os bichos das aventuras!');
+      VoiceManager.falar(mundo.nome, 'narrador');
+    } else if (qtd === 0) {
       this.textoEspera('O Atlas está esperando os bichos das aventuras!');
       VoiceManager.falar('O Atlas ainda está vazio. Encontre bichos nas aventuras!', 'narrador');
     } else {

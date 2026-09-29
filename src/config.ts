@@ -32,6 +32,17 @@ export const BOLA = {
   fatorVelocidade: 0.5,
 };
 
+// Água: o Chico boia; a braçada sobe; com o "Nado da Onça" pode mergulhar e entrar na água funda.
+export const AGUA = {
+  fatorGravidade: 0.12,
+  maxQueda: 240,
+  empuxo: 1500,
+  bracada: 400,
+  saltoSaida: 0.85,
+  mergulho: 900,
+  fatorVelocidade: 0.7,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

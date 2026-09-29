@@ -11,13 +11,16 @@
 //   M  página voando (horizontal) V  página voando (vertical)
 //   Q  pedrinhas caindo daqui (perigo; o poder "Virar bola" protege)
 //   <  vento soprando para a esquerda   >  vento soprando para a direita (Vento Viravolta)
-//   U  começa a chover quando o Chico passa aqui (depois a Caatinga fica verde)
+//   U  começa a chover quando o Chico passa aqui (na Caatinga, depois fica verde)
+//   ~  água rasa (o Chico boia e nada)   w  água funda (só com o poder "Nado da Onça")
+//   J  cipó (escala como a escada)       Z  chamado de bicho: som + ondas visuais mostram o caminho
 
 import type { Personagem } from '../systems/VoiceManager';
+import type { MundoId } from '../data/mundos';
 
 export const LINHAS = 13;
 
-export type Poder = 'bola';
+export type Poder = 'bola' | 'onca';
 
 export interface Fala {
   texto: string;
@@ -26,7 +29,7 @@ export interface Fala {
 
 export interface AnimalNaFase {
   /** Id da ficha do animal (docs/DOSSIE-CIENTIFICO.md). */
-  id: 'moco' | 'tatu-bola' | 'asa-branca' | 'carcara' | 'prea';
+  id: 'moco' | 'tatu-bola' | 'asa-branca' | 'carcara' | 'prea' | 'onca' | 'arara' | 'preguica' | 'boto' | 'perereca';
   /** Fala tirada do dossiê científico. */
   fala: string;
   curiosidade?: string;
@@ -35,6 +38,8 @@ export interface AnimalNaFase {
     | { tipo: 'pular'; dx: number; dy: number }
     | { tipo: 'voar'; dx: number; dy: number }
     | { tipo: 'correr'; dx: number }
+    | { tipo: 'nadar'; dx: number }
+    | { tipo: 'ficar' }
     | { tipo: 'bola' };
   /** Poder que o Chico ganha depois da demonstração. */
   daPoder?: Poder;
@@ -43,7 +48,7 @@ export interface AnimalNaFase {
 export interface LevelDef {
   id: string;
   nome: string;
-  mundo: string;
+  mundo: MundoId;
   /** Fala ao começar a fase. */
   abertura?: Fala;
   /** Uma fala por placa "S", na ordem em que aparecem da esquerda para a direita. */

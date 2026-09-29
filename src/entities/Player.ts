@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -15,6 +15,13 @@ export class Player {
   temPoderBola = false;
   /** Velocidade horizontal que o vento soma ao Chico neste frame (definida pela cena). */
   ventoX = 0;
+  /** Poder passivo "Nado da Onça": pode mergulhar e entrar na água funda. */
+  temPoderOnca = false;
+  /** Água em que o Chico está neste frame (definida pela cena): y da superfície, ou null fora da água. */
+  agua: { superficie: number } | null = null;
+  private nadando = false;
+  /** Avisa a cena quando o Chico entra na água (respingo). */
+  aoEntrarNaAgua?: () => void;
 
   private partes: {
     corpo: Phaser.GameObjects.Image;
@@ -156,6 +163,37 @@ export class Player {
     }
     const enrolado = this.estado === 'bola';
 
+    // --- Água: boiar, braçada, mergulho (com o poder da onça) e sair pulando
+    const naAgua = this.agua !== null && this.estado !== 'escalando';
+    if (naAgua !== this.nadando) {
+      this.nadando = naAgua;
+      b.setGravityY(naAgua ? PLAYER.gravity * AGUA.fatorGravidade : this.estado === 'escalando' ? 0 : PLAYER.gravity);
+      // O limite do motor vale para subir e descer: na água ele fica alto para não cortar o pulo de saída;
+      // o afundar devagar é limitado no cálculo do nado (Clamp com AGUA.maxQueda).
+      b.setMaxVelocityY(naAgua ? PLAYER.jumpVelocity : PLAYER.maxFall);
+      if (naAgua) {
+        b.setVelocityY(Math.min(b.velocity.y, 200));
+        this.aoEntrarNaAgua?.();
+      }
+    }
+    if (naAgua && this.agua) {
+      const sup = this.agua.superficie;
+      const mergulhando = i.down && this.temPoderOnca;
+      let vy = b.velocity.y * (1 - Math.min(1, 2.5 * dt));
+      if (mergulhando) vy += AGUA.mergulho * dt;
+      else if (b.top > sup - 26) vy -= AGUA.empuxo * dt; // boia até a cabeça sair da água
+      if (i.up && !mergulhando) vy -= AGUA.empuxo * 0.5 * dt;
+      if (this.buffer > 0) {
+        this.buffer = 0;
+        // na superfície, o pulo tira o Chico da água; mais fundo, é uma braçada para cima
+        vy = b.top < sup + 14 ? -PLAYER.jumpVelocity * AGUA.saltoSaida : -AGUA.bracada;
+        AudioManager.tocar('bracada');
+      }
+      b.setVelocityY(Phaser.Math.Clamp(vy, -PLAYER.jumpVelocity, AGUA.maxQueda));
+      this.noChao = false;
+      this.coyote = 0;
+    }
+
     this.coyote = this.noChao ? PLAYER.coyoteMs : Math.max(0, this.coyote - ms);
     this.buffer = i.jumpPressed ? PLAYER.jumpBufferMs : Math.max(0, this.buffer - ms);
 
@@ -206,14 +244,14 @@ export class Player {
     let nvx = vx;
     // O vento desloca o ponto de equilíbrio: contra ele o Chico anda devagar; parado, é empurrado.
     const vento = this.estado === 'escalando' ? 0 : this.ventoX * (enrolado ? VENTO.fatorBola : 1);
-    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1) + vento;
+    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1) * (naAgua ? AGUA.fatorVelocidade : 1) + vento;
     if (nvx < meta) nvx = Math.min(meta, nvx + a * dt);
     else if (nvx > meta) nvx = Math.max(meta, nvx - a * dt);
     b.setVelocityX(nvx);
 
     // --- Pulo: coyote time + jump buffer + altura variável
     // Enrolado em bola não pula (o tatu-bola fechado não salta).
-    if (!enrolado && this.buffer > 0 && this.coyote > 0) {
+    if (!enrolado && !naAgua && this.buffer > 0 && this.coyote > 0) {
       b.setVelocityY(-PLAYER.jumpVelocity);
       this.buffer = 0;
       this.coyote = 0;
@@ -222,7 +260,7 @@ export class Player {
       AudioManager.tocar('pulo');
       this.poeira.explode(5, this.x, this.pes);
     }
-    if (!i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
+    if (!naAgua && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
       b.setVelocityY(b.velocity.y * PLAYER.jumpCutFactor);
     }
 
@@ -296,6 +334,14 @@ export class Player {
       bracoT = -2.2;
       pernaF = 0.4;
       pernaT = -0.4;
+    } else if (this.nadando) {
+      // nado: braços em círculo, pernas batendo
+      const s = Math.sin(t * 7);
+      bracoF = -2.2 + s * 0.9;
+      bracoT = -2.2 - s * 0.9;
+      pernaF = Math.sin(t * 12) * 0.5;
+      pernaT = -Math.sin(t * 12) * 0.5;
+      inclinacao = Math.abs(b.velocity.x) > 40 ? 0.25 : 0;
     } else if (this.estado === 'escalando') {
       const fase = Math.sin(t * 10) * (b.velocity.y !== 0 ? 1 : 0);
       bracoF = -2.8 + fase * 0.4;

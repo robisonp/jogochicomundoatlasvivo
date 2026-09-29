@@ -1,5 +1,6 @@
 // Efeitos sonoros e música gerados por síntese (Web Audio). Nenhum arquivo de áudio necessário.
 import { SaveManager } from '../core/SaveManager';
+import type { TemaMusica } from '../data/mundos';
 
 export type Sfx =
   | 'pulo'
@@ -13,7 +14,10 @@ export type Sfx =
   | 'bola'
   | 'desbola'
   | 'poder'
-  | 'pedra';
+  | 'pedra'
+  | 'splash'
+  | 'bracada'
+  | 'canto';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -24,6 +28,7 @@ class AudioManagerImpl {
   private beat = 0;
   private noiseBuf?: AudioBuffer;
   private querMusica = false;
+  private tema: TemaMusica = 'baiao';
   private chuvaFonte?: AudioBufferSourceNode;
   private chuvaGain?: GainNode;
 
@@ -131,6 +136,18 @@ class AudioManagerImpl {
       case 'poder':
         [392, 523, 659, 784, 1047, 1319].forEach((f, i) => this.tom(f, 0.25, { tipo: 'triangle', vol: 0.28, atraso: i * 0.07 }));
         break;
+      case 'splash':
+        this.ruido(0.35, 1200, 0.4);
+        this.tom(260, 0.2, { tipo: 'sine', ate: 90, vol: 0.2 });
+        break;
+      case 'bracada':
+        this.ruido(0.12, 900, 0.18);
+        break;
+      case 'canto':
+        // chamado de ave (estilizado): duas notas agudas e ásperas
+        this.tom(1400, 0.12, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
+        this.tom(1500, 0.14, { tipo: 'sawtooth', ate: 950, vol: 0.12, atraso: 0.18 });
+        break;
       case 'pedra':
         this.ruido(0.07, 1500, 0.22);
         this.tom(900, 0.05, { tipo: 'square', ate: 400, vol: 0.08 });
@@ -189,7 +206,11 @@ class AudioManagerImpl {
 
   // ---------- Música: baião simples (zabumba + triângulo + melodia na escala nordestina) ----------
 
-  tocarMusica(): void {
+  tocarMusica(tema?: TemaMusica): void {
+    if (tema && tema !== this.tema) {
+      this.pararMusica();
+      this.tema = tema;
+    }
     this.querMusica = true;
     if (!this.ctx || this.musicTimer !== undefined) return;
     this.nextBeatTime = this.ctx.currentTime + 0.1;
@@ -204,6 +225,7 @@ class AudioManagerImpl {
   }
 
   private agendar(): void {
+    if (this.tema === 'mata') return this.agendarMata();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -226,6 +248,36 @@ class AudioManagerImpl {
       if (b % 2 === 0) {
         const idx = melodia[(this.beat / 2) % melodia.length];
         if (idx >= 0) this.tomEm(t, escala[idx], passo * 1.8, 'sawtooth', 0.09, dest);
+      }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Mata: marimba suave em pentatônica, chocalho e grave leve (sem clichês "tribais").
+  private agendarMata(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 92 / 4;
+    const escala = [392, 440, 493.88, 587.33, 659.25, 783.99, 880];
+    const melodia = [0, -1, 2, -1, 3, -1, 2, -1, 4, -1, 3, 2, 1, -1, -1, -1, 2, -1, 3, -1, 5, -1, 4, -1, 3, -1, 2, 3, 2, -1, -1, -1];
+    const baixo = [98, 98, 130.81, 110];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const compasso = Math.floor(this.beat / 16);
+      const dest = this.musicGain!;
+      // chocalho nas colcheias
+      if (b % 2 === 0) this.ruido(0.05, 6000, b % 4 === 2 ? 0.07 : 0.04, t, dest);
+      // grave leve
+      if (b === 0 || b === 10) this.tomEm(t, baixo[compasso % 4], 0.5, 'sine', 0.45, dest);
+      // marimba: nota curta, ataque rápido
+      if (b % 2 === 0) {
+        const idx = melodia[(this.beat / 2) % melodia.length];
+        if (idx >= 0) {
+          this.tomEm(t, escala[idx], 0.28, 'triangle', 0.16, dest);
+          this.tomEm(t, escala[idx] * 2, 0.12, 'sine', 0.05, dest);
+        }
       }
       this.nextBeatTime += passo;
       this.beat++;

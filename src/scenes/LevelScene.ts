@@ -7,20 +7,29 @@ import { VoiceManager } from '../systems/VoiceManager';
 import { SaveManager } from '../core/SaveManager';
 import { LINHAS, type LevelDef, type AnimalNaFase } from '../levels/types';
 import { FASES, CAMPANHA, proximaFase } from '../levels';
+import { TEMAS, type TemaMundo } from '../data/mundos';
 
 const LINHAS_EXTRAS = 3;
-/** Caracteres que viram chão sólido, e a textura de cada um (bloco interno / bloco com topo). */
-const SOLIDOS: Record<string, [string, string]> = {
-  '#': ['terra', 'terra-topo'],
-  R: ['rocha', 'rocha-topo'],
-};
 const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   moco: 'moco',
   'tatu-bola': 'tatu',
   'asa-branca': 'asa-branca',
   carcara: 'carcara',
   prea: 'prea',
+  onca: 'onca',
+  arara: 'arara',
+  preguica: 'preguica',
+  boto: 'boto',
+  perereca: 'perereca',
 };
+/** Caracteres de água: rasa (~) e funda (w). */
+const AGUA = new Set(['~', 'w']);
+
+interface FonteSom {
+  x: number;
+  y: number;
+  t: number;
+}
 
 interface ZonaVento {
   area: Phaser.Geom.Rectangle;
@@ -95,6 +104,11 @@ export class LevelScene extends Phaser.Scene {
   private chovendo = false;
   private chuvaCaindo = false;
   private toposTerra: { x: number; y: number }[] = [];
+  private tema!: TemaMundo;
+  /** Grade da fase (para saber onde há água). */
+  private grade: string[] = [];
+  private fontesSom: FonteSom[] = [];
+  private respingos!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() {
     super('Level');
@@ -102,6 +116,8 @@ export class LevelScene extends Phaser.Scene {
 
   init(data: { faseId?: string }) {
     this.def = FASES[data.faseId ?? ''] ?? CAMPANHA[0];
+    this.tema = TEMAS[this.def.mundo];
+    this.fontesSom = [];
     this.bichos = [];
     this.fontesPedrinhas = [];
     this.ventos = [];
@@ -156,6 +172,11 @@ export class LevelScene extends Phaser.Scene {
       else this.morrer();
     });
     this.player.temPoderBola = SaveManager.data.poderes.includes('bola');
+    this.player.temPoderOnca = SaveManager.data.poderes.includes('onca');
+    this.player.aoEntrarNaAgua = () => {
+      AudioManager.tocar('splash');
+      this.respingos.explode(12, this.player.x, this.aguaSuperficie(this.player.x, this.player.y) ?? this.player.y);
+    };
     this.physics.add.overlap(this.player.sprite, this.pegadas, (_p, peg) =>
       this.pegar(peg as Phaser.Types.Physics.Arcade.ImageWithStaticBody),
     );
@@ -179,7 +200,7 @@ export class LevelScene extends Phaser.Scene {
     });
 
     if (!SaveManager.data.settings.reduzirMovimento) cam.fadeIn(350);
-    AudioManager.tocarMusica();
+    AudioManager.tocarMusica(this.tema.musica);
     if (this.def.abertura) {
       const a = this.def.abertura;
       this.time.delayedCall(500, () => VoiceManager.falar(a.texto, a.quem));
@@ -190,23 +211,23 @@ export class LevelScene extends Phaser.Scene {
 
   private criarFundo() {
     const { width, height } = this.scale;
-    this.add.image(0, 0, 'ceu').setOrigin(0).setScrollFactor(0).setDisplaySize(width, height).setDepth(-100);
-    this.add.image(width * 0.78, 130, 'sol').setScrollFactor(0).setDepth(-99);
-    for (let i = 0; i < 5; i++) {
-      const n = this.add.image(i * 700 + 120, 80 + (i % 3) * 50, 'nuvem').setScrollFactor(0.08, 0).setDepth(-98);
-      n.setScale(0.7 + (i % 2) * 0.4);
+    const tema = this.tema;
+    this.add.image(0, 0, tema.ceu).setOrigin(0).setScrollFactor(0).setDisplaySize(width, height).setDepth(-100);
+    if (tema.sol) this.add.image(width * 0.78, 130, 'sol').setScrollFactor(0).setDepth(-99);
+    if (tema.nuvens) {
+      for (let i = 0; i < 5; i++) {
+        const n = this.add.image(i * 700 + 120, 80 + (i % 3) * 50, 'nuvem').setScrollFactor(0.08, 0).setDepth(-98);
+        n.setScale(0.7 + (i % 2) * 0.4);
+      }
     }
-    const serra = this.add
-      .tileSprite(0, height - 470, width, 320, 'serra')
-      .setOrigin(0)
-      .setScrollFactor(0)
-      .setDepth(-97);
-    const mata = this.add
-      .tileSprite(0, height - 330, width, 260, 'mata-fundo')
-      .setOrigin(0)
-      .setScrollFactor(0)
-      .setDepth(-96);
-    this.fundo.push({ img: serra, fator: 0.15 }, { img: mata, fator: 0.4 });
+    tema.fundo.forEach((camada, i) => {
+      const img = this.add
+        .tileSprite(0, height - camada.base, width, camada.altura, camada.textura)
+        .setOrigin(0)
+        .setScrollFactor(0)
+        .setDepth(-97 + i);
+      this.fundo.push({ img, fator: camada.fator });
+    });
     this.scale.on('resize', this.aoRedimensionar, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', this.aoRedimensionar, this));
   }
@@ -225,17 +246,40 @@ export class LevelScene extends Phaser.Scene {
     }
     // Terra extra abaixo da fase: deixa a câmera mostrar o chão mais alto na tela, acima dos controles de toque.
     const ultima = grade[LINHAS - 1];
-    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(ultima.replace(/[^#R]/g, '.'));
+    // Embaixo dos rios fica o leito (terra): a água nunca "vaza" pelo fundo da fase.
+    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(ultima.replace(/[^#R~w]/g, '.').replace(/[~w]/g, '#'));
     const linhas = grade.length;
     const cols = grade[0].length;
     this.larguraMundo = cols * TILE;
     this.alturaMundo = linhas * TILE;
     const at = (r: number, c: number) => (r >= 0 && r < linhas && c >= 0 && c < cols ? grade[r][c] : '.');
+    const SOLIDOS = this.tema.solidos;
     const solido = (r: number, c: number) => at(r, c) in SOLIDOS;
+    // Bicho ou pegada no meio do rio (água dos dois lados) também conta como água.
+    const aguaEm = (r: number, c: number): string | null => {
+      const ch = at(r, c);
+      if (AGUA.has(ch)) return ch;
+      if ((ch === 'A' || ch === 'o') && AGUA.has(at(r, c - 1)) && AGUA.has(at(r, c + 1))) return at(r, c - 1);
+      return null;
+    };
+    this.grade = grade.map((linha, r) => [...linha].map((ch, c) => aguaEm(r, c) ?? ch).join(''));
+
+    // Água: desenhada na frente do Chico (ele "entra" nela); a superfície tem ondinhas.
+    for (let r = 0; r < LINHAS; r++) {
+      for (let c = 0; c < cols; c++) {
+        const ch = aguaEm(r, c);
+        if (!ch) continue;
+        const funda = ch === 'w';
+        const topo = !aguaEm(r - 1, c);
+        const textura = `agua-${funda ? 'funda' : 'rasa'}${topo ? '-topo' : ''}`;
+        const img = this.add.image(c * TILE, r * TILE, textura).setOrigin(0).setDepth(11);
+        if (topo) this.tweens.add({ targets: img, y: img.y + 3, yoyo: true, repeat: -1, duration: 900 + (c % 4) * 120, ease: 'Sine.easeInOut' });
+      }
+    }
 
     // Fundo escuro nos buracos (perigo legível para quem não lê).
     for (let c = 0; c < cols; c++) {
-      if (!solido(LINHAS - 1, c)) {
+      if (!solido(LINHAS - 1, c) && !AGUA.has(at(LINHAS - 1, c))) {
         this.add.image(c * TILE, (LINHAS - 3) * TILE, 'buraco').setOrigin(0).setDepth(0).setDisplaySize(TILE, (LINHAS_EXTRAS + 3) * TILE);
       }
     }
@@ -246,6 +290,15 @@ export class LevelScene extends Phaser.Scene {
     this.escadas = this.physics.add.staticGroup();
     this.pegadas = this.physics.add.staticGroup();
     this.pedrinhas = this.physics.add.group();
+    this.respingos = this.add.particles(0, 0, 'bolha', {
+      lifespan: 600,
+      speedX: { min: -140, max: 140 },
+      speedY: { min: -320, max: -120 },
+      gravityY: 700,
+      scale: { start: 1.2, end: 0.4 },
+      emitting: false,
+    });
+    this.respingos.setDepth(12);
     this.estilhacos = this.add.particles(0, 0, 'poeira', {
       lifespan: 350,
       speedX: { min: -120, max: 120 },
@@ -328,21 +381,26 @@ export class LevelScene extends Phaser.Scene {
             this.inicio = { x: cx, y: y + TILE - PLAYER.bodyHeight / 2 };
             break;
           case '=': {
-            const l = this.lajes.create(x, y, 'laje').setOrigin(0).setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+            const l = this.lajes.create(x, y, this.tema.laje).setOrigin(0).setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
             l.refreshBody();
             this.soDeCima(l.body);
             break;
           }
           case '^': {
-            const e = this.espinhos.create(cx, y + TILE, 'espinhos').setOrigin(0.5, 1).setDepth(3) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+            const e = this.espinhos.create(cx, y + TILE, this.tema.espinhos).setOrigin(0.5, 1).setDepth(3) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
             e.refreshBody();
             // hitbox menor que o desenho: só pune quando realmente encosta
             e.body.setSize(40, 28).setOffset(12, 20);
             this.tweens.add({ targets: e, scaleY: 0.94, yoyo: true, repeat: -1, duration: 700 + (c % 3) * 90, ease: 'Sine.easeInOut' });
             break;
           }
-          case 'H': {
-            const h = this.escadas.create(cx, y + TILE / 2, 'escada').setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+          case 'Z':
+            this.fontesSom.push({ x: cx, y: y + TILE / 2, t: this.fontesSom.length * 0.8 });
+            break;
+          case 'H':
+          case 'J': {
+            // H: escada de corda (Vovô Marcos); J: cipó da floresta. Os dois se escalam igual.
+            const h = this.escadas.create(cx, y + TILE / 2, ch === 'J' ? 'cipo' : 'escada').setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
             h.refreshBody();
             h.body.setSize(40, TILE);
             break;
@@ -390,7 +448,13 @@ export class LevelScene extends Phaser.Scene {
             const def = this.def.animais?.[bichoIdx++];
             if (!def) break;
             // Os desenhos olham para a direita; o bicho espera o Chico olhando para a esquerda.
-            const img = this.add.image(cx, y + TILE, TEXTURA_BICHO[def.id]).setOrigin(0.5, 1).setDepth(8).setFlipX(true);
+            // A preguiça fica pendurada no galho que está no bloco logo acima dela.
+            const pendurada = def.id === 'preguica';
+            const img = this.add
+              .image(cx, pendurada ? y - TILE + 18 : y + TILE, TEXTURA_BICHO[def.id])
+              .setOrigin(0.5, pendurada ? 0 : 1)
+              .setDepth(aguaEm(r, c) ? 10 : 8)
+              .setFlipX(true);
             this.tweens.add({ targets: img, scaleY: 0.95, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
             this.bichos.push({ img, def, ativado: false });
             break;
@@ -466,6 +530,14 @@ export class LevelScene extends Phaser.Scene {
     });
     this.player.marcarEscada(escadaX);
 
+    // Água sob o centro do Chico
+    const sup = this.aguaSuperficie(this.player.x, this.player.y);
+    this.player.agua = sup === null ? null : { superficie: sup };
+    if (sup !== null && this.aguaFunda(this.player.x, this.player.y) && !this.player.temPoderOnca && this.player.estado !== 'caido') {
+      // Sem o Nado da Onça, a água funda ainda não é segura: volta para o checkpoint.
+      this.morrer();
+    }
+
     this.player.update(this.terminou ? this.semEntrada() : i, dt);
 
     // Câmera antecipa a direção
@@ -484,6 +556,7 @@ export class LevelScene extends Phaser.Scene {
     this.checarCheckpoints();
     this.checarPlacas(i.actionPressed);
     this.checarBichos();
+    this.atualizarSons(dt);
     this.soltarPedrinhas(dt);
     this.atualizarVento(dt);
     if (this.gatilhoChuva !== null && !this.chovendo && this.player.x > this.gatilhoChuva) this.comecarChuva();
@@ -538,6 +611,11 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private verdejar() {
+    if (this.def.mundo !== 'caatinga') {
+      const f = this.def.chuva?.verde;
+      if (f) this.time.delayedCall(800, () => VoiceManager.falar(f.texto, f.quem));
+      return;
+    }
     for (const t of this.toposTerra) {
       const capim = this.add.image(t.x, t.y, 'capim-verde').setOrigin(0).setDepth(1.5).setAlpha(0);
       // o verde se espalha a partir de onde o Chico está
@@ -686,6 +764,34 @@ export class LevelScene extends Phaser.Scene {
         this.tweens.add({ targets: img, x: img.x + dx * TILE, duration: 900, ease: 'Quad.easeIn' });
         this.tweens.add({ targets: img, alpha: 0, delay: 700, duration: 300 });
       });
+    } else if (def.demo.tipo === 'nadar') {
+      // Onça e boto atravessam a água, subindo e descendo de leve.
+      // Quem começa na margem (a onça) afunda até a metade ao entrar no rio e sobe ao sair.
+      const { dx } = def.demo;
+      const x0 = img.x;
+      const y0 = img.y;
+      const comecaNaMargem = img.depth !== 10;
+      this.time.delayedCall(1000, () => {
+        img.setFlipX(dx < 0);
+        this.tweens.killTweensOf(img);
+        if (comecaNaMargem) img.setDepth(10);
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: Math.abs(dx) * 320,
+          onUpdate: (tw) => {
+            const t = tw.getValue() ?? 0;
+            const afunda = comecaNaMargem ? 30 * Math.min(1, t * 8, (1 - t) * 8) : 0;
+            img.setPosition(x0 + dx * TILE * t, y0 + afunda + Math.sin(t * Math.PI * 6) * 6);
+          },
+          onComplete: () => {
+            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          },
+        });
+      });
+    } else if (def.demo.tipo === 'ficar') {
+      // A preguiça continua no galho, bem firme.
+      this.tweens.add({ targets: img, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 1800, ease: 'Sine.easeInOut' });
     } else if (def.demo.tipo === 'pular') {
       // O mocó sobe o lajedo num salto, mostrando o caminho pelas pedras.
       const { dx, dy } = def.demo;
@@ -725,7 +831,7 @@ export class LevelScene extends Phaser.Scene {
             this.time.delayedCall(1500, () => {
               img.setTexture('tatu');
               AudioManager.tocar('desbola');
-              if (def.daPoder === 'bola') this.ganharPoderBola(img);
+              if (def.daPoder) this.ganharPoder(def.daPoder, img);
             });
           },
         });
@@ -733,7 +839,7 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  private ganharPoderBola(origem: Phaser.GameObjects.Image) {
+  private ganharPoder(poder: 'bola' | 'onca', origem: Phaser.GameObjects.Image) {
     const faisca = this.add.image(origem.x, origem.y - 30, 'brilho').setScale(3).setDepth(20).setTint(0xffd766);
     this.tweens.add({
       targets: faisca,
@@ -743,15 +849,57 @@ export class LevelScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
       onComplete: () => {
         faisca.destroy();
-        const novo = !this.player.temPoderBola;
-        this.player.temPoderBola = true;
-        SaveManager.conquistar('poderes', 'bola');
+        const novo = SaveManager.conquistar('poderes', poder);
         AudioManager.tocar('poder');
         this.cameras.main.flash(200, 255, 240, 170);
-        this.events.emit('poder', true);
-        if (novo) VoiceManager.falar('Agora você também pode virar bola! Aperte o botão da pata.', 'narrador', true);
+        if (poder === 'bola') {
+          this.player.temPoderBola = true;
+          this.events.emit('poder', true);
+          if (novo) VoiceManager.falar('Agora você também pode virar bola! Aperte o botão da pata.', 'narrador', true);
+        } else {
+          // Poder passivo: não precisa de botão.
+          this.player.temPoderOnca = true;
+          if (novo) VoiceManager.falar('Agora você nada como a onça! Pode entrar na água funda e mergulhar.', 'narrador', true);
+        }
       },
     });
+  }
+
+  // ------------------------------------------------------------------ água e chamados
+
+  private caractere(x: number, y: number) {
+    const r = Math.floor(y / TILE);
+    const c = Math.floor(x / TILE);
+    return this.grade[r]?.[c] ?? '.';
+  }
+
+  /** Y da superfície da água na coluna, se o ponto estiver dentro da água; senão null. */
+  private aguaSuperficie(x: number, y: number): number | null {
+    if (!AGUA.has(this.caractere(x, y))) return null;
+    let r = Math.floor(y / TILE);
+    const c = Math.floor(x / TILE);
+    while (r > 0 && AGUA.has(this.grade[r - 1]?.[c] ?? '.')) r--;
+    return r * TILE + 8;
+  }
+
+  private aguaFunda(x: number, y: number) {
+    return this.caractere(x, y) === 'w';
+  }
+
+  /** Chamados de bicho: ondas saem do ponto e um som toca quando o Chico está por perto. */
+  private atualizarSons(dt: number) {
+    for (const f of this.fontesSom) {
+      f.t -= dt;
+      if (f.t > 0) continue;
+      f.t = 2.4;
+      const perto = Math.abs(f.x - this.player.x) < 900 && Math.abs(f.y - this.player.y) < 700;
+      if (!perto) continue;
+      for (let k = 0; k < 3; k++) {
+        const onda = this.add.image(f.x, f.y, 'onda').setDepth(9).setScale(0.2).setTint(0xffd766);
+        this.tweens.add({ targets: onda, scale: 1.6, alpha: 0, delay: k * 250, duration: 1200, onComplete: () => onda.destroy() });
+      }
+      AudioManager.tocar('canto');
+    }
   }
 
   // ------------------------------------------------------------------ pedrinhas
