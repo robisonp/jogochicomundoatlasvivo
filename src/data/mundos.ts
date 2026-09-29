@@ -1,9 +1,9 @@
 // Visual e som de cada mundo. A fase diz em qual mundo está (`mundo` em LevelDef) e a cena usa este tema.
 
-export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia';
+export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico';
 /** Tema visual: um por mundo, mais variações (a mata de eucaliptos da Austrália). */
 export type TemaId = MundoId | 'australia-mata';
-export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback';
+export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico';
 
 export interface TemaMundo {
   /** Caractere sólido → [textura interna, textura com topo]. */
@@ -12,12 +12,20 @@ export interface TemaMundo {
   espinhos: string;
   ceu: string;
   sol: boolean;
+  /** Sol baixinho perto do horizonte (sol da meia-noite). */
+  solBaixo?: boolean;
   nuvens: boolean;
+  /** Textura das plataformas que se movem (M/V). Padrão: página do Atlas. */
+  plataforma?: string;
+  /** Textura dos rastros (:). Padrão: cascos na terra. */
+  rastro?: string;
+  /** Fundo dos túneis (t) e atrás da terra/neve que quebra. Padrão: terra escura. */
+  toca?: string;
   /** Camadas de fundo (parallax): textura, altura, quanto a base fica abaixo da linha do chão e fator de rolagem. */
   fundo: { textura: string; altura: number; afundar: number; fator: number }[];
   musica: TemaMusica;
   /** Poder que o botão da pata usa neste mundo. */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho';
 }
 
 export const TEMAS: Record<TemaId, TemaMundo> = {
@@ -93,5 +101,24 @@ export const TEMAS: Record<TemaId, TemaMundo> = {
     ],
     musica: 'outback',
     poderBotao: 'superpulo',
+  },
+  // Ártico no verão: tundra, neve, gelo marinho e o sol da meia-noite baixinho no horizonte.
+  artico: {
+    solidos: { '#': ['neve', 'neve-topo'], R: ['rocha-artica', 'rocha-artica-topo'], I: ['gelo', 'gelo-topo'] },
+    laje: 'laje-gelo',
+    espinhos: 'gelo-pontudo',
+    ceu: 'ceu-artico',
+    sol: true,
+    solBaixo: true,
+    nuvens: true,
+    plataforma: 'placa-gelo',
+    rastro: 'rastro-urso',
+    toca: 'caverna-gelo',
+    fundo: [
+      { textura: 'artico-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'artico-perto', altura: 240, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'artico',
+    poderBotao: 'mergulho',
   },
 };

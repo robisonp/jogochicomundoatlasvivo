@@ -10,7 +10,8 @@ export type RegiaoMapa =
   | 'africa'
   | 'africa-leste'
   | 'australia'
-  | 'australia-leste';
+  | 'australia-leste'
+  | 'artico';
 
 export interface FichaAnimal {
   id: string;
@@ -334,6 +335,82 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Phascolarctos cinereus · IUCN: Vulnerável (algumas populações: Em Perigo na lei australiana)',
   },
+  // ---------------------------------------------------------------- Ártico
+  {
+    id: 'coruja-das-neves',
+    nome: 'Coruja-das-neves',
+    mundo: 'artico',
+    textura: 'coruja-das-neves',
+    regiao: 'artico',
+    falas: {
+      apresentacao: 'No verão do Ártico, posso caçar até com o sol brilhando!',
+      mapa: 'Eu vivo na tundra, nas terras frias bem no norte do mundo.',
+      comida: 'Eu como principalmente bichinhos pequenos e aves.',
+      tamanho: 'Com as asas abertas, sou maior que muitas crianças!',
+      curiosidade: 'Nem toda coruja precisa esperar a noite!',
+    },
+    adulto: 'Bubo scandiacus · IUCN: Vulnerável',
+  },
+  {
+    id: 'urso-polar',
+    nome: 'Urso-polar',
+    mundo: 'artico',
+    textura: 'urso-polar',
+    regiao: 'artico',
+    falas: {
+      apresentacao: 'Minhas patas enormes também funcionam muito bem na água!',
+      mapa: 'Eu vivo no gelo do mar e nas costas do Ártico, como no Canadá, na Groenlândia e na Noruega.',
+      comida: 'Eu como principalmente animais do mar, especialmente focas.',
+      tamanho: 'Em pé, fico muito mais alto que uma pessoa.',
+      curiosidade: 'Preciso do gelo do mar para viver no Ártico!',
+    },
+    adulto: 'Ursus maritimus · IUCN: Vulnerável',
+  },
+  {
+    id: 'raposa-artica',
+    nome: 'Raposa-do-ártico',
+    mundo: 'artico',
+    textura: 'raposa-artica',
+    regiao: 'artico',
+    falas: {
+      apresentacao: 'Escuto debaixo da neve e... pulo de cabeça!',
+      mapa: 'Eu vivo na tundra, em volta de todo o Ártico.',
+      comida: 'Eu como bichinhos pequenos, aves, ovos e o que encontrar.',
+      tamanho: 'Sou do tamanho de um cachorro pequeno.',
+      curiosidade: 'Minha pelagem ajuda a enfrentar o frio do Ártico!',
+    },
+    adulto: 'Vulpes lagopus · IUCN: Menos Preocupante (algumas populações muito ameaçadas)',
+  },
+  {
+    id: 'rena',
+    nome: 'Rena',
+    mundo: 'artico',
+    textura: 'rena',
+    regiao: 'artico',
+    falas: {
+      apresentacao: 'Minhas patas me ajudam a caminhar pelas terras frias!',
+      mapa: 'Eu vivo no norte do mundo: Canadá, Alasca, Groenlândia, Noruega e Rússia.',
+      comida: 'Eu como líquens, capim, folhas e outras plantas.',
+      tamanho: 'Sou do tamanho de um cervo grande.',
+      curiosidade: 'Rena e caribu são nomes usados para animais da mesma espécie!',
+    },
+    adulto: 'Rangifer tarandus (rena/caribu) · IUCN: Vulnerável',
+  },
+  {
+    id: 'foca',
+    nome: 'Foca-anelada',
+    mundo: 'artico',
+    textura: 'foca',
+    regiao: 'artico',
+    falas: {
+      apresentacao: 'Eu encontro meu caminho entre a água e o gelo!',
+      mapa: 'Eu vivo nos mares frios em volta de todo o Ártico.',
+      comida: 'Eu como peixes e bichinhos pequenos do mar.',
+      tamanho: 'Sou do comprimento da altura de uma criança grande.',
+      curiosidade: 'O gelo também é parte da minha casa!',
+    },
+    adulto: 'Pusa hispida · IUCN: Menos Preocupante (global)',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -368,5 +445,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo da Austrália',
     texturaSelo: 'selo-australia',
     abertura: 'A Austrália não é toda deserto: tem interior seco e matas de eucalipto!',
+  },
+  {
+    id: 'artico',
+    nome: 'Ártico',
+    selo: 'artico',
+    nomeSelo: 'Selo do Ártico',
+    texturaSelo: 'selo-artico',
+    abertura: 'No verão, há lugares onde o Sol nem se põe!',
   },
 ];

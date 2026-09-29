@@ -6,6 +6,7 @@ import { CHICO_VISUAL as V, CAATINGA as C } from '../data/visual';
 import { gerarAmazonia } from './Amazonia';
 import { gerarSavana } from './Savana';
 import { gerarAustralia } from './Australia';
+import { gerarArtico } from './Artico';
 
 export type Ctx = CanvasRenderingContext2D;
 
@@ -49,6 +50,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarAmazonia(scene);
   gerarSavana(scene);
   gerarAustralia(scene);
+  gerarArtico(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -1373,6 +1375,26 @@ const AUSTRALIA_LESTE: [number, number][] = [
   [151.3, -33.5], [150.3, -35.5], [150, -37.5], [148, -37.8], [146.3, -39], [143.5, -38.8], [140, -37.5],
   [138, -35.6], [139.5, -34], [142, -33], [146, -30], [148, -26], [146.5, -22], [144.5, -18],
 ];
+// Ártico visto de cima (projeção polar simplificada), recortado em 55° N
+const GROENLANDIA: [number, number][] = [
+  [-73, 78], [-60, 82], [-30, 83.5], [-18, 81], [-20, 72], [-25, 68], [-40, 65], [-44, 60], [-50, 64], [-54, 70],
+  [-68, 76.5],
+];
+const AMERICA_NORTE: [number, number][] = [
+  [-168, 66], [-162, 70], [-150, 71], [-140, 70], [-128, 70], [-115, 68.5], [-100, 68], [-95, 72], [-85, 70],
+  [-80, 73], [-75, 72], [-70, 67], [-64, 60], [-60, 55], [-80, 55], [-100, 55], [-120, 55], [-140, 55],
+  [-160, 55], [-165, 60],
+];
+const ARQUIPELAGO_CANADA: [number, number][] = [
+  [-122, 75], [-100, 78], [-85, 80.5], [-72, 78], [-85, 74], [-100, 73], [-115, 72],
+];
+const EURASIA: [number, number][] = [
+  [8, 55], [5, 62], [14, 68], [25, 71], [40, 68], [44, 68], [60, 69.5], [70, 73], [80, 73], [100, 77.5],
+  [115, 74], [130, 72], [140, 72.5], [160, 70], [170, 69.5], [180, 66], [180, 55], [160, 55], [130, 55],
+  [100, 55], [70, 55], [40, 55],
+];
+const SVALBARD: [number, number][] = [[11, 79], [18, 80.3], [27, 80], [22, 77], [15, 77]];
+const ISLANDIA: [number, number][] = [[-24, 65.5], [-18, 66.5], [-13.5, 65], [-18, 63.4], [-22, 63.8]];
 const NORDESTE: [number, number][] = [
   [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
   [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
@@ -1473,6 +1495,70 @@ function gerarAtlas(scene: Phaser.Scene) {
       }
     });
   }
+
+  // Mapinha do Ártico: o "topo do mundo" visto de cima, com o Círculo Polar Ártico em destaque.
+  const projP = (lon: number, lat: number): [number, number] => {
+    const raio = (90 - lat) * 3.1;
+    const a = ((lon - 90) * Math.PI) / 180;
+    return [110 + raio * Math.cos(a), 110 + raio * Math.sin(a)];
+  };
+  const poligonoP = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projP(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  tex(scene, 'mapa-artico', 220, 220, (c) => {
+    c.save();
+    c.beginPath();
+    c.arc(110, 110, 35 * 3.1, 0, Math.PI * 2);
+    c.clip();
+    c.fillStyle = '#9fcbe6';
+    c.fillRect(0, 0, 220, 220);
+    c.lineJoin = 'round';
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 2;
+    const terras = [AMERICA_NORTE, EURASIA, ARQUIPELAGO_CANADA, GROENLANDIA, SVALBARD, ISLANDIA];
+    c.fillStyle = '#e9dcb8';
+    for (const p of terras) {
+      poligonoP(c, p);
+      c.fill();
+      c.stroke();
+    }
+    // terras dentro do Círculo Polar Ártico em destaque (onde vivem os bichos deste mundo)
+    c.save();
+    c.beginPath();
+    c.arc(110, 110, 23.5 * 3.1, 0, Math.PI * 2);
+    c.clip();
+    c.fillStyle = '#f2a93b';
+    for (const p of terras) {
+      poligonoP(c, p);
+      c.fill();
+      c.stroke();
+    }
+    c.restore();
+    // gelo do mar no meio
+    c.fillStyle = 'rgba(255,255,255,0.85)';
+    c.beginPath();
+    c.arc(110, 110, 10 * 3.1, 0, Math.PI * 2);
+    c.fill();
+    c.setLineDash([6, 5]);
+    c.strokeStyle = '#e08e2b';
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.arc(110, 110, 23.5 * 3.1, 0, Math.PI * 2);
+    c.stroke();
+    c.setLineDash([]);
+    c.restore();
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(110, 110, 35 * 3.1, 0, Math.PI * 2);
+    c.stroke();
+  });
 
   // Livro aberto (duas páginas)
   tex(scene, 'livro', 1120, 620, (c, w, h) => {

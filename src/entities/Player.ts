@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -25,8 +25,16 @@ export class Player {
   temPoderSuperPulo = false;
   /** Cavar do wombat (passivo): a cena cava a terra fofa quando o Chico empurra contra ela. */
   temPoderCavar = false;
+  /** Mergulho na neve da raposa-do-ártico (botão da pata no Ártico). */
+  temPoderMergulho = false;
+  /** Chão de gelo sob os pés neste frame (definido pela cena). */
+  noGelo = false;
   /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' = 'bola';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' = 'bola';
+  /** Caindo de cabeça (mergulho na neve). Quem encerra é a cena, que sabe se quebrou neve fofa embaixo. */
+  mergulhando = false;
+  /** Saltou para mergulhar: vira mergulho no alto do salto. */
+  private mergulhoArmado = false;
   /** Super pulo no ar: não é cortado ao soltar o pulo e corre um pouco mais rápido. */
   private emSuperPulo = false;
   private bufferPoder = 0;
@@ -199,6 +207,7 @@ export class Player {
     this.noChao = b.blocked.down || apoiado;
     if (this.noChao && !eraNoChao && b.velocity.y >= 0) this.aterrissou();
     if (this.emSuperPulo && ((this.noChao && b.velocity.y >= 0) || this.estado !== 'normal' || this.agua)) this.emSuperPulo = false;
+    if ((this.mergulhando || this.mergulhoArmado) && (this.estado !== 'normal' || this.agua)) this.terminarMergulho(false);
 
     // --- Poder "Virar bola": apertar de novo renova o tempo
     if (i.powerPressed && this.poderBotao === 'bola' && this.temPoderBola) {
@@ -317,10 +326,12 @@ export class Player {
     const alvo = (i.right ? 1 : 0) - (i.left ? 1 : 0);
     if (alvo !== 0) this.direcao = alvo as 1 | -1;
     const vx = b.velocity.x;
+    // no gelo, acelera e freia bem menos: o Chico escorrega
+    const gelo = this.noChao && this.noGelo;
     const acel = this.noChao
       ? alvo !== 0
-        ? PLAYER.groundAccel
-        : PLAYER.groundDecel
+        ? PLAYER.groundAccel * (gelo ? GELO.fatorAcel : 1)
+        : PLAYER.groundDecel * (gelo ? GELO.fatorFreio : 1)
       : alvo !== 0
         ? PLAYER.airAccel
         : PLAYER.airDecel;
@@ -367,11 +378,56 @@ export class Player {
       AudioManager.tocar('superpulo');
       this.poeira.explode(10, this.x, this.pes);
     }
-    if (!naAgua && !this.emSuperPulo && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
+    // --- Mergulho da raposa: do chão, salta e cai de cabeça no alto do salto; no ar, mergulha na hora
+    if (
+      i.powerPressed &&
+      this.poderBotao === 'mergulho' &&
+      this.temPoderMergulho &&
+      this.estado === 'normal' &&
+      !naAgua &&
+      !this.mergulhando &&
+      !this.mergulhoArmado
+    ) {
+      if (this.coyote > 0) {
+        b.setVelocityY(-PLAYER.jumpVelocity * MERGULHO.salto);
+        this.mergulhoArmado = true;
+        this.coyote = 0;
+        this.buffer = 0;
+        this.noChao = false;
+        this.squash = 0.75;
+        AudioManager.tocar('pulo');
+      } else {
+        this.comecarMergulho();
+      }
+    }
+    if (this.mergulhoArmado && b.velocity.y >= 0) this.comecarMergulho();
+    if (this.mergulhando) {
+      b.setVelocity(alvo * MERGULHO.velocidadeX, MERGULHO.queda);
+    }
+    if (!naAgua && !this.emSuperPulo && !this.mergulhoArmado && !this.mergulhando && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
       b.setVelocityY(b.velocity.y * PLAYER.jumpCutFactor);
     }
 
     this.animar(dt);
+  }
+
+  private comecarMergulho() {
+    this.mergulhoArmado = false;
+    this.mergulhando = true;
+    this.sprite.body.setVelocityY(MERGULHO.queda);
+    AudioManager.tocar('mergulho');
+  }
+
+  /** Fim do mergulho (a cena chama ao bater em chão que não é neve fofa). */
+  terminarMergulho(comEfeito = true) {
+    if (!this.mergulhando && !this.mergulhoArmado) return;
+    this.mergulhando = false;
+    this.mergulhoArmado = false;
+    if (comEfeito) {
+      this.squash = 1.3;
+      this.poeira.explode(8, this.x, this.pes);
+      AudioManager.tocar('aterrissar');
+    }
   }
 
   private soltarEscada(vy: number) {
@@ -432,7 +488,16 @@ export class Player {
     let quique = 0;
     let inclinacao = 0;
 
-    if (this.estado === 'festa') {
+    if (this.mergulhando && this.estado === 'normal') {
+      // de cabeça para baixo, braços esticados à frente (como a raposa)
+      bracoF = -3.0;
+      bracoT = -3.0;
+      pernaF = 0.2;
+      pernaT = -0.2;
+      inclinacao = this.direcao * 2.7;
+      // girado de cabeça para baixo em volta do alto do corpo: a cabeça fica embaixo, dentro da caixa de colisão
+      v.y = b.top + 8;
+    } else if (this.estado === 'festa') {
       bracoF = -2.6 + Math.sin(t * 14) * 0.3;
       bracoT = -2.4 - Math.sin(t * 14) * 0.3;
       quique = -Math.abs(Math.sin(t * 7)) * 18;
@@ -505,6 +570,8 @@ export class Player {
     this.arrancadaTempo = 0;
     this.emArrancada = false;
     this.emSuperPulo = false;
+    this.mergulhando = false;
+    this.mergulhoArmado = false;
     this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');

@@ -103,8 +103,10 @@ export class AtlasScene extends Phaser.Scene {
     this.tocavel(voltar, () => this.scene.start('Titulo'));
 
     // Abas dos mundos, no pé da página esquerda: o selo de cada mundo (apagado se ainda não conquistado).
+    // espaçamento diminui conforme entram mais mundos, para as abas caberem na página
+    const passoAbas = Math.min(130, 440 / Math.max(1, MUNDOS_ATLAS.length - 1));
     MUNDOS_ATLAS.forEach((m, i) => {
-      const x = esquerdaX + (i - (MUNDOS_ATLAS.length - 1) / 2) * 130 * s;
+      const x = esquerdaX + (i - (MUNDOS_ATLAS.length - 1) / 2) * passoAbas * s;
       const y = this.topo + 530 * s;
       const atual = m.id === mundo.id;
       if (atual) this.add.circle(x, y, 46 * s, 0xf2a93b, 0.35);

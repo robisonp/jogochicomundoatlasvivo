@@ -22,7 +22,9 @@ export type Sfx =
   | 'empurrar'
   | 'superpulo'
   | 'cavar'
-  | 'sinal';
+  | 'sinal'
+  | 'mergulho'
+  | 'neve';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -163,6 +165,15 @@ class AudioManagerImpl {
       case 'cavar':
         this.ruido(0.07, 700, 0.22);
         break;
+      case 'mergulho':
+        // assobio descendo: a raposa cai de cabeça
+        this.tom(900, 0.28, { tipo: 'sine', ate: 300, vol: 0.2 });
+        break;
+      case 'neve':
+        // neve fofa quebrando: ruído macio e abafado
+        this.ruido(0.18, 1600, 0.3);
+        this.ruido(0.1, 500, 0.2);
+        break;
       case 'sinal':
         // sinais debaixo d'água (estilizado): bipes suaves e agudos
         this.tom(1760, 0.08, { tipo: 'sine', vol: 0.12 });
@@ -253,6 +264,7 @@ class AudioManagerImpl {
     if (this.tema === 'mata') return this.agendarMata();
     if (this.tema === 'savana') return this.agendarSavana();
     if (this.tema === 'outback') return this.agendarOutback();
+    if (this.tema === 'artico') return this.agendarArtico();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -358,6 +370,30 @@ class AudioManagerImpl {
       if (b === 3) this.tomEm(t, baixo[compasso % 4] * 1.5, 0.3, 'triangle', 0.3, dest);
       const idx = melodia[this.beat % melodia.length];
       if (idx >= 0) this.tomEm(t, escala[idx], passo * 1.6, 'triangle', 0.14, dest);
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Ártico: calma e luminosa — sininhos (seno com cauda longa) em pentatônica, grave bem suave, sem bateria.
+  private agendarArtico(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 84 / 2; // colcheia a 84 bpm
+    const escala = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
+    const melodia = [2, -1, 4, -1, 3, 2, -1, -1, 1, -1, 2, 4, 5, -1, -1, -1, 4, -1, 3, -1, 2, 1, -1, 0, 1, -1, 2, -1, -1, -1, -1, -1];
+    const baixo = [130.81, 110, 87.31, 98];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 8;
+      const compasso = Math.floor(this.beat / 8);
+      const dest = this.musicGain!;
+      if (b === 0) this.tomEm(t, baixo[compasso % 4], 1.6, 'sine', 0.35, dest);
+      const idx = melodia[this.beat % melodia.length];
+      if (idx >= 0) {
+        this.tomEm(t, escala[idx], 0.9, 'sine', 0.13, dest);
+        this.tomEm(t, escala[idx] * 3, 0.3, 'sine', 0.025, dest);
+      }
       this.nextBeatTime += passo;
       this.beat++;
     }

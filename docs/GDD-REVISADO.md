@@ -101,13 +101,14 @@ Dois ambientes, como pede o dossiê ("a Austrália não é toda deserto"): o int
 19. **O Rio do Ornitorrinco** — nado e mergulho (usa o Nado da Onça do Mundo 2). Debaixo d'água, o chamado vira os sinais que o ornitorrinco sente: ondas azuis mostram a passagem por baixo das pedras. Eletrorrecepção não é "dar choque".
 20. **Noite na Mata** ◆ noite com trilha de vaga-lumes (vivem em áreas úmidas com vegetação, não no deserto do Outback). Só uma roda de luz em volta do Chico; o coala no galho do eucalipto; combina tronco para escalar, cavar e super pulo. Termina no **Selo da Austrália** (Cruzeiro do Sul, que também se vê do Brasil).
 
-### Mundo 5 — Ártico (Canadá e Noruega como referências)
+### Mundo 5 — Ártico (Canadá e Noruega como referências) — completo (fases 21 a 25 jogáveis)
 Animais: urso-polar, raposa-do-ártico, rena/caribu, foca-anelada, coruja-das-neves. **Sem pinguins** (eles não vivem no Ártico).
-21. **Sol da Meia-Noite** ◆ gelo escorregadio; o dia que não acaba.
-22. **Pegadas na Neve** — rastros.
-23. **O Pulo da Raposa** ★ mergulho na neve.
-24. **Corrida das Renas** — velocidade no gelo.
-25. **Mar Congelado** — gelo, água e resgate (Mamãe July).
+Correção de lógica: o Chico **não nada no mar do Ártico** (água gelada demais). Se cair na água, a **Mamãe July tira ele** e ele volta ao checkpoint — esse é o "resgate" do mundo. Os bichos (urso-polar, foca) nadam normalmente.
+21. **Sol da Meia-Noite** ◆ gelo escorregadio; o dia que não acaba (sol baixinho no horizonte). A coruja-das-neves aparece de dia (dossiê: "coruja = sempre noturna" é simplificação errada).
+22. **Pegadas na Neve** — rastros do urso-polar sobem pelas bordas de gelo; no fim, o urso entra no mar e nada.
+23. **O Pulo da Raposa** ★ mergulho na neve. No Ártico o botão da pata vira mergulho: do chão, o Chico salta e cai de cabeça; no ar, mergulha na hora. Só a **neve fofa** quebra (várias camadas seguidas); em gelo, rocha ou neve firme o mergulho acaba.
+24. **Corrida das Renas** — velocidade no gelo, com a rena correndo na frente (como o emu).
+25. **Mar Congelado** — placas de gelo que se movem sobre o mar, a foca-anelada, um paredão para passar por baixo mergulhando na neve fofa, e o resgate da Mamãe July. Termina no **Selo do Ártico** (sol da meia-noite).
 
 ### Mundo 6 — Antártica e Oceano Austral
 Animais: pinguim-de-adélia, foca-de-weddell, orca, baleia-jubarte, albatroz-errante. **Sem ursos-polares.**
