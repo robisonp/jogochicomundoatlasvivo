@@ -51,9 +51,11 @@ export class EndScene extends Phaser.Scene {
     const proxima = this.dados.proximaId;
     if (proxima) {
       // Seguir em frente é a ação principal: botão verde grande no meio.
+      // Fim de um mundo (selo): vai para o mapa ver a viagem até o próximo mundo.
       const seguir = () => {
         this.scene.stop('Level');
-        this.scene.start('Level', { faseId: proxima });
+        if (this.dados.selo) this.scene.start('Mapa');
+        else this.scene.start('Level', { faseId: proxima });
       };
       const b = botaoGrande(this, W / 2, H / 2 + 150, 'btn-jogar', seguir, 0.9);
       this.tweens.add({ targets: b, scale: 0.98, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });

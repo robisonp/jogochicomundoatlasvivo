@@ -1,13 +1,14 @@
 // Aparência do Chico. Ajuste as cores aqui para ficar parecido com ele — o desenho é gerado a partir disto.
+// Cores tiradas da arte da família (public/familia): camiseta vermelha, bermuda azul e tênis branco.
 export const CHICO_VISUAL = {
-  pele: '#e2a77a',
-  peleSombra: '#c98a5e',
-  cabelo: '#4a2c1a',
+  pele: '#f2bd8c',
+  peleSombra: '#d99f6c',
+  cabelo: '#5a3a22',
   olhos: '#2b1a10',
-  camisa: '#3f9e6b',
-  camisaSombra: '#2f7d53',
-  bermuda: '#c98b3b',
-  sapato: '#8a3b2a',
+  camisa: '#d93a34',
+  camisaSombra: '#b02c28',
+  bermuda: '#2f4f86',
+  sapato: '#f4f4f0',
   chapeu: '#e7c77f',
   chapeuFaixa: '#a0522d',
   mochila: '#d9553f',

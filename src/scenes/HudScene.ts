@@ -4,6 +4,7 @@ import { TouchControls } from '../ui/TouchControls';
 import { VoiceManager } from '../systems/VoiceManager';
 import { AudioManager } from '../systems/AudioManager';
 import type { LevelScene } from './LevelScene';
+import { ehFamiliar } from '../data/familia';
 
 export class HudScene extends Phaser.Scene {
   private level!: LevelScene;
@@ -12,6 +13,8 @@ export class HudScene extends Phaser.Scene {
   private btnPausa!: Phaser.GameObjects.Image;
   private iconePegada!: Phaser.GameObjects.Image;
   private textoPegadas!: Phaser.GameObjects.Text;
+  private retrato!: Phaser.GameObjects.Image;
+  private sumirRetrato?: Phaser.Time.TimerEvent;
 
   constructor() {
     super('Hud');
@@ -54,6 +57,24 @@ export class HudScene extends Phaser.Scene {
     this.level.events.on('pegadas', this.atualizarPegadas, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('pegadas', this.atualizarPegadas, this));
 
+    // Rosto de quem da família está falando (dicas da Vovó Lili, resgates da Mamãe July, placas...).
+    this.retrato = this.add.image(0, 0, 'familia', 'rosto-lili').setVisible(false).setDepth(50);
+    const pararDeOuvir = VoiceManager.aoFalar((quem) => {
+      if (!ehFamiliar(quem)) {
+        this.retrato.setVisible(false);
+        return;
+      }
+      this.retrato.setTexture('familia', `rosto-${quem}`).setVisible(true).setAlpha(1);
+      this.tweens.killTweensOf(this.retrato);
+      this.tweens.add({ targets: this.retrato, scale: { from: 0.3, to: 0.8 }, duration: 300, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: this.retrato, angle: { from: -4, to: 4 }, yoyo: true, repeat: 5, duration: 220, delay: 300 });
+      this.sumirRetrato?.remove();
+      this.sumirRetrato = this.time.delayedCall(3800, () =>
+        this.tweens.add({ targets: this.retrato, alpha: 0, duration: 400, onComplete: () => this.retrato.setVisible(false) }),
+      );
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, pararDeOuvir);
+
     this.posicionar();
     this.scale.on('resize', this.posicionar, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', this.posicionar, this));
@@ -76,6 +97,7 @@ export class HudScene extends Phaser.Scene {
     this.iconePegada.setPosition(140, 58);
     this.textoPegadas.setPosition(172, 34);
     this.btnPausa.setPosition(W - 60, 58);
+    this.retrato.setPosition(W / 2, 66);
   }
 
   private atualizarPegadas(p: { pegas: number; total: number }) {

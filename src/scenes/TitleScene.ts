@@ -3,8 +3,7 @@ import { botaoGrande, engrenagemAdulta, estiloTexto } from '../ui/widgets';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 import { Player } from '../entities/Player';
-import { SaveManager } from '../core/SaveManager';
-import { CAMPANHA } from '../levels';
+import { FAMILIA, type Familiar } from '../data/familia';
 
 export class TitleScene extends Phaser.Scene {
   private chico?: Player;
@@ -43,6 +42,46 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('Atlas');
     });
 
+    // A família do Chico, em pé no chão. Tocar em alguém: a pessoa se apresenta.
+    const apresentacao: Record<Familiar, string> = {
+      lili: 'Oi, Chico! Eu sou a Vovó Lili. Quando precisar, eu dou uma dica.',
+      marcos: 'Oi, Chico! Eu sou o Vovô Marcos. Eu construo escadas e pontes para você.',
+      marcela: 'Oi, Chico! Eu sou a Tia Marcela. Fui eu que mandei o Atlas Vivo!',
+      robi: 'E aí, Chico! Eu sou o Tio Robi. Aposto que você consegue!',
+      july: 'Oi, filho! Eu sou a Mamãe July. Estou sempre aqui para te ajudar!',
+      kelly: 'Oi, Chico! Aqui é a Tia Kelly, lá de longe!',
+      laura: 'Oi, Chico! Aqui é a Tia Laura, lá de longe!',
+    };
+    const presentes: Familiar[] = ['july', 'lili', 'marcos', 'marcela', 'robi'];
+    presentes.forEach((id, i) => {
+      const p = this.add
+        .image(W * 0.4 + i * 64, H - 128, 'familia', `corpo-${id}`)
+        .setOrigin(0.5, 1)
+        .setScale(0.42)
+        .setInteractive({ useHandCursor: true });
+      this.tweens.add({ targets: p, angle: { from: -2, to: 2 }, yoyo: true, repeat: -1, duration: 900 + i * 130, ease: 'Sine.easeInOut' });
+      p.on('pointerdown', () => {
+        AudioManager.desbloquear();
+        this.saudou = true;
+        VoiceManager.falar(apresentacao[id], id);
+        this.tweens.add({ targets: p, y: { from: H - 128, to: H - 150 }, yoyo: true, duration: 180 });
+      });
+    });
+    // Tias Kelly e Laura aparecem no Chamador do Atlas, lá em cima
+    (['kelly', 'laura'] as Familiar[]).forEach((id, i) => {
+      if (FAMILIA[id].presencial) return;
+      const tela = this.add.image(0, 0, 'chamador');
+      const rosto = this.add.image(0, -8, 'familia', `rosto-${id}`).setScale(0.62);
+      const c = this.add.container(W * 0.1 + i * 130, H * 0.45, [tela, rosto]).setScale(0.7).setSize(150, 124);
+      c.setInteractive({ useHandCursor: true });
+      this.tweens.add({ targets: c, y: c.y - 10, yoyo: true, repeat: -1, duration: 1100 + i * 200, ease: 'Sine.easeInOut' });
+      c.on('pointerdown', () => {
+        AudioManager.desbloquear();
+        this.saudou = true;
+        VoiceManager.falar(apresentacao[id], id);
+      });
+    });
+
     const jogar = botaoGrande(this, W / 2, H / 2 + 10, 'btn-jogar', () => this.jogar(), 1);
     this.tweens.add({ targets: jogar, scale: 1.08, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });
 
@@ -73,9 +112,8 @@ export class TitleScene extends Phaser.Scene {
     } catch {
       /* ignora */
     }
-    // Continua de onde parou: a primeira fase ainda não concluída (ou a primeira, se já zerou).
-    const fase = CAMPANHA.find((f) => !SaveManager.data.fases[f.id]?.concluida) ?? CAMPANHA[0];
-    this.scene.start('Level', { faseId: fase.id });
+    // Vai para o mapa-múndi: de lá, o botão verde continua de onde parou.
+    this.scene.start('Mapa');
   }
 
   update(_t: number, dms: number) {
