@@ -1,5 +1,6 @@
 // Efeitos sonoros e música gerados por síntese (Web Audio). Nenhum arquivo de áudio necessário.
 import { SaveManager } from '../core/SaveManager';
+import type { TemaMusica } from '../data/mundos';
 
 export type Sfx =
   | 'pulo'
@@ -13,7 +14,17 @@ export type Sfx =
   | 'bola'
   | 'desbola'
   | 'poder'
-  | 'pedra';
+  | 'pedra'
+  | 'splash'
+  | 'bracada'
+  | 'canto'
+  | 'arrancada'
+  | 'empurrar'
+  | 'superpulo'
+  | 'cavar'
+  | 'sinal'
+  | 'mergulho'
+  | 'neve';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -24,6 +35,7 @@ class AudioManagerImpl {
   private beat = 0;
   private noiseBuf?: AudioBuffer;
   private querMusica = false;
+  private tema: TemaMusica = 'baiao';
   private chuvaFonte?: AudioBufferSourceNode;
   private chuvaGain?: GainNode;
 
@@ -131,6 +143,47 @@ class AudioManagerImpl {
       case 'poder':
         [392, 523, 659, 784, 1047, 1319].forEach((f, i) => this.tom(f, 0.25, { tipo: 'triangle', vol: 0.28, atraso: i * 0.07 }));
         break;
+      case 'splash':
+        this.ruido(0.35, 1200, 0.4);
+        this.tom(260, 0.2, { tipo: 'sine', ate: 90, vol: 0.2 });
+        break;
+      case 'bracada':
+        this.ruido(0.12, 900, 0.18);
+        break;
+      case 'arrancada':
+        this.ruido(0.3, 2500, 0.25);
+        this.tom(300, 0.25, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
+        break;
+      case 'empurrar':
+        this.ruido(0.18, 300, 0.25);
+        break;
+      case 'superpulo':
+        // mola: sobe bem mais que o pulo normal
+        this.tom(220, 0.3, { tipo: 'triangle', ate: 990, vol: 0.28 });
+        this.tom(440, 0.22, { tipo: 'square', ate: 1320, vol: 0.08, atraso: 0.05 });
+        break;
+      case 'cavar':
+        this.ruido(0.07, 700, 0.22);
+        break;
+      case 'mergulho':
+        // assobio descendo: a raposa cai de cabeça
+        this.tom(900, 0.28, { tipo: 'sine', ate: 300, vol: 0.2 });
+        break;
+      case 'neve':
+        // neve fofa quebrando: ruído macio e abafado
+        this.ruido(0.18, 1600, 0.3);
+        this.ruido(0.1, 500, 0.2);
+        break;
+      case 'sinal':
+        // sinais debaixo d'água (estilizado): bipes suaves e agudos
+        this.tom(1760, 0.08, { tipo: 'sine', vol: 0.12 });
+        this.tom(2093, 0.1, { tipo: 'sine', vol: 0.1, atraso: 0.12 });
+        break;
+      case 'canto':
+        // chamado de ave (estilizado): duas notas agudas e ásperas
+        this.tom(1400, 0.12, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
+        this.tom(1500, 0.14, { tipo: 'sawtooth', ate: 950, vol: 0.12, atraso: 0.18 });
+        break;
       case 'pedra':
         this.ruido(0.07, 1500, 0.22);
         this.tom(900, 0.05, { tipo: 'square', ate: 400, vol: 0.08 });
@@ -189,7 +242,11 @@ class AudioManagerImpl {
 
   // ---------- Música: baião simples (zabumba + triângulo + melodia na escala nordestina) ----------
 
-  tocarMusica(): void {
+  tocarMusica(tema?: TemaMusica): void {
+    if (tema && tema !== this.tema) {
+      this.pararMusica();
+      this.tema = tema;
+    }
     this.querMusica = true;
     if (!this.ctx || this.musicTimer !== undefined) return;
     this.nextBeatTime = this.ctx.currentTime + 0.1;
@@ -204,6 +261,10 @@ class AudioManagerImpl {
   }
 
   private agendar(): void {
+    if (this.tema === 'mata') return this.agendarMata();
+    if (this.tema === 'savana') return this.agendarSavana();
+    if (this.tema === 'outback') return this.agendarOutback();
+    if (this.tema === 'artico') return this.agendarArtico();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -226,6 +287,112 @@ class AudioManagerImpl {
       if (b % 2 === 0) {
         const idx = melodia[(this.beat / 2) % melodia.length];
         if (idx >= 0) this.tomEm(t, escala[idx], passo * 1.8, 'sawtooth', 0.09, dest);
+      }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Mata: marimba suave em pentatônica, chocalho e grave leve (sem clichês "tribais").
+  private agendarMata(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 92 / 4;
+    const escala = [392, 440, 493.88, 587.33, 659.25, 783.99, 880];
+    const melodia = [0, -1, 2, -1, 3, -1, 2, -1, 4, -1, 3, 2, 1, -1, -1, -1, 2, -1, 3, -1, 5, -1, 4, -1, 3, -1, 2, 3, 2, -1, -1, -1];
+    const baixo = [98, 98, 130.81, 110];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const compasso = Math.floor(this.beat / 16);
+      const dest = this.musicGain!;
+      // chocalho nas colcheias
+      if (b % 2 === 0) this.ruido(0.05, 6000, b % 4 === 2 ? 0.07 : 0.04, t, dest);
+      // grave leve
+      if (b === 0 || b === 10) this.tomEm(t, baixo[compasso % 4], 0.5, 'sine', 0.45, dest);
+      // marimba: nota curta, ataque rápido
+      if (b % 2 === 0) {
+        const idx = melodia[(this.beat / 2) % melodia.length];
+        if (idx >= 0) {
+          this.tomEm(t, escala[idx], 0.28, 'triangle', 0.16, dest);
+          this.tomEm(t, escala[idx] * 2, 0.12, 'sine', 0.05, dest);
+        }
+      }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Savana: espaço aberto e movimento — arpejos claros em maior, batida leve e constante.
+  private agendarSavana(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 112 / 4;
+    const acordes = [
+      [261.63, 329.63, 392, 523.25],
+      [220, 261.63, 329.63, 440],
+      [174.61, 220, 261.63, 349.23],
+      [196, 246.94, 293.66, 392],
+    ];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const acorde = acordes[Math.floor(this.beat / 16) % 4];
+      const dest = this.musicGain!;
+      if (b % 4 === 0) this.bumbo(t, dest);
+      if (b % 4 === 2) this.ruido(0.06, 5000, 0.06, t, dest);
+      if (b === 0 || b === 8) this.tomEm(t, acorde[0] / 2, 0.45, 'triangle', 0.4, dest);
+      // arpejo dedilhado
+      if (b % 2 === 0) this.tomEm(t, acorde[(b / 2) % 4], 0.22, 'triangle', 0.13, dest);
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Austrália: ritmo de saltos (compasso composto, "pula-pula"), baixo dedilhado e melodia em pentatônica.
+  // Sem imitar instrumentos tradicionais aborígenes (evita clichê).
+  private agendarOutback(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 100 / 3; // colcheia em 6/8 (semínima pontuada a 100)
+    const escala = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25];
+    const melodia = [0, -1, 2, 3, -1, 2, 4, -1, 3, 2, -1, 1, 0, -1, 2, 4, -1, 5, 6, -1, 5, 4, 3, 2];
+    const baixo = [146.83, 146.83, 196, 220];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 6;
+      const compasso = Math.floor(this.beat / 6);
+      const dest = this.musicGain!;
+      if (b === 0 || b === 3) this.bumbo(t, dest);
+      // bloco de madeira (estalo curto) nos tempos fracos
+      if (b === 2 || b === 5) this.tomEm(t, 1320, 0.04, 'sine', 0.08, dest);
+      if (b === 0) this.tomEm(t, baixo[compasso % 4], 0.5, 'triangle', 0.4, dest);
+      if (b === 3) this.tomEm(t, baixo[compasso % 4] * 1.5, 0.3, 'triangle', 0.3, dest);
+      const idx = melodia[this.beat % melodia.length];
+      if (idx >= 0) this.tomEm(t, escala[idx], passo * 1.6, 'triangle', 0.14, dest);
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Ártico: calma e luminosa — sininhos (seno com cauda longa) em pentatônica, grave bem suave, sem bateria.
+  private agendarArtico(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 84 / 2; // colcheia a 84 bpm
+    const escala = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
+    const melodia = [2, -1, 4, -1, 3, 2, -1, -1, 1, -1, 2, 4, 5, -1, -1, -1, 4, -1, 3, -1, 2, 1, -1, 0, 1, -1, 2, -1, -1, -1, -1, -1];
+    const baixo = [130.81, 110, 87.31, 98];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 8;
+      const compasso = Math.floor(this.beat / 8);
+      const dest = this.musicGain!;
+      if (b === 0) this.tomEm(t, baixo[compasso % 4], 1.6, 'sine', 0.35, dest);
+      const idx = melodia[this.beat % melodia.length];
+      if (idx >= 0) {
+        this.tomEm(t, escala[idx], 0.9, 'sine', 0.13, dest);
+        this.tomEm(t, escala[idx] * 3, 0.3, 'sine', 0.025, dest);
       }
       this.nextBeatTime += passo;
       this.beat++;

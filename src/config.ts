@@ -32,6 +32,51 @@ export const BOLA = {
   fatorVelocidade: 0.5,
 };
 
+// Água: o Chico boia; a braçada sobe; com o "Nado da Onça" pode mergulhar e entrar na água funda.
+export const AGUA = {
+  fatorGravidade: 0.12,
+  maxQueda: 240,
+  empuxo: 1500,
+  bracada: 400,
+  saltoSaida: 0.85,
+  mergulho: 900,
+  fatorVelocidade: 0.7,
+};
+
+// Arrancada do guepardo: explosão curta de velocidade e depois recarga (dossiê: sprint dura poucos segundos).
+export const ARRANCADA = {
+  duracaoMs: 550,
+  fatorVelocidade: 2.3,
+  recargaMs: 1600,
+};
+
+// Super pulo do canguru: pulo bem mais alto e mais longo, só a partir do chão (dossiê: saltos longos).
+// A velocidade fica logo abaixo do limite de queda do motor (maxFall), que também limita a subida.
+export const SUPERPULO = {
+  velocidade: 1140,
+  fatorVelocidade: 1.25,
+  bufferMs: 160,
+};
+
+// Cavar do wombat (passivo): só terra fofa, e leva um instante (dossiê: não cavar qualquer material de uma vez).
+export const CAVAR = {
+  tempoMs: 380,
+};
+
+// Gelo: no chão de gelo o Chico acelera e freia bem menos (escorrega).
+export const GELO = {
+  fatorAcel: 0.3,
+  fatorFreio: 0.15,
+};
+
+// Mergulho na neve da raposa-do-ártico: salto alto e queda de cabeça que quebra a neve fofa
+// (dossiê: salto seguido de mergulho de cabeça na neve).
+export const MERGULHO = {
+  salto: 0.95,
+  queda: 950,
+  velocidadeX: 160,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

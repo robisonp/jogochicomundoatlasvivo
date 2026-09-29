@@ -76,37 +76,39 @@ Animais: tatu-bola, mocó, carcará, asa-branca, preá.
 4. **Chuva no Sertão** ◆ a Caatinga fica verde; primeiras zonas de vento.
 5. **Selo do Sertão** — combina tudo.
 
-### Mundo 2 — Amazônia (Brasil)
+### Mundo 2 — Amazônia (Brasil) — completo (fases 6 a 10 jogáveis)
 Animais: onça-pintada, arara-vermelha-grande, preguiça-de-garganta-marrom, boto-cor-de-rosa, perereca-leiteira.
 6. **O Dossel Verde** — cipós (escalada vertical). Tia Kelly e Tia Laura ligam.
 7. **O Rio** ◆ nado básico em água rasa.
-8. **Nado da Onça** ★ atravessar rios e água funda (a onça-pintada é excelente nadadora).
+8. **Nado da Onça** ★ atravessar rios e água funda (a onça-pintada é excelente nadadora). Poder passivo: sem botão; permite entrar na água escura e mergulhar (passar por baixo de troncos).
 9. **Vozes da Floresta** — seguir sons com ondas visuais.
 10. **Tempestade no Rio** — combina cipó, nado e vento.
 
-### Mundo 3 — Savana (Quênia e Tanzânia)
+### Mundo 3 — Savana (Quênia e Tanzânia) — completo (fases 11 a 15 jogáveis)
 Animais: guepardo, elefante-africano-da-savana, girafa-masai, zebra-da-planície, avestruz.
 11. **Pegadas na Savana** — seguir rastros.
-12. **Corrida do Guepardo** ★ arrancada curta (o guepardo só sustenta a velocidade máxima por segundos: a arrancada acaba e precisa "recarregar").
-13. **A Força do Elefante** ★ empurrar troncos e pedras.
+12. **Corrida do Guepardo** ★ arrancada curta (o guepardo só sustenta a velocidade máxima por segundos: a arrancada acaba e precisa "recarregar"). Na Savana o botão da pata vira arrancada; o anel em volta do botão mostra a recarga.
+13. **A Força do Elefante** ★ empurrar pedregulhos. Poder passivo: sem botão; o pedregulho só anda depois que o elefante ensina. Cada vala é tapada por **um** pedregulho (dois juntos se encavalavam).
 14. **Olhos no Alto** — rotas altas (girafa como referência de altura).
 15. **A Grande Travessia** — arrancada + empurrar.
 
-### Mundo 4 — Austrália
-Animais: canguru, wombat, emu, ornitorrinco, coala.
-16. **Saltos do Outback** ★ super pulo.
-17. **Tocas do Wombat** ★ cavar: fica baixinho e abre túneis na terra fofa.
-18. **Corrida do Emu** — trecho de velocidade.
-19. **O Rio do Ornitorrinco** — nado.
-20. **Noite na Mata** ◆ noite com trilha de vaga-lumes (vivem em áreas úmidas com vegetação, não no deserto do Outback).
+### Mundo 4 — Austrália — completo (fases 16 a 20 jogáveis)
+Animais: canguru-vermelho, wombat-comum, emu, ornitorrinco, coala.
+Dois ambientes, como pede o dossiê ("a Austrália não é toda deserto"): o interior seco (Outback: terra vermelha, arenito, capim-espinifex) nas fases 16 e 18, e a mata úmida de eucaliptos do leste nas fases 17, 19 e 20 (onde vivem wombat, ornitorrinco, coala e vaga-lumes).
+16. **Saltos do Outback** ★ super pulo. Na Austrália o botão da pata vira super pulo: bem mais alto e mais longo, só a partir do chão (o botão fica meio apagado no ar).
+17. **Tocas do Wombat** ★ cavar. Poder passivo: andar contra a terra fofa (ou apertar para baixo em cima dela) cava depois de um instante. Só a terra fofa se cava (dossiê: não cavar qualquer material de uma vez). Os túneis têm a altura do Chico, então ele não precisa se abaixar.
+18. **Corrida do Emu** — trecho de velocidade: o emu corre na frente do Chico mostrando o caminho, por cima de pedras, buracos e espinifex.
+19. **O Rio do Ornitorrinco** — nado e mergulho (usa o Nado da Onça do Mundo 2). Debaixo d'água, o chamado vira os sinais que o ornitorrinco sente: ondas azuis mostram a passagem por baixo das pedras. Eletrorrecepção não é "dar choque".
+20. **Noite na Mata** ◆ noite com trilha de vaga-lumes (vivem em áreas úmidas com vegetação, não no deserto do Outback). Só uma roda de luz em volta do Chico; o coala no galho do eucalipto; combina tronco para escalar, cavar e super pulo. Termina no **Selo da Austrália** (Cruzeiro do Sul, que também se vê do Brasil).
 
-### Mundo 5 — Ártico (Canadá e Noruega como referências)
+### Mundo 5 — Ártico (Canadá e Noruega como referências) — completo (fases 21 a 25 jogáveis)
 Animais: urso-polar, raposa-do-ártico, rena/caribu, foca-anelada, coruja-das-neves. **Sem pinguins** (eles não vivem no Ártico).
-21. **Sol da Meia-Noite** ◆ gelo escorregadio; o dia que não acaba.
-22. **Pegadas na Neve** — rastros.
-23. **O Pulo da Raposa** ★ mergulho na neve.
-24. **Corrida das Renas** — velocidade no gelo.
-25. **Mar Congelado** — gelo, água e resgate (Mamãe July).
+Correção de lógica: o Chico **não nada no mar do Ártico** (água gelada demais). Se cair na água, a **Mamãe July tira ele** e ele volta ao checkpoint — esse é o "resgate" do mundo. Os bichos (urso-polar, foca) nadam normalmente.
+21. **Sol da Meia-Noite** ◆ gelo escorregadio; o dia que não acaba (sol baixinho no horizonte). A coruja-das-neves aparece de dia (dossiê: "coruja = sempre noturna" é simplificação errada).
+22. **Pegadas na Neve** — rastros do urso-polar sobem pelas bordas de gelo; no fim, o urso entra no mar e nada.
+23. **O Pulo da Raposa** ★ mergulho na neve. No Ártico o botão da pata vira mergulho: do chão, o Chico salta e cai de cabeça; no ar, mergulha na hora. Só a **neve fofa** quebra (várias camadas seguidas); em gelo, rocha ou neve firme o mergulho acaba.
+24. **Corrida das Renas** — velocidade no gelo, com a rena correndo na frente (como o emu).
+25. **Mar Congelado** — placas de gelo que se movem sobre o mar, a foca-anelada, um paredão para passar por baixo mergulhando na neve fofa, e o resgate da Mamãe July. Termina no **Selo do Ártico** (sol da meia-noite).
 
 ### Mundo 6 — Antártica e Oceano Austral
 Animais: pinguim-de-adélia, foca-de-weddell, orca, baleia-jubarte, albatroz-errante. **Sem ursos-polares.**

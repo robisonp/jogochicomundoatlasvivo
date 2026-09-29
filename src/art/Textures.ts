@@ -3,10 +3,14 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { CHICO_VISUAL as V, CAATINGA as C } from '../data/visual';
+import { gerarAmazonia } from './Amazonia';
+import { gerarSavana } from './Savana';
+import { gerarAustralia } from './Australia';
+import { gerarArtico } from './Artico';
 
-type Ctx = CanvasRenderingContext2D;
+export type Ctx = CanvasRenderingContext2D;
 
-function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) {
+export function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) {
   if (scene.textures.exists(key)) return;
   const t = scene.textures.createCanvas(key, w, h);
   if (!t) return;
@@ -15,13 +19,13 @@ function tex(scene: Phaser.Scene, key: string, w: number, h: number, draw: (c: C
   t.refresh();
 }
 
-function rrect(c: Ctx, x: number, y: number, w: number, h: number, r: number) {
+export function rrect(c: Ctx, x: number, y: number, w: number, h: number, r: number) {
   c.beginPath();
   c.roundRect(x, y, w, h, r);
 }
 
 // Gerador pseudoaleatório determinístico (arte igual a cada carregamento).
-function rng(seed: number) {
+export function rng(seed: number) {
   let s = seed >>> 0;
   return () => {
     s = (s * 1664525 + 1013904223) >>> 0;
@@ -29,7 +33,7 @@ function rng(seed: number) {
   };
 }
 
-const OUTLINE = '#2a1c14';
+export const OUTLINE = '#2a1c14';
 
 export function gerarTexturas(scene: Phaser.Scene): void {
   tex(scene, 'px', 4, 4, (c) => {
@@ -42,6 +46,11 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarObjetos(scene);
   gerarBichos(scene);
   gerarUI(scene);
+  gerarAtlas(scene);
+  gerarAmazonia(scene);
+  gerarSavana(scene);
+  gerarAustralia(scene);
+  gerarArtico(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -752,8 +761,17 @@ function gerarObjetos(scene: Phaser.Scene) {
 // ------------------------------------------------------------------ Bichos da Caatinga
 
 function gerarBichos(scene: Phaser.Scene) {
+  // Cada bicho também ganha uma versão "-hd" (3x) para aparecer grande no Atlas sem pixelar.
+  const texBicho = (key: string, w: number, h: number, draw: (c: Ctx, w: number, h: number) => void) => {
+    tex(scene, key, w, h, draw);
+    tex(scene, `${key}-hd`, w * 3, h * 3, (c) => {
+      c.scale(3, 3);
+      draw(c, w, h);
+    });
+  };
+
   // Mocó (Kerodon rupestris): roedor cinza-amarronzado, sem cauda aparente, olhos grandes.
-  tex(scene, 'moco', 76, 52, (c) => {
+  texBicho('moco', 76, 52, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // patas
@@ -799,7 +817,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Tatu-bola (Tolypeutes tricinctus) andando: carapaça amarelada com três faixas móveis.
-  tex(scene, 'tatu', 84, 50, (c) => {
+  texBicho('tatu', 84, 50, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     c.fillStyle = '#8a6a44';
@@ -907,7 +925,7 @@ function gerarBichos(scene: Phaser.Scene) {
   bola('chico-bola', 64, true);
 
   // Asa-branca (Patagioenas picazuro): pombo grande cinza-amarronzado, cabeça acinzentada, faixa branca na asa.
-  tex(scene, 'asa-branca', 64, 48, (c) => {
+  texBicho('asa-branca', 64, 48, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // cauda
@@ -967,7 +985,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Carcará (Caracara plancus): boné escuro, rosto claro com pele alaranjada, corpo escuro, pernas amarelas.
-  tex(scene, 'carcara', 64, 76, (c) => {
+  texBicho('carcara', 64, 76, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     // pernas
@@ -1034,7 +1052,7 @@ function gerarBichos(scene: Phaser.Scene) {
   });
 
   // Preá (Galea spixii): roedor pequeno, pelo cinza-amarronzado, quase sem cauda.
-  tex(scene, 'prea', 52, 34, (c) => {
+  texBicho('prea', 52, 34, (c) => {
     c.strokeStyle = OUTLINE;
     c.lineWidth = 3;
     c.fillStyle = '#6e5a48';
@@ -1301,6 +1319,405 @@ function gerarUI(scene: Phaser.Scene) {
     c.fillStyle = 'rgba(29,43,58,1)';
     c.beginPath();
     c.arc(32, 32, 8, 0, Math.PI * 2);
+    c.fill();
+  });
+}
+
+// ------------------------------------------------------------------ Atlas
+
+// Contornos aproximados (longitude, latitude). Simplificados, mas com a forma real do continente.
+const AMERICA_DO_SUL: [number, number][] = [
+  [-77, 8.5], [-72, 12], [-63, 10.7], [-60, 8.5], [-57, 6], [-52, 5], [-50, 1.5], [-48, -1], [-44, -2.5],
+  [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39, -17.5], [-40.5, -21], [-43, -23],
+  [-48, -25.5], [-48.5, -28.5], [-51, -31.5], [-53.4, -33.7], [-56, -34.9], [-58, -34.5], [-57, -38],
+  [-62, -39], [-65, -41], [-65, -45], [-67.5, -47], [-69, -51], [-68.5, -52.5], [-70, -55], [-74, -52.5],
+  [-75, -47], [-73.5, -42], [-73.5, -37], [-71.5, -30], [-70.3, -18.5], [-76, -14], [-79.5, -7], [-81, -4.5],
+  [-80, -1], [-79, 1.5], [-77.5, 4], [-77.5, 7.5],
+];
+const BRASIL: [number, number][] = [
+  [-60, 5], [-51.5, 4.3], [-50, 1.5], [-48, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5],
+  [-35.5, -9.5], [-38.5, -13], [-39, -17.5], [-40.5, -21], [-43, -23], [-48, -25.5], [-48.5, -28.5],
+  [-51, -31.5], [-53.4, -33.7], [-57.6, -30.2], [-54.6, -25.6], [-58, -22.5], [-57.8, -19.9], [-60, -16.3],
+  [-65.3, -10], [-70.5, -11], [-73.8, -7.4], [-70, -4.2], [-69.4, 1], [-66.8, 1.2], [-63.5, 2.2],
+];
+const AMAZONIA: [number, number][] = [
+  [-79, 1], [-75, 4], [-70, 5], [-64, 6.5], [-60, 5], [-52, 4], [-50, 1], [-48, -1], [-50, -5], [-52, -10],
+  [-56, -13], [-62, -15], [-68, -16], [-72, -13], [-76, -10], [-78, -6], [-80, -3],
+];
+const AFRICA: [number, number][] = [
+  [-6, 35.8], [-9.8, 29], [-17, 21], [-17.5, 14.7], [-15, 11], [-13, 8.5], [-11, 6.9], [-7.5, 4.4], [-3, 5],
+  [2, 6.3], [6, 4.3], [9.5, 3.9], [9.3, 1], [9, -1], [11.8, -4.5], [13, -9], [12, -15], [11.8, -17.5],
+  [14.5, -22.8], [16, -28.6], [18.4, -34.2], [20, -34.8], [25.6, -34], [30, -31], [32.8, -26], [35.5, -23.8],
+  [35, -19], [40.7, -15], [40.5, -10.5], [39.3, -6.8], [39.7, -4], [41.5, -1.5], [44, 1.5], [49, 7.5],
+  [51.2, 11.8], [43.3, 11.5], [39.5, 15.5], [37.3, 21], [35.6, 23.9], [32.5, 29.9], [31, 31.5], [25, 31.8],
+  [20, 30.8], [15.5, 31.5], [10.5, 34], [11, 37], [8, 36.9], [3, 36.8], [-2, 35.1],
+];
+// Quênia e Tanzânia juntos (aproximado)
+const QUENIA_TANZANIA: [number, number][] = [
+  [34, 4.6], [41.9, 3.9], [41, -1.7], [39.3, -4.7], [38.8, -6.5], [39.5, -8], [40.4, -10.4], [35, -11.5],
+  [33, -9.6], [30.5, -8], [29.5, -5], [30.5, -1], [33.9, -1], [34, 1],
+];
+const AUSTRALIA: [number, number][] = [
+  [113.5, -22], [114, -26.5], [115, -30], [115, -33.5], [117.5, -35], [121, -33.8], [124, -33], [126, -32.3],
+  [129, -31.6], [132, -32], [134, -32.8], [135.8, -34.8], [137.5, -33.5], [138, -35.6], [140, -37.5],
+  [143.5, -38.8], [146.3, -39], [148, -37.8], [150, -37.5], [150.3, -35.5], [151.3, -33.5], [153, -31.5],
+  [153.6, -28.2], [153, -25.5], [151, -23.5], [149.5, -22.3], [146.3, -19], [145.3, -15], [143.5, -14],
+  [142.5, -10.7], [141.5, -13], [141.6, -16.5], [140.5, -17.6], [139, -17], [136, -15.5], [135.5, -14.5],
+  [136.8, -12.2], [133, -11.3], [131, -12], [130, -13], [129.5, -15], [127.5, -14], [126, -14.3], [124, -16.3],
+  [122.2, -17.8], [121, -19.5], [118, -20.4], [116, -20.8], [114, -21.8],
+];
+const TASMANIA: [number, number][] = [
+  [144.6, -40.7], [148.3, -40.9], [148.3, -42.2], [147, -43.6], [145.9, -43.5], [145.2, -42.2],
+];
+// Leste e sudeste (rios do ornitorrinco, matas dos coalas e dos wombats), aproximado
+const AUSTRALIA_LESTE: [number, number][] = [
+  [145.3, -15], [146.3, -19], [149.5, -22.3], [151, -23.5], [153, -25.5], [153.6, -28.2], [153, -31.5],
+  [151.3, -33.5], [150.3, -35.5], [150, -37.5], [148, -37.8], [146.3, -39], [143.5, -38.8], [140, -37.5],
+  [138, -35.6], [139.5, -34], [142, -33], [146, -30], [148, -26], [146.5, -22], [144.5, -18],
+];
+// Ártico visto de cima (projeção polar simplificada), recortado em 55° N
+const GROENLANDIA: [number, number][] = [
+  [-73, 78], [-60, 82], [-30, 83.5], [-18, 81], [-20, 72], [-25, 68], [-40, 65], [-44, 60], [-50, 64], [-54, 70],
+  [-68, 76.5],
+];
+const AMERICA_NORTE: [number, number][] = [
+  [-168, 66], [-162, 70], [-150, 71], [-140, 70], [-128, 70], [-115, 68.5], [-100, 68], [-95, 72], [-85, 70],
+  [-80, 73], [-75, 72], [-70, 67], [-64, 60], [-60, 55], [-80, 55], [-100, 55], [-120, 55], [-140, 55],
+  [-160, 55], [-165, 60],
+];
+const ARQUIPELAGO_CANADA: [number, number][] = [
+  [-122, 75], [-100, 78], [-85, 80.5], [-72, 78], [-85, 74], [-100, 73], [-115, 72],
+];
+const EURASIA: [number, number][] = [
+  [8, 55], [5, 62], [14, 68], [25, 71], [40, 68], [44, 68], [60, 69.5], [70, 73], [80, 73], [100, 77.5],
+  [115, 74], [130, 72], [140, 72.5], [160, 70], [170, 69.5], [180, 66], [180, 55], [160, 55], [130, 55],
+  [100, 55], [70, 55], [40, 55],
+];
+const SVALBARD: [number, number][] = [[11, 79], [18, 80.3], [27, 80], [22, 77], [15, 77]];
+const ISLANDIA: [number, number][] = [[-24, 65.5], [-18, 66.5], [-13.5, 65], [-18, 63.4], [-22, 63.8]];
+const NORDESTE: [number, number][] = [
+  [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
+  [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
+];
+
+function gerarAtlas(scene: Phaser.Scene) {
+  // Mapinha: América do Sul, Brasil e a região do bicho em destaque.
+  const proj = (lon: number, lat: number): [number, number] => [(lon + 83) * 3.3, (14 - lat) * 3.3];
+  const poligono = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = proj(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul'] as const) {
+    tex(scene, `mapa-${regiao}`, 170, 240, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'america-do-sul' ? '#f2a93b' : '#e9dcb8';
+      poligono(c, AMERICA_DO_SUL);
+      c.fill();
+      c.stroke();
+      c.fillStyle = regiao === 'america-do-sul' ? '#e08e2b' : regiao === 'brasil' ? '#f2a93b' : '#d8c79b';
+      poligono(c, BRASIL);
+      c.fill();
+      c.stroke();
+      if (regiao === 'nordeste' || regiao === 'amazonia') {
+        c.fillStyle = regiao === 'amazonia' ? '#5cc26a' : '#f2a93b';
+        poligono(c, regiao === 'amazonia' ? AMAZONIA : NORDESTE);
+        c.fill();
+        c.stroke();
+      }
+    });
+  }
+
+  // Mapinha da África: continente inteiro ou Quênia/Tanzânia em destaque.
+  const projA = (lon: number, lat: number): [number, number] => [(lon + 19) * 3.0, (38 - lat) * 3.0];
+  const poligonoA = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projA(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['africa', 'africa-leste'] as const) {
+    tex(scene, `mapa-${regiao}`, 220, 228, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'africa' ? '#f2a93b' : '#e9dcb8';
+      poligonoA(c, AFRICA);
+      c.fill();
+      c.stroke();
+      if (regiao === 'africa-leste') {
+        c.fillStyle = '#f2a93b';
+        poligonoA(c, QUENIA_TANZANIA);
+        c.fill();
+        c.stroke();
+      }
+    });
+  }
+
+  // Mapinha da Austrália: país inteiro ou o leste (com a Tasmânia) em destaque.
+  const projO = (lon: number, lat: number): [number, number] => [(lon - 111) * 4.9, (-9 - lat) * 4.9];
+  const poligonoO = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projO(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['australia', 'australia-leste'] as const) {
+    tex(scene, `mapa-${regiao}`, 220, 180, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'australia' ? '#f2a93b' : '#e9dcb8';
+      for (const p of [AUSTRALIA, TASMANIA]) {
+        poligonoO(c, p);
+        c.fill();
+        c.stroke();
+      }
+      if (regiao === 'australia-leste') {
+        c.fillStyle = '#f2a93b';
+        for (const p of [AUSTRALIA_LESTE, TASMANIA]) {
+          poligonoO(c, p);
+          c.fill();
+          c.stroke();
+        }
+      }
+    });
+  }
+
+  // Mapinha do Ártico: o "topo do mundo" visto de cima, com o Círculo Polar Ártico em destaque.
+  const projP = (lon: number, lat: number): [number, number] => {
+    const raio = (90 - lat) * 3.1;
+    const a = ((lon - 90) * Math.PI) / 180;
+    return [110 + raio * Math.cos(a), 110 + raio * Math.sin(a)];
+  };
+  const poligonoP = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projP(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  tex(scene, 'mapa-artico', 220, 220, (c) => {
+    c.save();
+    c.beginPath();
+    c.arc(110, 110, 35 * 3.1, 0, Math.PI * 2);
+    c.clip();
+    c.fillStyle = '#9fcbe6';
+    c.fillRect(0, 0, 220, 220);
+    c.lineJoin = 'round';
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 2;
+    const terras = [AMERICA_NORTE, EURASIA, ARQUIPELAGO_CANADA, GROENLANDIA, SVALBARD, ISLANDIA];
+    c.fillStyle = '#e9dcb8';
+    for (const p of terras) {
+      poligonoP(c, p);
+      c.fill();
+      c.stroke();
+    }
+    // terras dentro do Círculo Polar Ártico em destaque (onde vivem os bichos deste mundo)
+    c.save();
+    c.beginPath();
+    c.arc(110, 110, 23.5 * 3.1, 0, Math.PI * 2);
+    c.clip();
+    c.fillStyle = '#f2a93b';
+    for (const p of terras) {
+      poligonoP(c, p);
+      c.fill();
+      c.stroke();
+    }
+    c.restore();
+    // gelo do mar no meio
+    c.fillStyle = 'rgba(255,255,255,0.85)';
+    c.beginPath();
+    c.arc(110, 110, 10 * 3.1, 0, Math.PI * 2);
+    c.fill();
+    c.setLineDash([6, 5]);
+    c.strokeStyle = '#e08e2b';
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.arc(110, 110, 23.5 * 3.1, 0, Math.PI * 2);
+    c.stroke();
+    c.setLineDash([]);
+    c.restore();
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(110, 110, 35 * 3.1, 0, Math.PI * 2);
+    c.stroke();
+  });
+
+  // Livro aberto (duas páginas)
+  tex(scene, 'livro', 1120, 620, (c, w, h) => {
+    c.fillStyle = '#7b3f8c';
+    rrect(c, 0, 0, w, h, 26);
+    c.fill();
+    c.fillStyle = '#5e2c6c';
+    rrect(c, 10, 10, w - 20, h - 20, 20);
+    c.fill();
+    for (const x0 of [24, w / 2 + 4]) {
+      const g = c.createLinearGradient(x0, 0, x0 + w / 2 - 28, 0);
+      const esquerda = x0 === 24;
+      g.addColorStop(0, esquerda ? '#f6ecd0' : '#e8dcb8');
+      g.addColorStop(0.08, '#fff8e6');
+      g.addColorStop(0.92, '#fff8e6');
+      g.addColorStop(1, esquerda ? '#e8dcb8' : '#f6ecd0');
+      c.fillStyle = g;
+      rrect(c, x0, 22, w / 2 - 28, h - 44, 14);
+      c.fill();
+    }
+    c.fillStyle = 'rgba(0,0,0,0.12)';
+    c.fillRect(w / 2 - 6, 22, 12, h - 44);
+  });
+
+  const carta = (key: string, borda: string, espessura: number) =>
+    tex(scene, key, 160, 140, (c, w, h) => {
+      c.fillStyle = 'rgba(0,0,0,0.12)';
+      rrect(c, 4, 6, w - 8, h - 8, 16);
+      c.fill();
+      c.fillStyle = '#fffdf5';
+      c.strokeStyle = borda;
+      c.lineWidth = espessura;
+      rrect(c, 4, 2, w - 8, h - 8, 16);
+      c.fill();
+      c.stroke();
+    });
+  carta('carta', '#d8c79b', 3);
+  carta('carta-on', '#f2a93b', 7);
+
+  const icone = (key: string, cor: string, desenho: (c: Ctx) => void) =>
+    tex(scene, key, 100, 100, (c) => {
+      c.fillStyle = 'rgba(0,0,0,0.18)';
+      c.beginPath();
+      c.arc(50, 53, 44, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = cor;
+      c.strokeStyle = '#fff';
+      c.lineWidth = 5;
+      c.beginPath();
+      c.arc(50, 49, 44, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+      c.fillStyle = '#fff';
+      c.strokeStyle = '#fff';
+      desenho(c);
+    });
+
+  icone('ic-mapa', '#5bb0e8', (c) => {
+    c.lineWidth = 4;
+    c.lineJoin = 'round';
+    c.beginPath();
+    c.moveTo(26, 34);
+    c.lineTo(40, 28);
+    c.lineTo(58, 34);
+    c.lineTo(74, 28);
+    c.lineTo(74, 66);
+    c.lineTo(58, 72);
+    c.lineTo(40, 66);
+    c.lineTo(26, 72);
+    c.closePath();
+    c.stroke();
+    c.beginPath();
+    c.moveTo(40, 28);
+    c.lineTo(40, 66);
+    c.moveTo(58, 34);
+    c.lineTo(58, 72);
+    c.stroke();
+    c.fillStyle = '#e8553f';
+    c.beginPath();
+    c.arc(50, 44, 7, Math.PI, 0);
+    c.lineTo(50, 58);
+    c.closePath();
+    c.fill();
+  });
+  icone('ic-comida', '#5cc26a', (c) => {
+    c.beginPath();
+    c.ellipse(44, 46, 20, 11, -0.7, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#5cc26a';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(30, 60);
+    c.lineTo(58, 32);
+    c.stroke();
+    c.fillStyle = '#e8553f';
+    for (const [x, y] of [
+      [62, 60],
+      [72, 54],
+      [70, 66],
+    ]) {
+      c.beginPath();
+      c.arc(x, y, 7, 0, Math.PI * 2);
+      c.fill();
+    }
+  });
+  icone('ic-regua', '#f2a93b', (c) => {
+    c.save();
+    c.translate(50, 49);
+    c.rotate(-0.6);
+    rrect(c, -32, -11, 64, 22, 4);
+    c.fill();
+    c.strokeStyle = '#f2a93b';
+    c.lineWidth = 3;
+    for (let i = -24; i <= 24; i += 8) {
+      c.beginPath();
+      c.moveTo(i, -11);
+      c.lineTo(i, i % 16 === 0 ? 2 : -3);
+      c.stroke();
+    }
+    c.restore();
+  });
+  icone('ic-estrela', '#c77dff', (c) => {
+    c.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const r = i % 2 === 0 ? 28 : 12;
+      const x = 50 + Math.cos(a) * r;
+      const y = 50 + Math.sin(a) * r;
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    }
+    c.closePath();
+    c.fill();
+  });
+  icone('ic-som', '#e8553f', (c) => desenharAltoFalante(c, 52, 49, 20, '#fff'));
+
+  // Botão do Atlas (livro) para a tela de título
+  tex(scene, 'btn-voltar', 84, 84, (c) => {
+    c.fillStyle = 'rgba(0,0,0,0.25)';
+    c.beginPath();
+    c.arc(42, 45, 38, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#5bb0e8';
+    c.strokeStyle = '#fff';
+    c.lineWidth = 5;
+    c.beginPath();
+    c.arc(42, 42, 36, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#fff';
+    c.beginPath();
+    c.moveTo(24, 42);
+    c.lineTo(46, 24);
+    c.lineTo(46, 34);
+    c.lineTo(62, 34);
+    c.lineTo(62, 50);
+    c.lineTo(46, 50);
+    c.lineTo(46, 60);
+    c.closePath();
     c.fill();
   });
 }

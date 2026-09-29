@@ -33,8 +33,15 @@ export class TitleScene extends Phaser.Scene {
     this.physics.add.collider(this.chico.sprite, chao);
 
     this.add.text(W / 2, 120, 'CHICO E O ATLAS VIVO', estiloTexto(64, '#fff4d6')).setOrigin(0.5);
-    const atlas = this.add.image(W * 0.72, H - 190, 'atlas').setScale(1.3);
+    // O livro do Atlas abre a coleção de bichos.
+    const atlas = this.add.image(W * 0.72, H - 190, 'atlas').setScale(1.3).setInteractive({ useHandCursor: true });
     this.tweens.add({ targets: atlas, y: atlas.y - 12, yoyo: true, repeat: -1, duration: 1200, ease: 'Sine.easeInOut' });
+    atlas.on('pointerdown', () => {
+      AudioManager.desbloquear();
+      AudioManager.tocar('botao');
+      this.saudou = true;
+      this.scene.start('Atlas');
+    });
 
     const jogar = botaoGrande(this, W / 2, H / 2 + 10, 'btn-jogar', () => this.jogar(), 1);
     this.tweens.add({ targets: jogar, scale: 1.08, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });

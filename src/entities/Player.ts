@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -15,6 +15,38 @@ export class Player {
   temPoderBola = false;
   /** Velocidade horizontal que o vento soma ao Chico neste frame (definida pela cena). */
   ventoX = 0;
+  /** Poder passivo "Nado da Onça": pode mergulhar e entrar na água funda. */
+  temPoderOnca = false;
+  /** Arrancada do guepardo (botão da pata na Savana). */
+  temPoderArrancada = false;
+  /** Força do elefante (passiva): empurrar pedregulhos. A cena usa este valor. */
+  temPoderForca = false;
+  /** Super pulo do canguru (botão da pata na Austrália). */
+  temPoderSuperPulo = false;
+  /** Cavar do wombat (passivo): a cena cava a terra fofa quando o Chico empurra contra ela. */
+  temPoderCavar = false;
+  /** Mergulho na neve da raposa-do-ártico (botão da pata no Ártico). */
+  temPoderMergulho = false;
+  /** Chão de gelo sob os pés neste frame (definido pela cena). */
+  noGelo = false;
+  /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' = 'bola';
+  /** Caindo de cabeça (mergulho na neve). Quem encerra é a cena, que sabe se quebrou neve fofa embaixo. */
+  mergulhando = false;
+  /** Saltou para mergulhar: vira mergulho no alto do salto. */
+  private mergulhoArmado = false;
+  /** Super pulo no ar: não é cortado ao soltar o pulo e corre um pouco mais rápido. */
+  private emSuperPulo = false;
+  private bufferPoder = 0;
+  private arrancadaTempo = 0;
+  /** Arrancada em andamento (separado do tempo, que pode chegar a zero antes de encerrar). */
+  private emArrancada = false;
+  private recarga = 0;
+  /** Água em que o Chico está neste frame (definida pela cena): y da superfície, ou null fora da água. */
+  agua: { superficie: number } | null = null;
+  private nadando = false;
+  /** Avisa a cena quando o Chico entra na água (respingo). */
+  aoEntrarNaAgua?: () => void;
 
   private partes: {
     corpo: Phaser.GameObjects.Image;
@@ -77,6 +109,36 @@ export class Player {
     this.bolaImg = scene.add.image(0, 0, 'chico-bola');
     const chapeuBola = scene.add.image(0, -30, 'chico-chapeu').setScale(0.8);
     this.bolaVisual = scene.add.container(x, y, [this.bolaImg, chapeuBola]).setDepth(10).setVisible(false);
+  }
+
+  /** 0 a 1: quanto o poder do botão está pronto (a arrancada precisa recarregar). */
+  get cargaPoder() {
+    if (this.poderBotao === 'arrancada') return 1 - this.recarga / ARRANCADA.recargaMs;
+    // o super pulo só sai do chão: no ar o botão fica meio apagado
+    if (this.poderBotao === 'superpulo') return this.coyote > 0 || this.estado !== 'normal' ? 1 : 0.5;
+    return 1;
+  }
+
+  get noChaoAgora() {
+    return this.noChao;
+  }
+
+  get arrancando() {
+    return this.arrancadaTempo > 0;
+  }
+
+  /** Poeirinha em um ponto (usada ao empurrar pedregulhos). */
+  soltarPoeira(x: number, y: number) {
+    this.poeira.explode(3, x, y);
+  }
+
+  private encerrarArrancada() {
+    if (!this.emArrancada) return;
+    this.emArrancada = false;
+    this.arrancadaTempo = 0;
+    this.recarga = ARRANCADA.recargaMs;
+    const b = this.sprite.body;
+    if (this.estado === 'normal' && !this.nadando) b.setGravityY(PLAYER.gravity);
   }
 
   /** Enrolado em bola: espinhos e pedrinhas não machucam. */
@@ -144,9 +206,11 @@ export class Player {
     const eraNoChao = this.noChao;
     this.noChao = b.blocked.down || apoiado;
     if (this.noChao && !eraNoChao && b.velocity.y >= 0) this.aterrissou();
+    if (this.emSuperPulo && ((this.noChao && b.velocity.y >= 0) || this.estado !== 'normal' || this.agua)) this.emSuperPulo = false;
+    if ((this.mergulhando || this.mergulhoArmado) && (this.estado !== 'normal' || this.agua)) this.terminarMergulho(false);
 
     // --- Poder "Virar bola": apertar de novo renova o tempo
-    if (i.powerPressed && this.temPoderBola) {
+    if (i.powerPressed && this.poderBotao === 'bola' && this.temPoderBola) {
       if (this.estado === 'bola') this.bolaTempo = BOLA.duracaoMs;
       else if (this.estado === 'normal') this.entrarBola();
     }
@@ -155,6 +219,37 @@ export class Player {
       if (this.bolaTempo <= 0) this.sairBola();
     }
     const enrolado = this.estado === 'bola';
+
+    // --- Água: boiar, braçada, mergulho (com o poder da onça) e sair pulando
+    const naAgua = this.agua !== null && this.estado !== 'escalando';
+    if (naAgua !== this.nadando) {
+      this.nadando = naAgua;
+      b.setGravityY(naAgua ? PLAYER.gravity * AGUA.fatorGravidade : this.estado === 'escalando' ? 0 : PLAYER.gravity);
+      // O limite do motor vale para subir e descer: na água ele fica alto para não cortar o pulo de saída;
+      // o afundar devagar é limitado no cálculo do nado (Clamp com AGUA.maxQueda).
+      b.setMaxVelocityY(naAgua ? PLAYER.jumpVelocity : PLAYER.maxFall);
+      if (naAgua) {
+        b.setVelocityY(Math.min(b.velocity.y, 200));
+        this.aoEntrarNaAgua?.();
+      }
+    }
+    if (naAgua && this.agua) {
+      const sup = this.agua.superficie;
+      const mergulhando = i.down && this.temPoderOnca;
+      let vy = b.velocity.y * (1 - Math.min(1, 2.5 * dt));
+      if (mergulhando) vy += AGUA.mergulho * dt;
+      else if (b.top > sup - 26) vy -= AGUA.empuxo * dt; // boia até a cabeça sair da água
+      if (i.up && !mergulhando) vy -= AGUA.empuxo * 0.5 * dt;
+      if (this.buffer > 0) {
+        this.buffer = 0;
+        // na superfície, o pulo tira o Chico da água; mais fundo, é uma braçada para cima
+        vy = b.top < sup + 14 ? -PLAYER.jumpVelocity * AGUA.saltoSaida : -AGUA.bracada;
+        AudioManager.tocar('bracada');
+      }
+      b.setVelocityY(Phaser.Math.Clamp(vy, -PLAYER.jumpVelocity, AGUA.maxQueda));
+      this.noChao = false;
+      this.coyote = 0;
+    }
 
     this.coyote = this.noChao ? PLAYER.coyoteMs : Math.max(0, this.coyote - ms);
     this.buffer = i.jumpPressed ? PLAYER.jumpBufferMs : Math.max(0, this.buffer - ms);
@@ -189,14 +284,54 @@ export class Player {
       b.setVelocity(0, 0);
     }
 
+    // --- Arrancada do guepardo: reta, rápida, sem cair; depois recarrega
+    this.recarga = Math.max(0, this.recarga - ms);
+    if (
+      i.powerPressed &&
+      this.poderBotao === 'arrancada' &&
+      this.temPoderArrancada &&
+      this.recarga <= 0 &&
+      this.arrancadaTempo <= 0 &&
+      this.estado === 'normal' &&
+      !naAgua
+    ) {
+      this.arrancadaTempo = ARRANCADA.duracaoMs;
+      this.emArrancada = true;
+      b.setGravityY(0);
+      b.setVelocityY(0);
+      this.squash = 0.75;
+      AudioManager.tocar('arrancada');
+    }
+    if (this.arrancadaTempo > 0) {
+      this.arrancadaTempo -= ms;
+      const bateu = (this.direcao > 0 && b.blocked.right) || (this.direcao < 0 && b.blocked.left);
+      if (this.arrancadaTempo <= 0 || bateu || naAgua || this.estado !== 'normal') this.encerrarArrancada();
+      else {
+        b.setVelocityX(this.direcao * PLAYER.maxRun * ARRANCADA.fatorVelocidade);
+        b.setVelocityY(0);
+        if (Math.floor(this.tempoAnim * 30) % 2 === 0) this.poeira.emitParticleAt(this.x - this.direcao * 20, this.pes - 20);
+        // pular durante a arrancada vira um pulo longo (a velocidade continua e cai aos poucos)
+        if (this.buffer > 0) {
+          this.encerrarArrancada();
+          b.setVelocityY(-PLAYER.jumpVelocity);
+          this.buffer = 0;
+          AudioManager.tocar('pulo');
+        }
+        this.animar(dt);
+        return;
+      }
+    }
+
     // --- Corrida horizontal com aceleração suave
     const alvo = (i.right ? 1 : 0) - (i.left ? 1 : 0);
     if (alvo !== 0) this.direcao = alvo as 1 | -1;
     const vx = b.velocity.x;
+    // no gelo, acelera e freia bem menos: o Chico escorrega
+    const gelo = this.noChao && this.noGelo;
     const acel = this.noChao
       ? alvo !== 0
-        ? PLAYER.groundAccel
-        : PLAYER.groundDecel
+        ? PLAYER.groundAccel * (gelo ? GELO.fatorAcel : 1)
+        : PLAYER.groundDecel * (gelo ? GELO.fatorFreio : 1)
       : alvo !== 0
         ? PLAYER.airAccel
         : PLAYER.airDecel;
@@ -206,14 +341,15 @@ export class Player {
     let nvx = vx;
     // O vento desloca o ponto de equilíbrio: contra ele o Chico anda devagar; parado, é empurrado.
     const vento = this.estado === 'escalando' ? 0 : this.ventoX * (enrolado ? VENTO.fatorBola : 1);
-    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1) + vento;
+    const fator = enrolado ? BOLA.fatorVelocidade : naAgua ? AGUA.fatorVelocidade : this.emSuperPulo ? SUPERPULO.fatorVelocidade : 1;
+    const meta = alvo * PLAYER.maxRun * fator + vento;
     if (nvx < meta) nvx = Math.min(meta, nvx + a * dt);
     else if (nvx > meta) nvx = Math.max(meta, nvx - a * dt);
     b.setVelocityX(nvx);
 
     // --- Pulo: coyote time + jump buffer + altura variável
     // Enrolado em bola não pula (o tatu-bola fechado não salta).
-    if (!enrolado && this.buffer > 0 && this.coyote > 0) {
+    if (!enrolado && !naAgua && this.buffer > 0 && this.coyote > 0) {
       b.setVelocityY(-PLAYER.jumpVelocity);
       this.buffer = 0;
       this.coyote = 0;
@@ -222,11 +358,76 @@ export class Player {
       AudioManager.tocar('pulo');
       this.poeira.explode(5, this.x, this.pes);
     }
-    if (!i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
+    // --- Super pulo do canguru: sai do chão (com a mesma folga do pulo) e não é cortado ao soltar
+    this.bufferPoder = i.powerPressed ? SUPERPULO.bufferMs : Math.max(0, this.bufferPoder - ms);
+    if (
+      this.bufferPoder > 0 &&
+      this.poderBotao === 'superpulo' &&
+      this.temPoderSuperPulo &&
+      this.estado === 'normal' &&
+      !naAgua &&
+      this.coyote > 0
+    ) {
+      this.bufferPoder = 0;
+      this.buffer = 0;
+      this.coyote = 0;
+      this.noChao = false;
+      this.emSuperPulo = true;
+      b.setVelocityY(-SUPERPULO.velocidade);
+      this.squash = 0.65;
+      AudioManager.tocar('superpulo');
+      this.poeira.explode(10, this.x, this.pes);
+    }
+    // --- Mergulho da raposa: do chão, salta e cai de cabeça no alto do salto; no ar, mergulha na hora
+    if (
+      i.powerPressed &&
+      this.poderBotao === 'mergulho' &&
+      this.temPoderMergulho &&
+      this.estado === 'normal' &&
+      !naAgua &&
+      !this.mergulhando &&
+      !this.mergulhoArmado
+    ) {
+      if (this.coyote > 0) {
+        b.setVelocityY(-PLAYER.jumpVelocity * MERGULHO.salto);
+        this.mergulhoArmado = true;
+        this.coyote = 0;
+        this.buffer = 0;
+        this.noChao = false;
+        this.squash = 0.75;
+        AudioManager.tocar('pulo');
+      } else {
+        this.comecarMergulho();
+      }
+    }
+    if (this.mergulhoArmado && b.velocity.y >= 0) this.comecarMergulho();
+    if (this.mergulhando) {
+      b.setVelocity(alvo * MERGULHO.velocidadeX, MERGULHO.queda);
+    }
+    if (!naAgua && !this.emSuperPulo && !this.mergulhoArmado && !this.mergulhando && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
       b.setVelocityY(b.velocity.y * PLAYER.jumpCutFactor);
     }
 
     this.animar(dt);
+  }
+
+  private comecarMergulho() {
+    this.mergulhoArmado = false;
+    this.mergulhando = true;
+    this.sprite.body.setVelocityY(MERGULHO.queda);
+    AudioManager.tocar('mergulho');
+  }
+
+  /** Fim do mergulho (a cena chama ao bater em chão que não é neve fofa). */
+  terminarMergulho(comEfeito = true) {
+    if (!this.mergulhando && !this.mergulhoArmado) return;
+    this.mergulhando = false;
+    this.mergulhoArmado = false;
+    if (comEfeito) {
+      this.squash = 1.3;
+      this.poeira.explode(8, this.x, this.pes);
+      AudioManager.tocar('aterrissar');
+    }
   }
 
   private soltarEscada(vy: number) {
@@ -287,7 +488,16 @@ export class Player {
     let quique = 0;
     let inclinacao = 0;
 
-    if (this.estado === 'festa') {
+    if (this.mergulhando && this.estado === 'normal') {
+      // de cabeça para baixo, braços esticados à frente (como a raposa)
+      bracoF = -3.0;
+      bracoT = -3.0;
+      pernaF = 0.2;
+      pernaT = -0.2;
+      inclinacao = this.direcao * 2.7;
+      // girado de cabeça para baixo em volta do alto do corpo: a cabeça fica embaixo, dentro da caixa de colisão
+      v.y = b.top + 8;
+    } else if (this.estado === 'festa') {
       bracoF = -2.6 + Math.sin(t * 14) * 0.3;
       bracoT = -2.4 - Math.sin(t * 14) * 0.3;
       quique = -Math.abs(Math.sin(t * 7)) * 18;
@@ -296,6 +506,14 @@ export class Player {
       bracoT = -2.2;
       pernaF = 0.4;
       pernaT = -0.4;
+    } else if (this.nadando) {
+      // nado: braços em círculo, pernas batendo
+      const s = Math.sin(t * 7);
+      bracoF = -2.2 + s * 0.9;
+      bracoT = -2.2 - s * 0.9;
+      pernaF = Math.sin(t * 12) * 0.5;
+      pernaT = -Math.sin(t * 12) * 0.5;
+      inclinacao = Math.abs(b.velocity.x) > 40 ? 0.25 : 0;
     } else if (this.estado === 'escalando') {
       const fase = Math.sin(t * 10) * (b.velocity.y !== 0 ? 1 : 0);
       bracoF = -2.8 + fase * 0.4;
@@ -349,6 +567,12 @@ export class Player {
   cair(onDone: () => void) {
     if (this.estado === 'caido') return;
     this.sairBola(false);
+    this.arrancadaTempo = 0;
+    this.emArrancada = false;
+    this.emSuperPulo = false;
+    this.mergulhando = false;
+    this.mergulhoArmado = false;
+    this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');
     const b = this.sprite.body;
@@ -376,6 +600,8 @@ export class Player {
   }
 
   comemorar() {
+    // Se tocou o objetivo no meio de uma arrancada, volta a gravidade para comemorar no chão.
+    this.encerrarArrancada();
     this.estado = 'festa';
     const b = this.sprite.body;
     b.setVelocityX(0);
