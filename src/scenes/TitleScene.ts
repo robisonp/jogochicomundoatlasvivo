@@ -3,6 +3,8 @@ import { botaoGrande, engrenagemAdulta, estiloTexto } from '../ui/widgets';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 import { Player } from '../entities/Player';
+import { SaveManager } from '../core/SaveManager';
+import { CAMPANHA } from '../levels';
 
 export class TitleScene extends Phaser.Scene {
   private chico?: Player;
@@ -64,7 +66,9 @@ export class TitleScene extends Phaser.Scene {
     } catch {
       /* ignora */
     }
-    this.scene.start('Level', { faseId: 'teste-movimento' });
+    // Continua de onde parou: a primeira fase ainda não concluída (ou a primeira, se já zerou).
+    const fase = CAMPANHA.find((f) => !SaveManager.data.fases[f.id]?.concluida) ?? CAMPANHA[0];
+    this.scene.start('Level', { faseId: fase.id });
   }
 
   update(_t: number, dms: number) {

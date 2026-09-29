@@ -1,16 +1,18 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER } from '../config';
+import { PLAYER, BOLA } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
-type Estado = 'normal' | 'escalando' | 'caido' | 'festa';
+type Estado = 'normal' | 'escalando' | 'caido' | 'festa' | 'bola';
 
 export class Player {
   readonly sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   readonly visual: Phaser.GameObjects.Container;
   estado: Estado = 'normal';
   direcao: 1 | -1 = 1;
+  /** Poder "Virar bola" liberado (tatu-bola). */
+  temPoderBola = false;
 
   private partes: {
     corpo: Phaser.GameObjects.Image;
@@ -32,6 +34,9 @@ export class Player {
   private apoiado = false;
   private squash = 1;
   private poeira: Phaser.GameObjects.Particles.ParticleEmitter;
+  private bolaVisual: Phaser.GameObjects.Container;
+  private bolaImg: Phaser.GameObjects.Image;
+  private bolaTempo = 0;
 
   constructor(private scene: Phaser.Scene, x: number, y: number) {
     this.sprite = scene.physics.add.sprite(x, y, 'px');
@@ -65,6 +70,37 @@ export class Player {
       emitting: false,
     });
     this.poeira.setDepth(9);
+
+    // Chico enrolado: bola de carapaça com o chapéu por cima (o chapéu não gira).
+    this.bolaImg = scene.add.image(0, 0, 'chico-bola');
+    const chapeuBola = scene.add.image(0, -30, 'chico-chapeu').setScale(0.8);
+    this.bolaVisual = scene.add.container(x, y, [this.bolaImg, chapeuBola]).setDepth(10).setVisible(false);
+  }
+
+  /** Enrolado em bola: espinhos e pedrinhas não machucam. */
+  get protegido() {
+    return this.estado === 'bola';
+  }
+
+  private entrarBola() {
+    this.estado = 'bola';
+    this.bolaTempo = BOLA.duracaoMs;
+    this.visual.setVisible(false);
+    this.bolaVisual.setVisible(true).setAlpha(1);
+    this.squash = 0.8;
+    AudioManager.tocar('bola');
+    this.poeira.explode(6, this.x, this.pes);
+  }
+
+  private sairBola(comSom = true) {
+    if (this.estado !== 'bola') return;
+    this.estado = 'normal';
+    this.visual.setVisible(true);
+    this.bolaVisual.setVisible(false);
+    if (comSom) {
+      AudioManager.tocar('desbola');
+      this.squash = 1.2;
+    }
   }
 
   get x() {
@@ -107,6 +143,17 @@ export class Player {
     this.noChao = b.blocked.down || apoiado;
     if (this.noChao && !eraNoChao && b.velocity.y >= 0) this.aterrissou();
 
+    // --- Poder "Virar bola": apertar de novo renova o tempo
+    if (i.powerPressed && this.temPoderBola) {
+      if (this.estado === 'bola') this.bolaTempo = BOLA.duracaoMs;
+      else if (this.estado === 'normal') this.entrarBola();
+    }
+    if (this.estado === 'bola') {
+      this.bolaTempo -= ms;
+      if (this.bolaTempo <= 0) this.sairBola();
+    }
+    const enrolado = this.estado === 'bola';
+
     this.coyote = this.noChao ? PLAYER.coyoteMs : Math.max(0, this.coyote - ms);
     this.buffer = i.jumpPressed ? PLAYER.jumpBufferMs : Math.max(0, this.buffer - ms);
 
@@ -133,7 +180,7 @@ export class Player {
         this.animar(dt);
         return;
       }
-    } else if (this.escadaX !== null && (i.up || (i.down && !this.noChao))) {
+    } else if (!enrolado && this.escadaX !== null && (i.up || (i.down && !this.noChao))) {
       this.estado = 'escalando';
       b.setAllowGravity(false);
       b.setGravityY(0);
@@ -155,13 +202,14 @@ export class Player {
     const virando = alvo !== 0 && Math.sign(vx) === -alvo;
     const a = virando ? acel * 1.8 : acel;
     let nvx = vx;
-    const meta = alvo * PLAYER.maxRun;
+    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1);
     if (nvx < meta) nvx = Math.min(meta, nvx + a * dt);
     else if (nvx > meta) nvx = Math.max(meta, nvx - a * dt);
     b.setVelocityX(nvx);
 
     // --- Pulo: coyote time + jump buffer + altura variável
-    if (this.buffer > 0 && this.coyote > 0) {
+    // Enrolado em bola não pula (o tatu-bola fechado não salta).
+    if (!enrolado && this.buffer > 0 && this.coyote > 0) {
       b.setVelocityY(-PLAYER.jumpVelocity);
       this.buffer = 0;
       this.coyote = 0;
@@ -200,6 +248,16 @@ export class Player {
     const v = this.visual;
     v.setPosition(this.sprite.x, b.bottom);
     v.scaleX = this.direcao;
+
+    if (this.estado === 'bola') {
+      this.bolaVisual.setPosition(this.sprite.x, b.bottom - 32);
+      this.bolaImg.rotation += (b.velocity.x * dt) / 30;
+      this.squash = Phaser.Math.Linear(this.squash, 1, Math.min(1, dt * 12));
+      this.bolaVisual.scaleY = Phaser.Math.Clamp(this.squash > 1 ? 1 / this.squash : 2 - this.squash, 0.8, 1.2);
+      // pisca quando está para abrir
+      this.bolaVisual.setAlpha(this.bolaTempo < BOLA.avisoMs && Math.floor(this.tempoAnim * 10) % 2 === 0 ? 0.55 : 1);
+      return;
+    }
 
     // piscar
     this.proximaPiscada -= dt;
@@ -286,6 +344,7 @@ export class Player {
 
   cair(onDone: () => void) {
     if (this.estado === 'caido') return;
+    this.sairBola(false);
     this.estado = 'caido';
     AudioManager.tocar('ai');
     const b = this.sprite.body;

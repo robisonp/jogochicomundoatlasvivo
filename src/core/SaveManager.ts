@@ -22,11 +22,15 @@ export interface SaveData {
   fases: Record<string, LevelProgress>;
   // Tentativas agregadas por trecho (checkpoint), usadas só para oferecer ajuda.
   tentativas: Record<string, number>;
+  /** Animais já encontrados (páginas do Atlas). */
+  animais: string[];
+  /** Poderes do Bicho já conquistados. */
+  poderes: string[];
   settings: Settings;
 }
 
 const KEY = 'chico-atlas-vivo:save';
-const VERSAO_ATUAL = 1;
+const VERSAO_ATUAL = 2;
 
 export const DEFAULT_SETTINGS: Settings = {
   volumeVoz: 1,
@@ -37,11 +41,24 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 function novoSave(): SaveData {
-  return { versao: VERSAO_ATUAL, fases: {}, tentativas: {}, settings: { ...DEFAULT_SETTINGS } };
+  return { versao: VERSAO_ATUAL, fases: {}, tentativas: {}, animais: [], poderes: [], settings: { ...DEFAULT_SETTINGS } };
 }
 
 // Cada entrada migra da versão N para N+1. Ex.: migracoes[1] leva um save v1 para v2.
-const migracoes: Record<number, (s: any) => any> = {};
+const migracoes: Record<number, (s: any) => any> = {
+  // v1 → v2: a fase de teste virou a Fase 1 da Caatinga; entram Atlas (animais) e poderes.
+  1: (s) => {
+    const renomear = (id: string) => (id === 'teste-movimento' ? 'caatinga-1' : id);
+    const fases: Record<string, unknown> = {};
+    for (const [id, p] of Object.entries(s.fases ?? {})) fases[renomear(id)] = p;
+    const tentativas: Record<string, number> = {};
+    for (const [k, n] of Object.entries(s.tentativas ?? {})) {
+      const [id, trecho] = k.split(':');
+      tentativas[`${renomear(id)}:${trecho}`] = n as number;
+    }
+    return { ...s, versao: 2, fases, tentativas, animais: [], poderes: [] };
+  },
+};
 
 function migrar(raw: any): SaveData {
   let s = raw;
@@ -89,6 +106,14 @@ class SaveManagerImpl {
   fase(id: string): LevelProgress {
     if (!this.data.fases[id]) this.data.fases[id] = { concluida: false, pegadas: [] };
     return this.data.fases[id];
+  }
+
+  /** Registra um item numa lista do save (animal do Atlas, poder) sem repetir. */
+  conquistar(lista: 'animais' | 'poderes', id: string): boolean {
+    if (this.data[lista].includes(id)) return false;
+    this.data[lista].push(id);
+    this.salvar();
+    return true;
   }
 
   registrarTentativa(trecho: string): number {

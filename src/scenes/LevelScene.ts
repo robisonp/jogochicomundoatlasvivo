@@ -5,10 +5,16 @@ import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 import { SaveManager } from '../core/SaveManager';
-import { LINHAS, type LevelDef } from '../levels/types';
+import { LINHAS, type LevelDef, type AnimalNaFase } from '../levels/types';
+import { FASES, CAMPANHA, proximaFase } from '../levels';
 
 const LINHAS_EXTRAS = 3;
-import { FASES } from '../levels';
+/** Caracteres que viram chão sólido, e a textura de cada um (bloco interno / bloco com topo). */
+const SOLIDOS: Record<string, [string, string]> = {
+  '#': ['terra', 'terra-topo'],
+  R: ['rocha', 'rocha-topo'],
+};
+const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = { moco: 'moco', 'tatu-bola': 'tatu' };
 
 interface Plataforma {
   img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
@@ -18,6 +24,18 @@ interface Plataforma {
   amp: number;
   periodo: number;
   fase: number;
+}
+
+interface Bicho {
+  img: Phaser.GameObjects.Image;
+  def: AnimalNaFase;
+  ativado: boolean;
+}
+
+interface FontePedrinhas {
+  x: number;
+  y: number;
+  t: number;
 }
 
 interface Placa {
@@ -54,13 +72,19 @@ export class LevelScene extends Phaser.Scene {
   private dicaMostrada = new Set<number>();
   private iconeAcao!: Phaser.GameObjects.Image;
   private relogioPlataformas = 0;
+  private bichos: Bicho[] = [];
+  private fontesPedrinhas: FontePedrinhas[] = [];
+  private pedrinhas!: Phaser.Physics.Arcade.Group;
+  private estilhacos!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() {
     super('Level');
   }
 
   init(data: { faseId?: string }) {
-    this.def = FASES[data.faseId ?? ''] ?? FASES['teste-movimento'];
+    this.def = FASES[data.faseId ?? ''] ?? CAMPANHA[0];
+    this.bichos = [];
+    this.fontesPedrinhas = [];
     this.plataformas = [];
     this.placas = [];
     this.checkpoints = [];
@@ -95,7 +119,17 @@ export class LevelScene extends Phaser.Scene {
       this.podePisar,
       this,
     );
-    this.physics.add.overlap(this.player.sprite, this.espinhos, () => this.morrer());
+    // Enrolado em bola, o Chico passa pelos espinhos sem se machucar.
+    this.physics.add.overlap(this.player.sprite, this.espinhos, () => {
+      if (!this.player.protegido) this.morrer();
+    });
+    this.physics.add.collider(this.pedrinhas, this.solidos, (pd) => this.quebrarPedrinha(pd as Phaser.Physics.Arcade.Image));
+    this.physics.add.overlap(this.player.sprite, this.pedrinhas, (_pl, pd) => {
+      const pedra = pd as Phaser.Physics.Arcade.Image;
+      if (this.player.protegido) this.quicarPedrinha(pedra);
+      else this.morrer();
+    });
+    this.player.temPoderBola = SaveManager.data.poderes.includes('bola');
     this.physics.add.overlap(this.player.sprite, this.pegadas, (_p, peg) =>
       this.pegar(peg as Phaser.Types.Physics.Arcade.ImageWithStaticBody),
     );
@@ -164,16 +198,17 @@ export class LevelScene extends Phaser.Scene {
     }
     // Terra extra abaixo da fase: deixa a câmera mostrar o chão mais alto na tela, acima dos controles de toque.
     const ultima = grade[LINHAS - 1];
-    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(ultima.replace(/[^#]/g, '.'));
+    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(ultima.replace(/[^#R]/g, '.'));
     const linhas = grade.length;
     const cols = grade[0].length;
     this.larguraMundo = cols * TILE;
     this.alturaMundo = linhas * TILE;
     const at = (r: number, c: number) => (r >= 0 && r < linhas && c >= 0 && c < cols ? grade[r][c] : '.');
+    const solido = (r: number, c: number) => at(r, c) in SOLIDOS;
 
     // Fundo escuro nos buracos (perigo legível para quem não lê).
     for (let c = 0; c < cols; c++) {
-      if (at(LINHAS - 1, c) !== '#') {
+      if (!solido(LINHAS - 1, c)) {
         this.add.image(c * TILE, (LINHAS - 3) * TILE, 'buraco').setOrigin(0).setDepth(0).setDisplaySize(TILE, (LINHAS_EXTRAS + 3) * TILE);
       }
     }
@@ -183,20 +218,30 @@ export class LevelScene extends Phaser.Scene {
     this.espinhos = this.physics.add.staticGroup();
     this.escadas = this.physics.add.staticGroup();
     this.pegadas = this.physics.add.staticGroup();
+    this.pedrinhas = this.physics.add.group();
+    this.estilhacos = this.add.particles(0, 0, 'poeira', {
+      lifespan: 350,
+      speedX: { min: -120, max: 120 },
+      speedY: { min: -160, max: -40 },
+      scale: { start: 0.7, end: 0 },
+      tint: 0xb7aa98,
+      emitting: false,
+    });
+    this.estilhacos.setDepth(7);
 
     // Chão: desenha bloco a bloco, mas cria corpos físicos mesclados (menos corpos, sem "tropeços" nas junções).
     const corpos: { c0: number; c1: number; r0: number; r1: number }[] = [];
     for (let r = 0; r < linhas; r++) {
       let c = 0;
       while (c < cols) {
-        if (at(r, c) !== '#') {
+        if (!solido(r, c)) {
           c++;
           continue;
         }
         const c0 = c;
-        while (at(r, c) === '#') {
-          const topo = at(r - 1, c) !== '#';
-          this.add.image(c * TILE, r * TILE, topo ? 'terra-topo' : 'terra').setOrigin(0).setDepth(1);
+        while (solido(r, c)) {
+          const [interno, comTopo] = SOLIDOS[at(r, c)];
+          this.add.image(c * TILE, r * TILE, solido(r - 1, c) ? interno : comTopo).setOrigin(0).setDepth(1);
           c++;
         }
         const anterior = corpos.find((k) => k.c0 === c0 && k.c1 === c - 1 && k.r1 === r - 1);
@@ -213,6 +258,7 @@ export class LevelScene extends Phaser.Scene {
 
     // Demais objetos
     let placaIdx = 0;
+    let bichoIdx = 0;
     let cpIdx = 1;
     // Varre por coluna (esquerda → direita) para numerar placas e checkpoints na ordem do percurso.
     for (let c = 0; c < cols; c++) {
@@ -282,6 +328,29 @@ export class LevelScene extends Phaser.Scene {
               periodo: 3.2,
               fase: n % 2 === 0 ? 0 : Math.PI,
             });
+            break;
+          }
+          case 'A': {
+            const def = this.def.animais?.[bichoIdx++];
+            if (!def) break;
+            // Os desenhos olham para a direita; o bicho espera o Chico olhando para a esquerda.
+            const img = this.add.image(cx, y + TILE, TEXTURA_BICHO[def.id]).setOrigin(0.5, 1).setDepth(8).setFlipX(true);
+            this.tweens.add({ targets: img, scaleY: 0.95, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
+            this.bichos.push({ img, def, ativado: false });
+            break;
+          }
+          case 'Q': {
+            this.fontesPedrinhas.push({ x: cx, y: y + 10, t: 0.4 + this.fontesPedrinhas.length * 0.35 });
+            // poeirinha caindo avisa onde as pedrinhas vão cair
+            this.add.particles(cx, y, 'poeira', {
+              lifespan: 700,
+              speedY: { min: 40, max: 90 },
+              speedX: { min: -8, max: 8 },
+              scale: { start: 0.35, end: 0.1 },
+              alpha: { start: 0.8, end: 0 },
+              tint: 0xb7aa98,
+              frequency: 260,
+            }).setDepth(2);
             break;
           }
           case 'G': {
@@ -354,6 +423,8 @@ export class LevelScene extends Phaser.Scene {
 
     this.checarCheckpoints();
     this.checarPlacas(i.actionPressed);
+    this.checarBichos();
+    this.soltarPedrinhas(dt);
   }
 
   private semEntrada() {
@@ -414,6 +485,147 @@ export class LevelScene extends Phaser.Scene {
     } else {
       this.iconeAcao.setVisible(false);
     }
+  }
+
+  // ------------------------------------------------------------------ bichos
+
+  get temPoder() {
+    return this.player.temPoderBola;
+  }
+
+  private checarBichos() {
+    for (const b of this.bichos) {
+      if (b.ativado) continue;
+      if (Math.abs(this.player.x - b.img.x) < 260 && Math.abs(this.player.y - b.img.y) < 240) this.ativarBicho(b);
+    }
+  }
+
+  private ativarBicho(b: Bicho) {
+    b.ativado = true;
+    const { def, img } = b;
+    // Página do Atlas: o animal fica registrado para a coleção.
+    SaveManager.conquistar('animais', def.id);
+    VoiceManager.falar(def.fala, 'bicho');
+    if (def.curiosidade) VoiceManager.falar(def.curiosidade, 'bicho', true);
+    this.add.particles(img.x, img.y - 30, 'brilho', {
+      lifespan: 700,
+      speed: { min: 60, max: 160 },
+      scale: { start: 1, end: 0 },
+      tint: [0xfff1a8, 0xffd766],
+      quantity: 16,
+      emitting: false,
+    }).setDepth(9).explode(16);
+
+    if (def.demo.tipo === 'pular') {
+      // O mocó sobe o lajedo num salto, mostrando o caminho pelas pedras.
+      const { dx, dy } = def.demo;
+      const x0 = img.x;
+      const y0 = img.y;
+      img.setFlipX(false);
+      this.time.delayedCall(900, () =>
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: 1000,
+          ease: 'Sine.easeInOut',
+          onUpdate: (tw) => {
+            const t = tw.getValue() ?? 0;
+            img.setPosition(x0 + dx * TILE * t, y0 + dy * TILE * t - Math.sin(Math.PI * t) * 140);
+          },
+        }),
+      );
+    } else {
+      // O tatu-bola se fecha quando uma pedrinha cai perto, e depois se abre de novo.
+      this.time.delayedCall(1400, () => {
+        const pedra = this.add.image(img.x, img.y - 320, 'pedrinha').setDepth(9);
+        this.tweens.add({
+          targets: pedra,
+          y: img.y - 40,
+          duration: 450,
+          ease: 'Quad.easeIn',
+          onStart: () => {
+            this.time.delayedCall(200, () => {
+              img.setTexture('tatu-bola');
+              AudioManager.tocar('bola');
+            });
+          },
+          onComplete: () => {
+            AudioManager.tocar('pedra');
+            this.tweens.add({ targets: pedra, x: pedra.x + 90, y: pedra.y - 60, alpha: 0, angle: 200, duration: 500, onComplete: () => pedra.destroy() });
+            this.time.delayedCall(1500, () => {
+              img.setTexture('tatu');
+              AudioManager.tocar('desbola');
+              if (def.daPoder === 'bola') this.ganharPoderBola(img);
+            });
+          },
+        });
+      });
+    }
+  }
+
+  private ganharPoderBola(origem: Phaser.GameObjects.Image) {
+    const faisca = this.add.image(origem.x, origem.y - 30, 'brilho').setScale(3).setDepth(20).setTint(0xffd766);
+    this.tweens.add({
+      targets: faisca,
+      x: this.player.x,
+      y: this.player.y,
+      duration: 700,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        faisca.destroy();
+        const novo = !this.player.temPoderBola;
+        this.player.temPoderBola = true;
+        SaveManager.conquistar('poderes', 'bola');
+        AudioManager.tocar('poder');
+        this.cameras.main.flash(200, 255, 240, 170);
+        this.events.emit('poder', true);
+        if (novo) VoiceManager.falar('Agora você também pode virar bola! Aperte o botão da pata.', 'narrador', true);
+      },
+    });
+  }
+
+  // ------------------------------------------------------------------ pedrinhas
+
+  private soltarPedrinhas(dt: number) {
+    const cam = this.cameras.main;
+    const centro = cam.scrollX + cam.width / 2;
+    for (const f of this.fontesPedrinhas) {
+      // só caem perto da tela (economiza e não assusta de longe)
+      if (Math.abs(f.x - centro) > cam.width) continue;
+      f.t -= dt;
+      if (f.t > 0) continue;
+      f.t = 1.1 + Math.random() * 0.4;
+      const p = this.pedrinhas.create(f.x + Phaser.Math.Between(-10, 10), f.y, 'pedrinha') as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+      p.setDepth(6);
+      p.body.setGravityY(1400);
+      p.body.setSize(16, 16);
+      p.setAngularVelocity(Phaser.Math.Between(-200, 200));
+    }
+    this.pedrinhas.getChildren().forEach((g) => {
+      const p = g as Phaser.Physics.Arcade.Image;
+      if (p.y > this.alturaMundo) p.destroy();
+    });
+  }
+
+  private quebrarPedrinha(p: Phaser.Physics.Arcade.Image) {
+    this.estilhacos.explode(5, p.x, p.y + 8);
+    if (Math.abs(p.x - this.player.x) < 500) AudioManager.tocar('pedra');
+    p.destroy();
+  }
+
+  /** Pedrinha bate na bola e é jogada para longe. */
+  private quicarPedrinha(p: Phaser.Physics.Arcade.Image) {
+    if (!p.body?.enable) return;
+    p.disableBody(false, false);
+    AudioManager.tocar('pedra');
+    this.tweens.add({
+      targets: p,
+      x: p.x + Phaser.Math.Between(-90, 90),
+      y: p.y - 90,
+      alpha: 0,
+      duration: 450,
+      onComplete: () => p.destroy(),
+    });
   }
 
   // ------------------------------------------------------------------ eventos
@@ -482,7 +694,12 @@ export class LevelScene extends Phaser.Scene {
     }).setDepth(30).explode(80);
 
     this.time.delayedCall(1800, () => {
-      this.scene.launch('Fim', { faseId: this.def.id, ...this.contarPegadasFase(), tempoMs: this.tempo });
+      this.scene.launch('Fim', {
+        faseId: this.def.id,
+        proximaId: proximaFase(this.def.id)?.id,
+        ...this.contarPegadasFase(),
+        tempoMs: this.tempo,
+      });
       this.scene.pause();
     });
   }

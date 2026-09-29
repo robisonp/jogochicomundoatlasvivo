@@ -9,7 +9,11 @@ export type Sfx =
   | 'ai'
   | 'vitoria'
   | 'botao'
-  | 'escalar';
+  | 'escalar'
+  | 'bola'
+  | 'desbola'
+  | 'poder'
+  | 'pedra';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -114,6 +118,20 @@ class AudioManagerImpl {
         break;
       case 'escalar':
         this.ruido(0.05, 2000, 0.08);
+        break;
+      case 'bola':
+        this.tom(520, 0.12, { tipo: 'triangle', ate: 180, vol: 0.35 });
+        this.ruido(0.06, 900, 0.2);
+        break;
+      case 'desbola':
+        this.tom(200, 0.12, { tipo: 'triangle', ate: 520, vol: 0.3 });
+        break;
+      case 'poder':
+        [392, 523, 659, 784, 1047, 1319].forEach((f, i) => this.tom(f, 0.25, { tipo: 'triangle', vol: 0.28, atraso: i * 0.07 }));
+        break;
+      case 'pedra':
+        this.ruido(0.07, 1500, 0.22);
+        this.tom(900, 0.05, { tipo: 'square', ate: 400, vol: 0.08 });
         break;
     }
   }

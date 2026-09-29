@@ -40,6 +40,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarChico(scene);
   gerarCenario(scene);
   gerarObjetos(scene);
+  gerarBichos(scene);
   gerarUI(scene);
 }
 
@@ -249,6 +250,44 @@ function gerarCenario(scene: Phaser.Scene) {
     c.lineTo(w, 1);
     c.stroke();
   });
+
+  // Rocha do lajedo: bloco interno e bloco com topo arredondado
+  const rocha = (key: string, topo: boolean) =>
+    tex(scene, key, TILE, TILE, (c, w, h) => {
+      c.fillStyle = C.pedra;
+      c.fillRect(0, 0, w, h);
+      const r = rng(topo ? 31 : 37);
+      // rachaduras e manchas de líquen (lajedos são cheios delas)
+      c.strokeStyle = C.pedraEscura;
+      c.lineWidth = 2;
+      for (let i = 0; i < 2; i++) {
+        const x = 8 + r() * (w - 16);
+        const y = (topo ? 22 : 6) + r() * (h - 30);
+        c.beginPath();
+        c.moveTo(x, y);
+        c.lineTo(x + 6 + r() * 8, y + 5 + r() * 6);
+        c.lineTo(x + 4 + r() * 10, y + 12 + r() * 6);
+        c.stroke();
+      }
+      for (let i = 0; i < 3; i++) {
+        c.fillStyle = r() > 0.5 ? 'rgba(210,190,120,0.45)' : 'rgba(255,255,255,0.18)';
+        c.beginPath();
+        c.ellipse(r() * w, (topo ? 20 : 0) + r() * (h - 20), 4 + r() * 6, 3 + r() * 3, 0, 0, Math.PI * 2);
+        c.fill();
+      }
+      if (topo) {
+        c.fillStyle = 'rgba(255,255,255,0.35)';
+        c.fillRect(0, 3, w, 5);
+        c.strokeStyle = OUTLINE;
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(0, 1);
+        c.lineTo(w, 1);
+        c.stroke();
+      }
+    });
+  rocha('rocha', false);
+  rocha('rocha-topo', true);
 
   // Laje de pedra (plataforma atravessável por baixo)
   tex(scene, 'laje', TILE, 26, (c, w) => {
@@ -599,6 +638,24 @@ function gerarObjetos(scene: Phaser.Scene) {
     c.fillRect(0, 24, w, h - 24);
   });
 
+  tex(scene, 'pedrinha', 22, 20, (c) => {
+    c.fillStyle = C.pedra;
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.moveTo(4, 8);
+    c.lineTo(10, 2);
+    c.lineTo(18, 4);
+    c.lineTo(20, 13);
+    c.lineTo(12, 18);
+    c.lineTo(3, 15);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.4)';
+    c.fillRect(8, 6, 5, 3);
+  });
+
   tex(scene, 'brilho', 16, 16, (c) => {
     const g = c.createRadialGradient(8, 8, 0, 8, 8, 8);
     g.addColorStop(0, 'rgba(255,255,255,1)');
@@ -613,6 +670,164 @@ function gerarObjetos(scene: Phaser.Scene) {
     c.arc(6, 6, 6, 0, Math.PI * 2);
     c.fill();
   });
+}
+
+// ------------------------------------------------------------------ Bichos da Caatinga
+
+function gerarBichos(scene: Phaser.Scene) {
+  // Mocó (Kerodon rupestris): roedor cinza-amarronzado, sem cauda aparente, olhos grandes.
+  tex(scene, 'moco', 76, 52, (c) => {
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    // patas
+    c.fillStyle = '#6e5a48';
+    for (const x of [18, 30, 46, 56]) {
+      rrect(c, x, 36, 9, 13, 4);
+      c.fill();
+      c.stroke();
+    }
+    // corpo
+    c.fillStyle = '#8e7a66';
+    c.beginPath();
+    c.ellipse(34, 30, 26, 16, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // barriga clara
+    c.fillStyle = '#d8c7a8';
+    c.beginPath();
+    c.ellipse(40, 38, 14, 6, 0, 0, Math.PI);
+    c.fill();
+    // cabeça
+    c.fillStyle = '#8e7a66';
+    c.beginPath();
+    c.ellipse(58, 24, 14, 12, 0.2, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // orelha
+    c.beginPath();
+    c.ellipse(52, 12, 5, 6, -0.3, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // olho grande e focinho
+    c.fillStyle = '#1d140e';
+    c.beginPath();
+    c.arc(61, 21, 4, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#fff';
+    c.fillRect(62, 18.5, 1.6, 1.6);
+    c.fillStyle = '#e6a39a';
+    c.beginPath();
+    c.arc(71, 27, 3, 0, Math.PI * 2);
+    c.fill();
+  });
+
+  // Tatu-bola (Tolypeutes tricinctus) andando: carapaça amarelada com três faixas móveis.
+  tex(scene, 'tatu', 84, 50, (c) => {
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    c.fillStyle = '#8a6a44';
+    for (const x of [22, 34, 50, 60]) {
+      rrect(c, x, 36, 8, 12, 3);
+      c.fill();
+      c.stroke();
+    }
+    // carapaça
+    c.fillStyle = '#c9a466';
+    c.beginPath();
+    c.moveTo(12, 40);
+    c.bezierCurveTo(12, 6, 68, 6, 68, 40);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    // três faixas móveis
+    c.strokeStyle = '#8a6a44';
+    c.lineWidth = 3;
+    for (const x of [34, 40, 46]) {
+      c.beginPath();
+      c.moveTo(x, 12);
+      c.lineTo(x, 40);
+      c.stroke();
+    }
+    // placas (pontinhos)
+    c.fillStyle = 'rgba(138,106,68,0.6)';
+    for (let i = 0; i < 14; i++) {
+      const x = 18 + (i % 7) * 7;
+      const y = 22 + Math.floor(i / 7) * 9;
+      if (x > 32 && x < 48) continue;
+      c.beginPath();
+      c.arc(x, y, 2, 0, Math.PI * 2);
+      c.fill();
+    }
+    // cabeça com escudo
+    c.strokeStyle = OUTLINE;
+    c.fillStyle = '#b89058';
+    c.beginPath();
+    c.moveTo(66, 26);
+    c.lineTo(82, 36);
+    c.lineTo(66, 42);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#1d140e';
+    c.beginPath();
+    c.arc(71, 32, 2.2, 0, Math.PI * 2);
+    c.fill();
+    // cauda curtinha
+    c.fillStyle = '#b89058';
+    c.beginPath();
+    c.moveTo(14, 34);
+    c.lineTo(4, 40);
+    c.lineTo(14, 40);
+    c.closePath();
+    c.fill();
+    c.stroke();
+  });
+
+  // Tatu-bola fechado: a cabeça e a cauda se encaixam, formando uma bola.
+  const bola = (key: string, tam: number, chapeu: boolean) =>
+    tex(scene, key, tam, tam, (c, w) => {
+      const cx = w / 2;
+      const r = w / 2 - 3;
+      c.strokeStyle = OUTLINE;
+      c.lineWidth = 3;
+      c.fillStyle = '#c9a466';
+      c.beginPath();
+      c.arc(cx, cx, r, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+      c.strokeStyle = '#8a6a44';
+      c.lineWidth = 3;
+      for (const dx of [-r * 0.28, 0, r * 0.28]) {
+        c.beginPath();
+        c.moveTo(cx + dx, cx - Math.sqrt(r * r - dx * dx) + 3);
+        c.lineTo(cx + dx, cx + Math.sqrt(r * r - dx * dx) - 3);
+        c.stroke();
+      }
+      // escudo da cabeça e da cauda encaixados
+      c.strokeStyle = OUTLINE;
+      c.fillStyle = '#b89058';
+      c.beginPath();
+      c.moveTo(cx - r * 0.35, cx + r * 0.55);
+      c.lineTo(cx, cx + r * 0.95);
+      c.lineTo(cx + r * 0.35, cx + r * 0.55);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.3)';
+      c.beginPath();
+      c.ellipse(cx - r * 0.4, cx - r * 0.45, r * 0.25, r * 0.12, -0.6, 0, Math.PI * 2);
+      c.fill();
+      if (chapeu) {
+        // faixa com a cor da camisa do Chico: dá para saber que é ele dentro da bola
+        c.strokeStyle = V.camisa;
+        c.lineWidth = 5;
+        c.beginPath();
+        c.arc(cx, cx, r - 5, Math.PI * 1.1, Math.PI * 1.9);
+        c.stroke();
+      }
+    });
+  bola('tatu-bola', 44, false);
+  bola('chico-bola', 64, true);
 }
 
 export function desenharAltoFalante(c: Ctx, cx: number, cy: number, s: number, cor: string) {

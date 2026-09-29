@@ -24,6 +24,14 @@ export const PLAYER = {
   respawnMs: 450,
 };
 
+// Poder "Virar bola" (tatu-bola): protege por alguns segundos. Andar enrolado devagar é estilização do jogo.
+export const BOLA = {
+  duracaoMs: 3500,
+  // piscar avisando que a bola vai abrir
+  avisoMs: 900,
+  fatorVelocidade: 0.5,
+};
+
 export const COLORS = {
   sky: 0x8fd3ff,
   ui: 0xffffff,

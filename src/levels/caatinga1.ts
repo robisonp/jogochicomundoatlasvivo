@@ -1,12 +1,12 @@
-// Trecho de teste de movimento (Mundo 1 — Caatinga). Sem conteúdo educativo: só correr, pular, subir e explorar.
+// Mundo 1 — Caatinga · Fase 1: A Página Seca. Correr, pular, subir e explorar (base do movimento).
 // Duração-alvo: 2 a 3 minutos.
 import type { LevelDef } from './types';
 
-export const FASE_TESTE: LevelDef = {
-  id: 'teste-movimento',
-  nome: 'Trilha de Teste',
+export const CAATINGA_1: LevelDef = {
+  id: 'caatinga-1',
+  nome: 'A Página Seca',
   mundo: 'caatinga',
-  abertura: { texto: 'Vamos lá, Chico! Anda para a direita.', quem: 'narrador' },
+  abertura: { texto: 'Aqui a chuva é rara, mas a Caatinga está cheia de vida! Anda para a direita.', quem: 'narrador' },
   placas: [
     { texto: 'Aperte o botão de pulo! Segura para pular mais alto.', quem: 'robi' },
     { texto: 'Cuidado com os espinhos do xique-xique! Pula por cima.', quem: 'lili' },

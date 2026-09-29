@@ -2,7 +2,7 @@
 // Futuro: se existir um arquivo pré-gerado em audio/voz/<id>.mp3, ele terá prioridade sobre a síntese.
 import { SaveManager } from '../core/SaveManager';
 
-export type Personagem = 'narrador' | 'lili' | 'marcos' | 'marcela' | 'july' | 'robi' | 'kelly' | 'laura';
+export type Personagem = 'narrador' | 'lili' | 'marcos' | 'marcela' | 'july' | 'robi' | 'kelly' | 'laura' | 'bicho';
 
 interface Perfil {
   pitch: number;
@@ -20,11 +20,13 @@ const PERFIS: Record<Personagem, Perfil> = {
   robi: { pitch: 0.95, rate: 1.1, prefere: 'masculina' },
   kelly: { pitch: 1.2, rate: 1.05, prefere: 'feminina' },
   laura: { pitch: 1.05, rate: 1.0, prefere: 'feminina' },
+  // Animais falam em primeira pessoa (falas do dossiê), com voz mais aguda e alegre.
+  bicho: { pitch: 1.45, rate: 1.05, prefere: 'qualquer' },
 };
 
 // Heurística: nomes comuns de vozes femininas/masculinas em pt-BR nos motores de TTS.
 const FEM = /(female|feminin|mulher|francisca|thalita|luciana|maria|vitoria|leila|brenda|giovanna|yara|manuela|elza|raquel|ana|pt-br-x-afs|pt-br-x-pte)/i;
-const MASC = /(male|masculin|homem|antonio|daniel|felipe|donato|fabio|julio|humberto|nicolau|valerio|ricardo|pt-br-x-ptd|pt-br-x-ptl)/i;
+const MASC = /(\bmale|masculin|homem|antonio|daniel|felipe|donato|fabio|julio|humberto|nicolau|valerio|ricardo|pt-br-x-ptd|pt-br-x-ptl)/i;
 
 class VoiceManagerImpl {
   private vozes: SpeechSynthesisVoice[] = [];
@@ -52,14 +54,17 @@ class VoiceManagerImpl {
     return lista[0];
   }
 
-  /** Fala curta (2 a 8 segundos). Interrompe a fala anterior para não acumular. */
-  falar(texto: string, quem: Personagem = 'narrador'): void {
+  /**
+   * Fala curta (2 a 8 segundos). Por padrão interrompe a fala anterior para não acumular;
+   * com `enfileirar`, espera a anterior terminar (ex.: fala do bicho seguida da curiosidade).
+   */
+  falar(texto: string, quem: Personagem = 'narrador', enfileirar = false): void {
     this.ultima = { texto, quem };
     const synth = window.speechSynthesis;
     if (!synth) return;
     const vol = SaveManager.data.settings.volumeVoz;
     if (vol <= 0) return;
-    synth.cancel();
+    if (!enfileirar) synth.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     const p = PERFIS[quem];
     u.lang = 'pt-BR';
