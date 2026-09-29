@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { botaoGrande, estiloTexto } from '../ui/widgets';
 
 export class EndScene extends Phaser.Scene {
-  private dados!: { faseId: string; pegas: number; total: number; tempoMs: number };
+  private dados!: { faseId: string; proximaId?: string; selo?: string; pegas: number; total: number; tempoMs: number };
 
   constructor() {
     super('Fim');
@@ -16,6 +16,12 @@ export class EndScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale;
     this.scene.stop('Hud');
     this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setInteractive();
+
+    // Selo do mundo conquistado: aparece girando no alto da tela.
+    if (this.dados.selo) {
+      const selo = this.add.image(W / 2, H / 2 - 265, this.dados.selo).setScale(0);
+      this.tweens.add({ targets: selo, scale: 1, angle: 360, duration: 900, ease: 'Back.easeOut' });
+    }
 
     // Pegadas encontradas, mostradas como ícones (sem precisar ler números).
     const { pegas, total } = this.dados;
@@ -42,7 +48,20 @@ export class EndScene extends Phaser.Scene {
       this.scene.stop('Level');
       this.scene.start('Titulo');
     };
-    botaoGrande(this, W / 2 - 150, H / 2 + 140, 'btn-denovo', recomecar, 0.8);
-    botaoGrande(this, W / 2 + 150, H / 2 + 140, 'btn-casa', casa, 0.8);
+    const proxima = this.dados.proximaId;
+    if (proxima) {
+      // Seguir em frente é a ação principal: botão verde grande no meio.
+      const seguir = () => {
+        this.scene.stop('Level');
+        this.scene.start('Level', { faseId: proxima });
+      };
+      const b = botaoGrande(this, W / 2, H / 2 + 150, 'btn-jogar', seguir, 0.9);
+      this.tweens.add({ targets: b, scale: 0.98, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });
+      botaoGrande(this, W / 2 - 250, H / 2 + 160, 'btn-denovo', recomecar, 0.65);
+      botaoGrande(this, W / 2 + 250, H / 2 + 160, 'btn-casa', casa, 0.65);
+    } else {
+      botaoGrande(this, W / 2 - 150, H / 2 + 140, 'btn-denovo', recomecar, 0.8);
+      botaoGrande(this, W / 2 + 150, H / 2 + 140, 'btn-casa', casa, 0.8);
+    }
   }
 }

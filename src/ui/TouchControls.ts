@@ -150,6 +150,17 @@ export class TouchControls {
     }
   }
 
+  /** Mostra ou esconde o botão do Poder do Bicho (aparece quando o Chico ganha um poder). */
+  setPoder(visivel: boolean) {
+    const b = this.botoes.find((x) => x.papel === 'power');
+    if (!b || b.visivel === visivel) return;
+    b.visivel = visivel;
+    b.img.setVisible(this.ativo && visivel);
+    if (visivel && this.ativo) {
+      this.scene.tweens.add({ targets: b.img, scale: { from: 1.6, to: 1 }, duration: 500, ease: 'Back.easeOut' });
+    }
+  }
+
   limpar() {
     this.ponteiros.clear();
     this.dpadPonteiro = undefined;

@@ -22,7 +22,10 @@ export class HudScene extends Phaser.Scene {
   }
 
   create() {
-    this.controles = new TouchControls(this, { poder: false });
+    this.controles = new TouchControls(this, { poder: this.level.temPoder });
+    const aoGanharPoder = (v: boolean) => this.controles.setPoder(v);
+    this.level.events.on('poder', aoGanharPoder);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('poder', aoGanharPoder));
 
     this.btnSom = this.add.image(0, 0, 'btn-som').setInteractive({ useHandCursor: true });
     this.btnSom.on('pointerdown', () => {

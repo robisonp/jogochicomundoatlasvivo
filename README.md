@@ -5,6 +5,7 @@ Phaser 4 + TypeScript + Vite. Arte, música e efeitos gerados por código; vozes
 
 - Auditoria do GDD: [docs/AUDITORIA.md](docs/AUDITORIA.md)
 - GDD revisado (decisões, correções e os 8 mundos): [docs/GDD-REVISADO.md](docs/GDD-REVISADO.md)
+- Dossiê científico (fonte das falas e fichas do Atlas): [docs/DOSSIE-CIENTIFICO.md](docs/DOSSIE-CIENTIFICO.md)
 
 ## Rodar
 
@@ -15,7 +16,7 @@ npm run build      # gera dist/
 ```
 
 Parâmetros de URL úteis:
-- `?fase=teste-movimento` abre direto uma fase;
+- `?fase=caatinga-2` abre direto uma fase (ids em `src/levels/`);
 - `?toque` mostra os controles de toque no computador;
 - `?debug` mostra as caixas de colisão.
 
@@ -47,7 +48,7 @@ src/
 
 ### Como criar uma fase
 
-As fases são trechos desenhados em texto, colados lado a lado (`src/levels/teste.ts` é o exemplo):
+As fases são trechos desenhados em texto, colados lado a lado (`src/levels/caatinga1.ts` é o exemplo mais simples):
 
 ```
 '..o.o......',     o = pegada
@@ -56,7 +57,7 @@ As fases são trechos desenhados em texto, colados lado a lado (`src/levels/test
 '###########',     # = chão
 ```
 
-A legenda completa está em `src/levels/types.ts`. As falas das placas e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código.
+A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U` etc.) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
 
 ## Publicação
 
