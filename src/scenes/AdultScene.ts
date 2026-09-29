@@ -7,6 +7,7 @@ import { estiloTexto } from '../ui/widgets';
 export class AdultScene extends Phaser.Scene {
   private voltarPara = 'Titulo';
   private linhas: Phaser.GameObjects.GameObject[] = [];
+  private confirmarApagar = false;
 
   constructor() {
     super('Adulto');
@@ -14,6 +15,7 @@ export class AdultScene extends Phaser.Scene {
 
   init(data: { voltarPara: string }) {
     this.voltarPara = data.voltarPara;
+    this.confirmarApagar = false;
   }
 
   create() {
@@ -83,9 +85,11 @@ export class AdultScene extends Phaser.Scene {
       if (cod && !SaveManager.importar(cod)) window.alert('Código inválido.');
     });
     y += 64;
-    botao(x0 + 420, 'Apagar progresso', () => {
-      if (window.confirm('Apagar todo o progresso do jogo?')) SaveManager.apagarTudo();
-    });
+    // Confirmação por dois toques (sem caixas de diálogo do navegador).
+    botao(x0 + 420, this.confirmarApagar ? 'Toque de novo para apagar' : 'Apagar progresso', () => {
+      if (this.confirmarApagar) SaveManager.apagarTudo();
+      this.confirmarApagar = !this.confirmarApagar;
+    }, this.confirmarApagar);
 
     const fechar = this.add
       .text(W - 40, 50, '✕', { ...estiloTexto(40), backgroundColor: '#2e4a63', padding: { x: 16, y: 4 } })
