@@ -71,7 +71,7 @@ Legenda: ★ = poder novo · ◆ = variação de ambiente. Cada fase tem 2–3 m
 ### Mapa-múndi e família (prontos)
 - **Mapa 2D** (correção 9): o botão verde do título abre o mapa com a rota dos 8 mundos. Mundos abertos têm o selo colorido; os seguintes, cadeado; os que ainda não existem no jogo, ampulheta ("em breve"). Tocar num mundo fala o nome, o continente e o país ou região e abre a escolha das 5 fases. Quando um mundo abre, o Chico viaja pela rota até ele.
 - **História do Atlas** (correção 1): na primeira vez no mapa, a Tia Marcela liga pelo Chamador do Atlas e conta que mandou o livro pelo correio e que o Vento Viravolta bagunçou as páginas.
-- **Família visível:** quem fala numa placa aparece em pé ao lado dela (Vovó Lili com a Bússola, Vovô Marcos de capacete de construtor, Tia Marcela com o Atlas, Tio Robi de boné, Mamãe July de capa de super-heroína). As Tias Kelly e Laura aparecem por chamada de vídeo. O rosto de quem da família está falando surge no alto da tela (dicas da Vovó Lili, resgates da Mamãe July). A aparência de cada um se ajusta em `src/data/familia.ts`.
+- **Família visível**, com a arte feita pela família: quem fala numa placa aparece em pé ao lado dela; as Tias Kelly e Laura aparecem por chamada de vídeo. O rosto de quem da família está falando surge no alto da tela (dicas da Vovó Lili, resgates da Mamãe July). O Chico usa as cores da mesma arte (camiseta vermelha, bermuda azul, tênis branco), com o chapéu e a mochila de explorador.
 
 ### Mundo 1 — Caatinga (sertão da Paraíba) — completo (fases 1 a 5 jogáveis)
 Animais: tatu-bola, mocó, carcará, asa-branca, preá.

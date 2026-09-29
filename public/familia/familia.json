@@ -1,0 +1,332 @@
+{
+ "frames": {
+  "corpo-robi": {
+   "frame": {
+    "x": 2,
+    "y": 14,
+    "w": 111,
+    "h": 323
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 111,
+    "h": 323
+   },
+   "sourceSize": {
+    "w": 111,
+    "h": 323
+   }
+  },
+  "corpo-july": {
+   "frame": {
+    "x": 115,
+    "y": 40,
+    "w": 112,
+    "h": 297
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 112,
+    "h": 297
+   },
+   "sourceSize": {
+    "w": 112,
+    "h": 297
+   }
+  },
+  "corpo-chico": {
+   "frame": {
+    "x": 229,
+    "y": 116,
+    "w": 87,
+    "h": 221
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 87,
+    "h": 221
+   },
+   "sourceSize": {
+    "w": 87,
+    "h": 221
+   }
+  },
+  "corpo-lili": {
+   "frame": {
+    "x": 318,
+    "y": 58,
+    "w": 99,
+    "h": 279
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 99,
+    "h": 279
+   },
+   "sourceSize": {
+    "w": 99,
+    "h": 279
+   }
+  },
+  "corpo-marcos": {
+   "frame": {
+    "x": 419,
+    "y": 2,
+    "w": 100,
+    "h": 335
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 335
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 335
+   }
+  },
+  "corpo-marcela": {
+   "frame": {
+    "x": 521,
+    "y": 44,
+    "w": 114,
+    "h": 293
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 114,
+    "h": 293
+   },
+   "sourceSize": {
+    "w": 114,
+    "h": 293
+   }
+  },
+  "corpo-kelly": {
+   "frame": {
+    "x": 637,
+    "y": 52,
+    "w": 109,
+    "h": 285
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 109,
+    "h": 285
+   },
+   "sourceSize": {
+    "w": 109,
+    "h": 285
+   }
+  },
+  "corpo-laura": {
+   "frame": {
+    "x": 748,
+    "y": 26,
+    "w": 111,
+    "h": 311
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 111,
+    "h": 311
+   },
+   "sourceSize": {
+    "w": 111,
+    "h": 311
+   }
+  },
+  "rosto-robi": {
+   "frame": {
+    "x": 2,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-july": {
+   "frame": {
+    "x": 124,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-chico": {
+   "frame": {
+    "x": 246,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-lili": {
+   "frame": {
+    "x": 368,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-marcos": {
+   "frame": {
+    "x": 490,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-marcela": {
+   "frame": {
+    "x": 612,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-kelly": {
+   "frame": {
+    "x": 734,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  },
+  "rosto-laura": {
+   "frame": {
+    "x": 856,
+    "y": 339,
+    "w": 120,
+    "h": 120
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 120,
+    "h": 120
+   },
+   "sourceSize": {
+    "w": 120,
+    "h": 120
+   }
+  }
+ },
+ "meta": {
+  "image": "familia.png",
+  "size": {
+   "w": 978,
+   "h": 461
+  },
+  "scale": "1"
+ }
+}

@@ -551,16 +551,16 @@ export class LevelScene extends Phaser.Scene {
                 // em pé ao lado da placa, olhando para o Chico (que vem da esquerda); do outro lado se houver parede
                 const lado = solido(r, c + 1) ? -1 : 1;
                 pessoa = this.add
-                  .image(cx + lado * 46, y + TILE, `familia-${quem}`)
+                  .image(cx + lado * 46, y + TILE, 'familia', `corpo-${quem}`)
                   .setOrigin(0.5, 1)
-                  .setScale(0.82)
+                  .setScale(0.5)
                   .setFlipX(true)
                   .setDepth(2.5)
                   .setData('y0', y + TILE);
               } else {
                 // chamada de vídeo: o tabletzinho flutua em cima da placa
                 const tela = this.add.image(0, 0, 'chamador');
-                const rosto = this.add.image(0, -8, `rosto-${quem}`).setScale(0.62);
+                const rosto = this.add.image(0, -8, 'familia', `rosto-${quem}`).setScale(0.62);
                 pessoa = this.add.container(cx, y - 30, [tela, rosto]).setDepth(2.5).setScale(0.8);
                 this.tweens.add({ targets: pessoa, y: y - 40, yoyo: true, repeat: -1, duration: 1000, ease: 'Sine.easeInOut' });
               }

@@ -226,7 +226,7 @@ export class MapaScene extends Phaser.Scene {
     this.ocupado = true;
     const fundo = this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setDepth(50).setInteractive();
     const tela = this.add.image(W / 2, H / 2, 'chamador').setScale(2.6).setDepth(51);
-    const rosto = this.add.image(W / 2, H / 2 - 20, 'rosto-marcela').setScale(1.9).setDepth(52);
+    const rosto = this.add.image(W / 2, H / 2 - 20, 'familia', 'rosto-marcela').setScale(1.9).setDepth(52);
     const livro = this.add.image(W / 2 + 150, H / 2 + 40, 'atlas').setScale(0.8).setDepth(53);
     this.tweens.add({ targets: tela, angle: { from: -3, to: 3 }, yoyo: true, repeat: 3, duration: 90 });
     this.tweens.add({ targets: livro, y: livro.y - 10, yoyo: true, repeat: -1, duration: 800 });

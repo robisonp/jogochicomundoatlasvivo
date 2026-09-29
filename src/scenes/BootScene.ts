@@ -6,6 +6,13 @@ export class BootScene extends Phaser.Scene {
     super('Boot');
   }
 
+  preload() {
+    // Arte da família (corpo inteiro "corpo-<id>" e retrato "rosto-<id>") numa folha só (atlas):
+    // uma textura para todos evita misturar imagens ao desenhar muitas ao mesmo tempo.
+    // O resto do jogo é desenhado por código.
+    this.load.atlas('familia', 'familia/familia.png', 'familia/familia.json');
+  }
+
   create() {
     gerarTexturas(this);
     const params = new URLSearchParams(location.search);

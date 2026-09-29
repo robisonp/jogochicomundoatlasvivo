@@ -58,13 +58,13 @@ export class HudScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('pegadas', this.atualizarPegadas, this));
 
     // Rosto de quem da família está falando (dicas da Vovó Lili, resgates da Mamãe July, placas...).
-    this.retrato = this.add.image(0, 0, 'rosto-lili').setVisible(false).setDepth(50);
+    this.retrato = this.add.image(0, 0, 'familia', 'rosto-lili').setVisible(false).setDepth(50);
     const pararDeOuvir = VoiceManager.aoFalar((quem) => {
       if (!ehFamiliar(quem)) {
         this.retrato.setVisible(false);
         return;
       }
-      this.retrato.setTexture(`rosto-${quem}`).setVisible(true).setAlpha(1);
+      this.retrato.setTexture('familia', `rosto-${quem}`).setVisible(true).setAlpha(1);
       this.tweens.killTweensOf(this.retrato);
       this.tweens.add({ targets: this.retrato, scale: { from: 0.3, to: 0.8 }, duration: 300, ease: 'Back.easeOut' });
       this.tweens.add({ targets: this.retrato, angle: { from: -4, to: 4 }, yoyo: true, repeat: 5, duration: 220, delay: 300 });

@@ -34,7 +34,7 @@ Parâmetros de URL úteis:
 
 Mapa: o **botão verde da tela de título** abre o mapa-múndi com a rota dos 8 mundos. Toque num mundo aberto para escolher a fase, ou no botão verde do mapa para continuar de onde parou. Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro; quando um mundo novo abre, o Chico viaja pela rota e o narrador diz o continente e o país.
 
-Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **Para deixar cada um parecido com a pessoa de verdade, ajuste cores, penteado, óculos, barba etc. em `src/data/familia.ts`** (como `src/data/visual.ts` faz com o Chico).
+Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **A aparência vem da arte feita pela família**, recortada numa folha só (`public/familia/familia.png`, com os quadros `corpo-<id>` e `rosto-<id>` descritos em `familia.json`). O papel de cada um no jogo fica em `src/data/familia.ts`; as cores do Chico (que é animado em partes) ficam em `src/data/visual.ts`.
 
 Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
@@ -47,7 +47,7 @@ src/
   art/Textures.ts       arte desenhada por código (Chico em partes, cenário, objetos, UI)
   core/SaveManager.ts   save local versionado (com migração) + configurações
   data/visual.ts        cores do Chico e da paleta de cada mundo
-  data/familia.ts       aparência e papel de cada pessoa da família
+  data/familia.ts       papel de cada pessoa da família (a arte fica em public/familia)
   data/mapa.ts          os 8 mundos no mapa-múndi (onde ficam e o que o narrador fala)
   entities/Player.ts    física do movimento + animação procedural
   levels/               fases em texto (ver legenda em levels/types.ts)

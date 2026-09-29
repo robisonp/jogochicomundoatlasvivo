@@ -55,9 +55,9 @@ export class TitleScene extends Phaser.Scene {
     const presentes: Familiar[] = ['july', 'lili', 'marcos', 'marcela', 'robi'];
     presentes.forEach((id, i) => {
       const p = this.add
-        .image(W * 0.4 + i * 64, H - 128, `familia-${id}`)
+        .image(W * 0.4 + i * 64, H - 128, 'familia', `corpo-${id}`)
         .setOrigin(0.5, 1)
-        .setScale(0.72)
+        .setScale(0.42)
         .setInteractive({ useHandCursor: true });
       this.tweens.add({ targets: p, angle: { from: -2, to: 2 }, yoyo: true, repeat: -1, duration: 900 + i * 130, ease: 'Sine.easeInOut' });
       p.on('pointerdown', () => {
@@ -71,7 +71,7 @@ export class TitleScene extends Phaser.Scene {
     (['kelly', 'laura'] as Familiar[]).forEach((id, i) => {
       if (FAMILIA[id].presencial) return;
       const tela = this.add.image(0, 0, 'chamador');
-      const rosto = this.add.image(0, -8, `rosto-${id}`).setScale(0.62);
+      const rosto = this.add.image(0, -8, 'familia', `rosto-${id}`).setScale(0.62);
       const c = this.add.container(W * 0.1 + i * 130, H * 0.45, [tela, rosto]).setScale(0.7).setSize(150, 124);
       c.setInteractive({ useHandCursor: true });
       this.tweens.add({ targets: c, y: c.y - 10, yoyo: true, repeat: -1, duration: 1100 + i * 200, ease: 'Sine.easeInOut' });
