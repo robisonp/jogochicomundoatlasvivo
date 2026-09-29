@@ -1,0 +1,78 @@
+// Interface por cima da fase: controles de toque, repetir áudio, pausa e contador de pegadas.
+import Phaser from 'phaser';
+import { TouchControls } from '../ui/TouchControls';
+import { VoiceManager } from '../systems/VoiceManager';
+import { AudioManager } from '../systems/AudioManager';
+import type { LevelScene } from './LevelScene';
+
+export class HudScene extends Phaser.Scene {
+  private level!: LevelScene;
+  private controles!: TouchControls;
+  private btnSom!: Phaser.GameObjects.Image;
+  private btnPausa!: Phaser.GameObjects.Image;
+  private iconePegada!: Phaser.GameObjects.Image;
+  private textoPegadas!: Phaser.GameObjects.Text;
+
+  constructor() {
+    super('Hud');
+  }
+
+  init(data: { level: LevelScene }) {
+    this.level = data.level;
+  }
+
+  create() {
+    this.controles = new TouchControls(this, { poder: false });
+
+    this.btnSom = this.add.image(0, 0, 'btn-som').setInteractive({ useHandCursor: true });
+    this.btnSom.on('pointerdown', () => {
+      AudioManager.tocar('botao');
+      VoiceManager.repetir();
+      this.tweens.add({ targets: this.btnSom, scale: { from: 0.85, to: 1 }, duration: 200 });
+    });
+
+    this.btnPausa = this.add.image(0, 0, 'btn-pausa').setInteractive({ useHandCursor: true });
+    this.btnPausa.on('pointerdown', () => {
+      AudioManager.tocar('botao');
+      this.controles.limpar();
+      this.level.pausar();
+    });
+
+    this.iconePegada = this.add.image(0, 0, 'pegada').setScale(1.1);
+    this.textoPegadas = this.add.text(0, 0, '', {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '40px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      stroke: '#1d2b3a',
+      strokeThickness: 8,
+    });
+    this.atualizarPegadas(this.level.contarPegadasFase());
+    this.level.events.on('pegadas', this.atualizarPegadas, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('pegadas', this.atualizarPegadas, this));
+
+    this.posicionar();
+    this.scale.on('resize', this.posicionar, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', this.posicionar, this));
+    // Ao voltar da pausa, nenhum botão fica "preso".
+    const aoRetomar = () => this.controles.limpar();
+    this.events.on(Phaser.Scenes.Events.RESUME, aoRetomar);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.RESUME, aoRetomar));
+    // Entrando direto numa fase (sem passar pelo título), o primeiro toque ou tecla libera o áudio.
+    this.input.on('pointerdown', () => AudioManager.desbloquear());
+    this.input.keyboard?.on('keydown', () => AudioManager.desbloquear());
+  }
+
+  private posicionar() {
+    const W = this.scale.width;
+    this.btnSom.setPosition(60, 58);
+    this.iconePegada.setPosition(140, 58);
+    this.textoPegadas.setPosition(172, 34);
+    this.btnPausa.setPosition(W - 60, 58);
+  }
+
+  private atualizarPegadas(p: { pegas: number; total: number }) {
+    this.textoPegadas.setText(`${p.pegas}/${p.total}`);
+    this.tweens.add({ targets: this.iconePegada, scale: { from: 1.5, to: 1.1 }, duration: 250, ease: 'Back.easeOut' });
+  }
+}

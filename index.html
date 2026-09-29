@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6c177" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Chico e o Atlas Vivo</title>
+    <style>
+      html, body { margin: 0; padding: 0; height: 100%; background: #1d2b3a; overflow: hidden; }
+      body { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+      #game { width: 100vw; height: 100vh; height: 100dvh; }
+      #rotate { display: none; position: fixed; inset: 0; background: #1d2b3a; color: #fff; font: 600 22px system-ui, sans-serif;
+        align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; z-index: 10; }
+      #rotate svg { width: 120px; height: 120px; }
+      @media (orientation: portrait) and (max-width: 1024px) { #rotate { display: flex; } }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="rotate" aria-label="Gire o tablet">
+      <svg viewBox="0 0 120 120" fill="none" stroke="#f6c177" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="38" y="16" width="44" height="76" rx="8" />
+        <path d="M22 96c10 12 30 16 46 12" /><path d="M62 100l8 8-10 6" />
+      </svg>
+      <span>↻</span>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
