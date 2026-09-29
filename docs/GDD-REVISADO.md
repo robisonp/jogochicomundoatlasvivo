@@ -1,4 +1,4 @@
-# GDD revisado — Chico e o Atlas Vivo (v1.1)
+# GDD revisado — Chico e o Atlas Vivo (v1.2)
 
 Este documento **complementa** o GDD v1.0: tudo o que não está aqui continua valendo. Ele registra as decisões da família, as correções de lógica e a estrutura simplificada dos 8 mundos.
 
@@ -13,7 +13,7 @@ Este documento **complementa** o GDD v1.0: tudo o que não está aqui continua v
 | Controles de toque | Direcional à **direita**; botões **Pular**, **Ação** e **Poder** à **esquerda** (lado trocável na área adulta). O botão Poder só aparece quando há poder |
 | Vozes | **Sintéticas**. Cada personagem tem um perfil de tom e velocidade sobre a voz pt-BR do aparelho |
 | Arte | Vetorial, desenhada por código. Animais como figuras simples e reconhecíveis |
-| Conteúdo científico | Vem do documento de fichas da família. O jogo só fala o que estiver na ficha |
+| Conteúdo científico | Vem do [dossiê científico](DOSSIE-CIENTIFICO.md) da família. O jogo só fala o que estiver nele |
 
 ### Motor de mecânicas (tudo o que as 40 fases usam)
 
@@ -23,17 +23,20 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 |---|---|
 | Correr, pular (altura variável), escadas/cipós, lajes, buracos, espinhos, pegadas, checkpoints, placas de som | Todas as fases (**já pronto** no protótipo) |
 | Páginas voando (plataformas móveis) | Todos os mundos (**pronto**) |
-| **Rolar/deslizar** (fica baixinho e rápido: passa em túneis e desliza) | Tatu-bola (M1), wombat (M4), pinguim (M6) |
-| **Arrancada** (explosão de velocidade) | Guepardo (M3), golfinho na água (M7) |
+| **Virar bola** (fecha-se e fica protegido por alguns segundos: perigos não machucam) | Tatu-bola (M1) |
+| **Baixinho/deslizar** (fica baixo e desliza: passa em túneis e em gelo) | Wombat cavando túneis (M4), pinguim-de-adélia no tobogã (M6) |
+| **Arrancada** (explosão de velocidade, curta) | Guepardo (M3) |
+| **Salto giratório** (sai da água girando e alcança o alto) | Golfinho-rotador (M7) |
+| **Grudar** (sobe paredes de tronco) | Perereca-leiteira (M2, trechos opcionais) |
 | **Super pulo** | Canguru (M4) |
 | **Empurrar pesado** | Elefante (M3) |
-| **Nado** (zona de água: flutuar, subir com o pulo) | M2, M4, M5, M6, M7 |
+| **Nado** (zona de água: flutuar, subir com o pulo). Sem poder, só água rasa; com o poder da onça, água funda | M2, M4, M5, M6, M7 |
 | **Mergulho na neve** (pulo que cai de cabeça e quebra neve fofa) | Raposa-do-ártico (M5) |
 | **Vento Viravolta** (zonas que empurram o Chico) | Aparece em todos os mundos, porque é o "antagonista" |
 | **Gelo** (chão escorregadio) | M5, M6 |
 | **Noite** (escuro com trilha iluminada) | M4 |
 | **Maré** (água que sobe e desce devagar) | M7 |
-| **Cavar** (botão Ação em pontos marcados) | M8 |
+| **Cavar** (botão Ação em pontos marcados) | M8 (Araripe) |
 | **Montar esqueleto** (único minijogo: arrastar 4–5 ossos) | M8 |
 
 ## 2. Correções de lógica
@@ -55,6 +58,11 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 | 13 | Mundo 7 (praia, perto de casa) vem depois da Antártica | Parecia fora de ordem | Mantido: é a **volta para casa** pelo Oceano Atlântico. A saída "praia" da Casa se abre ao chegar no M7 |
 | 14 | Protótipo na Savana (M3), mas a campanha começa na Caatinga | O tutorial ficaria fora do lugar | O protótipo de movimento já é a **Caatinga** e vira a base da Fase 1 |
 | 15 | 10 opções de acessibilidade | Excesso para a v1 | v1: volumes separados, pausa, reduzir movimento, lado dos controles |
+| 16 | Poder do tatu-bola = rolar | Dossiê: fechar-se em bola é VERDADEIRO; sair rolando é PARCIAL | Poder **Virar bola** (proteção). Túneis passam para o wombat (M4) |
+| 17 | Onça nada "contra a correnteza" | Dossiê: não documentado | Poder **Nado da Onça**: atravessar rios e água funda |
+| 18 | Golfinho = "nada muito rápido" | Dossiê: PARCIAL (números populares exagerados) | Poder **Salto giratório** do golfinho-rotador (comportamento real que dá nome à espécie) |
+| 19 | Escavação e esqueleto em Sousa | Em Sousa há **só pegadas**, não esqueletos | M8 vira um passeio pelo Brasil dos dinossauros: pegadas em **Sousa (PB)**, escavação no **Araripe (CE)**, esqueleto do **Buriolestes (RS)** |
+| 20 | Asa-branca vai embora na seca e volta com a chuva | Associação cultural, não regra biológica | Aparece como **cultura sertaneja** (música), separada da fala científica |
 
 ## 3. Os 8 mundos e as 40 fases
 
@@ -64,22 +72,22 @@ Legenda: ★ = poder novo · ◆ = variação de ambiente. Cada fase tem 2–3 m
 Animais: tatu-bola, mocó, carcará, asa-branca, preá.
 1. **A Página Seca** — correr, pular, pegadas (base = protótipo atual).
 2. **Lajedo do Mocó** — lajes, escadas e fendas nas pedras.
-3. **O Caminho do Tatu-bola** ★ rolar: túneis baixos.
+3. **O Tatu-bola** ★ virar bola: passar protegido por chuva de pedrinhas e espinhos.
 4. **Chuva no Sertão** ◆ a Caatinga fica verde; primeiras zonas de vento.
 5. **Selo do Sertão** — combina tudo.
 
 ### Mundo 2 — Amazônia (Brasil)
-Animais: onça-pintada, arara, preguiça, boto, sapos.
+Animais: onça-pintada, arara-vermelha-grande, preguiça-de-garganta-marrom, boto-cor-de-rosa, perereca-leiteira.
 6. **O Dossel Verde** — cipós (escalada vertical). Tia Kelly e Tia Laura ligam.
-7. **O Rio** ◆ nado básico.
-8. **Nado da Onça** ★ nado forte contra a correnteza (a onça-pintada nada muito bem).
+7. **O Rio** ◆ nado básico em água rasa.
+8. **Nado da Onça** ★ atravessar rios e água funda (a onça-pintada é excelente nadadora).
 9. **Vozes da Floresta** — seguir sons com ondas visuais.
 10. **Tempestade no Rio** — combina cipó, nado e vento.
 
 ### Mundo 3 — Savana (Quênia e Tanzânia)
-Animais: guepardo, elefante, girafa, zebra, avestruz.
+Animais: guepardo, elefante-africano-da-savana, girafa-masai, zebra-da-planície, avestruz.
 11. **Pegadas na Savana** — seguir rastros.
-12. **Corrida do Guepardo** ★ arrancada.
+12. **Corrida do Guepardo** ★ arrancada curta (o guepardo só sustenta a velocidade máxima por segundos: a arrancada acaba e precisa "recarregar").
 13. **A Força do Elefante** ★ empurrar troncos e pedras.
 14. **Olhos no Alto** — rotas altas (girafa como referência de altura).
 15. **A Grande Travessia** — arrancada + empurrar.
@@ -87,13 +95,13 @@ Animais: guepardo, elefante, girafa, zebra, avestruz.
 ### Mundo 4 — Austrália
 Animais: canguru, wombat, emu, ornitorrinco, coala.
 16. **Saltos do Outback** ★ super pulo.
-17. **Tocas do Wombat** — túneis (reaproveita o rolar).
+17. **Tocas do Wombat** ★ cavar: fica baixinho e abre túneis na terra fofa.
 18. **Corrida do Emu** — trecho de velocidade.
 19. **O Rio do Ornitorrinco** — nado.
-20. **Noite no Outback** ◆ noite com trilha iluminada.
+20. **Noite na Mata** ◆ noite com trilha de vaga-lumes (vivem em áreas úmidas com vegetação, não no deserto do Outback).
 
 ### Mundo 5 — Ártico (Canadá e Noruega como referências)
-Animais: urso-polar, raposa-do-ártico, rena, foca, coruja-das-neves.
+Animais: urso-polar, raposa-do-ártico, rena/caribu, foca-anelada, coruja-das-neves. **Sem pinguins** (eles não vivem no Ártico).
 21. **Sol da Meia-Noite** ◆ gelo escorregadio; o dia que não acaba.
 22. **Pegadas na Neve** — rastros.
 23. **O Pulo da Raposa** ★ mergulho na neve.
@@ -101,30 +109,28 @@ Animais: urso-polar, raposa-do-ártico, rena, foca, coruja-das-neves.
 25. **Mar Congelado** — gelo, água e resgate (Mamãe July).
 
 ### Mundo 6 — Antártica e Oceano Austral
-Animais: pinguins, focas, orca, baleias, albatroz.
+Animais: pinguim-de-adélia, foca-de-weddell, orca, baleia-jubarte, albatroz-errante. **Sem ursos-polares.**
 26. **Um Continente sem País** — chegada pelo mapa.
-27. **Deslize do Pinguim** ★ deslizar de barriga (reaproveita o rolar sobre gelo).
+27. **Deslize do Pinguim** ★ tobogã de barriga (reaproveita o "baixinho/deslizar" sobre gelo).
 28. **Debaixo do Gelo** — nado, com bolhas marcando o caminho.
 29. **O Canto das Baleias** — sons com ondas visuais.
 30. **Tempestade Branca** — vento forte do Viravolta.
 
 ### Mundo 7 — Oceano e Praia (Brasil)
-Animais: tartaruga-marinha, peixe-boi-marinho, golfinho, caranguejo, cavalo-marinho.
+Animais: tartaruga-de-pente, peixe-boi-marinho, golfinho-rotador, caranguejo-uçá, cavalo-marinho-de-focinho-longo.
 31. **Um Dia na Praia** — chegada perto de casa.
 32. **A Maré Mudou** ◆ maré sobe e desce.
-33. **Nado do Golfinho** ★ arrancada na água.
+33. **Salto do Golfinho** ★ salto giratório para fora d'água (referência: golfinhos-rotadores de Fernando de Noronha).
 34. **O Berçário do Mar** — manguezal.
 35. **Praia Depois da Tempestade** — exploração e cuidado com a praia.
 
-### Mundo 8 — Os Dinossauros (Sousa, PB)
-Referências: pegadas do Vale dos Dinossauros (Sousa); fósseis do Nordeste, como o Irritator e os pterossauros da Chapada do Araripe ("nem todo animal pré-histórico era dinossauro"). Outros dinossauros entram como páginas do Atlas.
-36. **O Vale dos Dinossauros** — pegadas na rocha, hoje. O Portal do Tempo se abre.
-37. **Pegadas do Cretáceo** — o mesmo lugar, milhões de anos atrás; seguir as pegadas.
-38. **Escavação** ★ cavar (botão Ação) e limpar fósseis.
-39. **Monte o Esqueleto** — o único minijogo: arrastar os ossos até a silhueta.
+### Mundo 8 — O Brasil dos Dinossauros
+O Portal do Tempo abre em Sousa (PB) e leva o Chico a três lugares do Brasil onde fósseis foram encontrados. Outros dinossauros (Carnotaurus, Argentinosaurus, Velociraptor, T. rex) entram como **páginas do Atlas**.
+36. **O Vale dos Dinossauros** (Sousa, PB) — hoje: centenas de pegadas na rocha. O Portal do Tempo se abre.
+37. **Pegadas do Cretáceo** (Sousa, entre 145 e 125 milhões de anos atrás) — seguir as trilhas. Os dinossauros aparecem como silhuetas de **grupos** (terópode, saurópode, ornitópode), porque ninguém sabe a espécie exata de quem deixou cada pegada.
+38. **Escavação no Araripe** (CE) ★ cavar (botão Ação) e limpar fósseis: o crânio do Irritator e um pterossauro. Minijogo rápido de dois cestos: "é dinossauro" / "não é dinossauro".
+39. **Monte o Esqueleto** (RS) — o único minijogo grande: montar o **Buriolestes** em 5 peças (crânio; coluna e costelas; braços; bacia; pernas e cauda). O esqueleto dele foi encontrado quase completo.
 40. **O Atlas Inteiro** — final com todos os poderes e a família inteira.
-
-> Datas geológicas, espécies e locais exatos devem ser **conferidos na ficha científica** antes de virar fala.
 
 ## 4. Curva de dificuldade (ajustada)
 
@@ -142,7 +148,7 @@ Ajuda da Vovó Lili: depois de **4 falhas** no mesmo trecho, ela fala uma dica c
 | Narrador | Instruções gerais, países, animais |
 | Vovó Lili | Dicas depois de falhas; placas de cuidado |
 | Vovô Marcos | Construções: escadas de corda, pontes, jangadas |
-| Tia Marcela | Abertura de mundos; páginas voando; Mundo 8 |
+| Tia Marcela | Abertura de mundos; páginas voando; Mundo 8. Canta/conta a tradição da asa-branca (cultura, não ciência) |
 | Tio Robi | Desafios de corrida e de pulo |
 | Mamãe July | Resgates (M5, M7, fase 40) |
 | Tias Kelly e Laura | Chamadas nas fases verticais (M2, M3, M5) |

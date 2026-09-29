@@ -5,6 +5,7 @@ Phaser 4 + TypeScript + Vite. Arte, música e efeitos gerados por código; vozes
 
 - Auditoria do GDD: [docs/AUDITORIA.md](docs/AUDITORIA.md)
 - GDD revisado (decisões, correções e os 8 mundos): [docs/GDD-REVISADO.md](docs/GDD-REVISADO.md)
+- Dossiê científico (fonte das falas e fichas do Atlas): [docs/DOSSIE-CIENTIFICO.md](docs/DOSSIE-CIENTIFICO.md)
 
 ## Rodar
 
