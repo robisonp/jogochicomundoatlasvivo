@@ -26,6 +26,8 @@ export interface SaveData {
   animais: string[];
   /** Poderes do Bicho já conquistados. */
   poderes: string[];
+  /** Selos dos mundos concluídos. */
+  selos: string[];
   settings: Settings;
 }
 
@@ -41,7 +43,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 function novoSave(): SaveData {
-  return { versao: VERSAO_ATUAL, fases: {}, tentativas: {}, animais: [], poderes: [], settings: { ...DEFAULT_SETTINGS } };
+  return { versao: VERSAO_ATUAL, fases: {}, tentativas: {}, animais: [], poderes: [], selos: [], settings: { ...DEFAULT_SETTINGS } };
 }
 
 // Cada entrada migra da versão N para N+1. Ex.: migracoes[1] leva um save v1 para v2.
@@ -109,7 +111,7 @@ class SaveManagerImpl {
   }
 
   /** Registra um item numa lista do save (animal do Atlas, poder) sem repetir. */
-  conquistar(lista: 'animais' | 'poderes', id: string): boolean {
+  conquistar(lista: 'animais' | 'poderes' | 'selos', id: string): boolean {
     if (this.data[lista].includes(id)) return false;
     this.data[lista].push(id);
     this.salvar();

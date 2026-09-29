@@ -68,7 +68,7 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 
 Legenda: ★ = poder novo · ◆ = variação de ambiente. Cada fase tem 2–3 min, com 1 checkpoint por minuto.
 
-### Mundo 1 — Caatinga (sertão da Paraíba) — fases 1 a 3 jogáveis
+### Mundo 1 — Caatinga (sertão da Paraíba) — completo (fases 1 a 5 jogáveis)
 Animais: tatu-bola, mocó, carcará, asa-branca, preá.
 1. **A Página Seca** — correr, pular, pegadas (base = protótipo atual).
 2. **Lajedo do Mocó** — lajes, escadas e fendas nas pedras.

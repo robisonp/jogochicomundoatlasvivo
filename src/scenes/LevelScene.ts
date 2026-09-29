@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, PLAYER } from '../config';
+import { TILE, PLAYER, VENTO } from '../config';
 import { Player } from '../entities/Player';
 import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -14,7 +14,19 @@ const SOLIDOS: Record<string, [string, string]> = {
   '#': ['terra', 'terra-topo'],
   R: ['rocha', 'rocha-topo'],
 };
-const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = { moco: 'moco', 'tatu-bola': 'tatu' };
+const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
+  moco: 'moco',
+  'tatu-bola': 'tatu',
+  'asa-branca': 'asa-branca',
+  carcara: 'carcara',
+  prea: 'prea',
+};
+
+interface ZonaVento {
+  area: Phaser.Geom.Rectangle;
+  dir: 1 | -1;
+  folhas: Phaser.GameObjects.Particles.ParticleEmitter;
+}
 
 interface Plataforma {
   img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
@@ -76,6 +88,13 @@ export class LevelScene extends Phaser.Scene {
   private fontesPedrinhas: FontePedrinhas[] = [];
   private pedrinhas!: Phaser.Physics.Arcade.Group;
   private estilhacos!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private ventos: ZonaVento[] = [];
+  private relogioVento = 0;
+  private rajadaForte = false;
+  private gatilhoChuva: number | null = null;
+  private chovendo = false;
+  private chuvaCaindo = false;
+  private toposTerra: { x: number; y: number }[] = [];
 
   constructor() {
     super('Level');
@@ -85,6 +104,13 @@ export class LevelScene extends Phaser.Scene {
     this.def = FASES[data.faseId ?? ''] ?? CAMPANHA[0];
     this.bichos = [];
     this.fontesPedrinhas = [];
+    this.ventos = [];
+    this.relogioVento = 0;
+    this.rajadaForte = false;
+    this.gatilhoChuva = null;
+    this.chovendo = false;
+    this.chuvaCaindo = false;
+    this.toposTerra = [];
     this.plataformas = [];
     this.placas = [];
     this.checkpoints = [];
@@ -149,6 +175,7 @@ export class LevelScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop('Hud');
       VoiceManager.calar();
+      AudioManager.chuva(false);
     });
 
     if (!SaveManager.data.settings.reduzirMovimento) cam.fadeIn(350);
@@ -241,7 +268,9 @@ export class LevelScene extends Phaser.Scene {
         const c0 = c;
         while (solido(r, c)) {
           const [interno, comTopo] = SOLIDOS[at(r, c)];
-          this.add.image(c * TILE, r * TILE, solido(r - 1, c) ? interno : comTopo).setOrigin(0).setDepth(1);
+          const temTopo = !solido(r - 1, c);
+          this.add.image(c * TILE, r * TILE, temTopo ? comTopo : interno).setOrigin(0).setDepth(1);
+          if (temTopo && at(r, c) === '#') this.toposTerra.push({ x: c * TILE, y: r * TILE });
           c++;
         }
         const anterior = corpos.find((k) => k.c0 === c0 && k.c1 === c - 1 && k.r1 === r - 1);
@@ -249,6 +278,33 @@ export class LevelScene extends Phaser.Scene {
         else corpos.push({ c0, c1: c - 1, r0: r, r1: r });
       }
     }
+    // Zonas de vento: células "<" e ">" viram retângulos por linha, cada um com suas folhas voando.
+    for (let r = 0; r < LINHAS; r++) {
+      let c = 0;
+      while (c < cols) {
+        const ch = at(r, c);
+        if (ch !== '<' && ch !== '>') {
+          c++;
+          continue;
+        }
+        const c0 = c;
+        while (at(r, c) === ch) c++;
+        const area = new Phaser.Geom.Rectangle(c0 * TILE, r * TILE, (c - c0) * TILE, TILE);
+        const dir = ch === '>' ? 1 : -1;
+        const folhas = this.add.particles(0, 0, 'folha', {
+          lifespan: 1600,
+          speedX: { min: dir * 260, max: dir * 420 },
+          speedY: { min: -30, max: 30 },
+          rotate: { min: 0, max: 360 },
+          alpha: { start: 0.9, end: 0 },
+          frequency: 350,
+          emitZone: { type: 'random', source: area as any },
+        });
+        folhas.setDepth(9);
+        this.ventos.push({ area, dir, folhas });
+      }
+    }
+
     for (const k of corpos) {
       const w = (k.c1 - k.c0 + 1) * TILE;
       const h = (k.r1 - k.r0 + 1) * TILE;
@@ -339,6 +395,9 @@ export class LevelScene extends Phaser.Scene {
             this.bichos.push({ img, def, ativado: false });
             break;
           }
+          case 'U':
+            if (this.gatilhoChuva === null) this.gatilhoChuva = cx;
+            break;
           case 'Q': {
             this.fontesPedrinhas.push({ x: cx, y: y + 10, t: 0.4 + this.fontesPedrinhas.length * 0.35 });
             // poeirinha caindo avisa onde as pedrinhas vão cair
@@ -354,7 +413,8 @@ export class LevelScene extends Phaser.Scene {
             break;
           }
           case 'G': {
-            this.objetivo = this.physics.add.staticImage(cx, y + TILE, 'atlas').setOrigin(0.5, 1).setDepth(3);
+            const textura = this.def.selo ? `selo-${this.def.selo.id}` : 'atlas';
+            this.objetivo = this.physics.add.staticImage(cx, y + TILE, textura).setOrigin(0.5, 1).setDepth(3);
             this.objetivo.refreshBody();
             this.tweens.add({ targets: this.objetivo, y: this.objetivo.y - 10, yoyo: true, repeat: -1, duration: 1100, ease: 'Sine.easeInOut' });
             this.add.particles(cx, y + TILE - 60, 'brilho', {
@@ -425,6 +485,84 @@ export class LevelScene extends Phaser.Scene {
     this.checarPlacas(i.actionPressed);
     this.checarBichos();
     this.soltarPedrinhas(dt);
+    this.atualizarVento(dt);
+    if (this.gatilhoChuva !== null && !this.chovendo && this.player.x > this.gatilhoChuva) this.comecarChuva();
+  }
+
+  // ------------------------------------------------------------------ vento e chuva
+
+  private atualizarVento(dt: number) {
+    if (!this.ventos.length) return;
+    this.relogioVento += dt * 1000;
+    const ciclo = VENTO.rajadaMs + VENTO.calmaMs;
+    const forte = this.relogioVento % ciclo < VENTO.rajadaMs;
+    const perto = this.ventos.some((v) => Math.abs(v.area.centerX - this.player.x) < 900);
+    if (forte && !this.rajadaForte && perto) AudioManager.rajada();
+    if (forte !== this.rajadaForte) {
+      this.rajadaForte = forte;
+      // folhas mostram a força do vento: muitas na rajada, poucas na calmaria
+      for (const v of this.ventos) v.folhas.frequency = forte ? 110 : 600;
+    }
+    const zona = this.ventos.find((v) => v.area.contains(this.player.x, this.player.y));
+    this.player.ventoX = zona ? zona.dir * VENTO.forca * (forte ? 1 : 0.15) : 0;
+  }
+
+  private comecarChuva() {
+    this.chovendo = true;
+    this.chuvaCaindo = true;
+    const { width, height } = this.scale;
+    const nublado = this.add.rectangle(0, 0, width, height, 0x2c3e55, 0).setOrigin(0).setScrollFactor(0).setDepth(-50);
+    this.tweens.add({ targets: nublado, fillAlpha: 0.35, duration: 1200 });
+    const gotas = this.add.particles(0, -30, 'gota', {
+      x: { min: 0, max: width },
+      lifespan: 900,
+      speedY: { min: 900, max: 1200 },
+      speedX: { min: -60, max: -20 },
+      quantity: 3,
+      frequency: 16,
+      alpha: { start: 0.8, end: 0.4 },
+    });
+    gotas.setScrollFactor(0).setDepth(40);
+    AudioManager.chuva(true);
+    const f = this.def.chuva?.comeca;
+    if (f) VoiceManager.falar(f.texto, f.quem);
+
+    // A chuva passa e a Caatinga fica verde depressa (dossiê: a mudança da paisagem pode ser muito rápida).
+    this.time.delayedCall(6500, () => {
+      gotas.stop();
+      this.chuvaCaindo = false;
+      AudioManager.chuva(false);
+      this.tweens.add({ targets: nublado, fillAlpha: 0, duration: 1500, onComplete: () => nublado.destroy() });
+      this.verdejar();
+    });
+  }
+
+  private verdejar() {
+    for (const t of this.toposTerra) {
+      const capim = this.add.image(t.x, t.y, 'capim-verde').setOrigin(0).setDepth(1.5).setAlpha(0);
+      // o verde se espalha a partir de onde o Chico está
+      const atraso = Math.min(2500, Math.abs(t.x - this.player.x) * 0.6);
+      this.tweens.add({ targets: capim, alpha: 1, duration: 600, delay: atraso });
+    }
+    for (const f of this.fundo) {
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: 2000,
+        onUpdate: (tw) => {
+          const k = tw.getValue() ?? 0;
+          const cor = Phaser.Display.Color.Interpolate.ColorWithColor(
+            Phaser.Display.Color.ValueToColor(0xffffff),
+            Phaser.Display.Color.ValueToColor(0xa8e08a),
+            100,
+            k * 100,
+          );
+          f.img.setTint(Phaser.Display.Color.GetColor(cor.r, cor.g, cor.b));
+        },
+      });
+    }
+    const f = this.def.chuva?.verde;
+    if (f) this.time.delayedCall(800, () => VoiceManager.falar(f.texto, f.quem));
   }
 
   private semEntrada() {
@@ -516,7 +654,39 @@ export class LevelScene extends Phaser.Scene {
       emitting: false,
     }).setDepth(9).explode(16);
 
-    if (def.demo.tipo === 'pular') {
+    if (def.demo.tipo === 'voar') {
+      // Aves levantam voo batendo as asas.
+      const { dx, dy } = def.demo;
+      const x0 = img.x;
+      const y0 = img.y;
+      this.time.delayedCall(1200, () => {
+        img.setFlipX(false);
+        this.tweens.killTweensOf(img);
+        this.tweens.add({ targets: img, scaleY: 0.6, yoyo: true, repeat: -1, duration: 110 });
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: 2200,
+          ease: 'Sine.easeInOut',
+          onUpdate: (tw) => {
+            const t = tw.getValue() ?? 0;
+            img.setPosition(x0 + dx * TILE * t, y0 + dy * TILE * t - Math.sin(Math.PI * t) * 60);
+          },
+          onComplete: () => {
+            this.tweens.killTweensOf(img);
+            img.setScale(1);
+          },
+        });
+      });
+    } else if (def.demo.tipo === 'correr') {
+      // O preá corre e some por baixo da vegetação.
+      const { dx } = def.demo;
+      this.time.delayedCall(1000, () => {
+        img.setFlipX(false);
+        this.tweens.add({ targets: img, x: img.x + dx * TILE, duration: 900, ease: 'Quad.easeIn' });
+        this.tweens.add({ targets: img, alpha: 0, delay: 700, duration: 300 });
+      });
+    } else if (def.demo.tipo === 'pular') {
       // O mocó sobe o lajedo num salto, mostrando o caminho pelas pedras.
       const { dx, dy } = def.demo;
       const x0 = img.x;
@@ -674,7 +844,12 @@ export class LevelScene extends Phaser.Scene {
     this.player.comemorar();
     AudioManager.pararMusica();
     AudioManager.tocar('vitoria');
-    VoiceManager.falar('Você achou o Atlas! Muito bem, Chico!', 'narrador');
+    if (this.def.selo) {
+      SaveManager.conquistar('selos', this.def.selo.id);
+      VoiceManager.falar(this.def.selo.fala.texto, this.def.selo.fala.quem);
+    } else {
+      VoiceManager.falar('Você achou o Atlas! Muito bem, Chico!', 'narrador');
+    }
 
     const prog = SaveManager.fase(this.def.id);
     prog.concluida = true;
@@ -697,6 +872,7 @@ export class LevelScene extends Phaser.Scene {
       this.scene.launch('Fim', {
         faseId: this.def.id,
         proximaId: proximaFase(this.def.id)?.id,
+        selo: this.def.selo ? `selo-${this.def.selo.id}` : undefined,
         ...this.contarPegadasFase(),
         tempoMs: this.tempo,
       });
@@ -708,6 +884,7 @@ export class LevelScene extends Phaser.Scene {
     if (this.pausado || this.terminou) return;
     this.pausado = true;
     this.physics.pause();
+    if (this.chuvaCaindo) AudioManager.chuva(false);
     this.scene.launch('Pausa', { faseId: this.def.id });
     this.scene.pause();
   }
@@ -715,5 +892,6 @@ export class LevelScene extends Phaser.Scene {
   retomar() {
     this.pausado = false;
     this.physics.resume();
+    if (this.chuvaCaindo) AudioManager.chuva(true);
   }
 }

@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA } from '../config';
+import { PLAYER, BOLA, VENTO } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -13,6 +13,8 @@ export class Player {
   direcao: 1 | -1 = 1;
   /** Poder "Virar bola" liberado (tatu-bola). */
   temPoderBola = false;
+  /** Velocidade horizontal que o vento soma ao Chico neste frame (definida pela cena). */
+  ventoX = 0;
 
   private partes: {
     corpo: Phaser.GameObjects.Image;
@@ -202,7 +204,9 @@ export class Player {
     const virando = alvo !== 0 && Math.sign(vx) === -alvo;
     const a = virando ? acel * 1.8 : acel;
     let nvx = vx;
-    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1);
+    // O vento desloca o ponto de equilíbrio: contra ele o Chico anda devagar; parado, é empurrado.
+    const vento = this.estado === 'escalando' ? 0 : this.ventoX * (enrolado ? VENTO.fatorBola : 1);
+    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1) + vento;
     if (nvx < meta) nvx = Math.min(meta, nvx + a * dt);
     else if (nvx > meta) nvx = Math.max(meta, nvx - a * dt);
     b.setVelocityX(nvx);

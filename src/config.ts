@@ -32,6 +32,16 @@ export const BOLA = {
   fatorVelocidade: 0.5,
 };
 
+// Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
+export const VENTO = {
+  forca: 190,
+  // enrolado em bola, o vento empurra bem menos (estilização do jogo)
+  fatorBola: 0.25,
+  // ciclo de rajada: forte por um tempo, fraco por outro (dá para esperar o vento acalmar)
+  rajadaMs: 2400,
+  calmaMs: 1400,
+};
+
 export const COLORS = {
   sky: 0x8fd3ff,
   ui: 0xffffff,

@@ -638,6 +638,83 @@ function gerarObjetos(scene: Phaser.Scene) {
     c.fillRect(0, 24, w, h - 24);
   });
 
+  // Capim verde que cobre o topo do chão depois da chuva
+  tex(scene, 'capim-verde', TILE, 22, (c, w) => {
+    c.fillStyle = '#6fbf4a';
+    c.fillRect(0, 0, w, 14);
+    c.fillStyle = '#4f9a35';
+    c.fillRect(0, 12, w, 5);
+    for (let x = 1; x < w; x += 7) {
+      c.fillStyle = x % 2 ? '#6fbf4a' : '#85d15c';
+      c.beginPath();
+      c.moveTo(x, 6);
+      c.lineTo(x + 3, -3);
+      c.lineTo(x + 6, 6);
+      c.fill();
+    }
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(0, 1);
+    c.lineTo(w, 1);
+    c.stroke();
+  });
+
+  tex(scene, 'gota', 4, 22, (c) => {
+    c.fillStyle = 'rgba(210,235,255,0.85)';
+    c.fillRect(1, 0, 2, 22);
+  });
+
+  tex(scene, 'folha', 18, 12, (c) => {
+    c.fillStyle = '#b7a24a';
+    c.strokeStyle = '#7a6a2a';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(9, 6, 8, 4, 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+  });
+
+  // Selo do Sertão: medalha dourada com mandacaru e sol
+  tex(scene, 'selo-sertao', 130, 130, (c) => {
+    const g = c.createRadialGradient(65, 65, 20, 65, 65, 65);
+    g.addColorStop(0, 'rgba(255,240,160,0.9)');
+    g.addColorStop(1, 'rgba(255,240,160,0)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, 130, 130);
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 4;
+    c.fillStyle = '#f2b93b';
+    c.beginPath();
+    c.arc(65, 65, 46, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#e0955a';
+    c.beginPath();
+    c.arc(65, 65, 36, 0, Math.PI * 2);
+    c.fill();
+    c.lineWidth = 3;
+    c.stroke();
+    c.fillStyle = '#ffe28a';
+    c.beginPath();
+    c.arc(80, 52, 9, 0, Math.PI * 2);
+    c.fill();
+    c.save();
+    c.beginPath();
+    c.arc(65, 65, 34, 0, Math.PI * 2);
+    c.clip();
+    desenharMandacaru(c, 60, 104, 62, '#3f8a45');
+    c.restore();
+    // raios da medalha
+    c.fillStyle = '#f2b93b';
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      c.beginPath();
+      c.arc(65 + Math.cos(a) * 52, 65 + Math.sin(a) * 52, 5, 0, Math.PI * 2);
+      c.fill();
+    }
+  });
+
   tex(scene, 'pedrinha', 22, 20, (c) => {
     c.fillStyle = C.pedra;
     c.strokeStyle = OUTLINE;
@@ -828,6 +905,166 @@ function gerarBichos(scene: Phaser.Scene) {
     });
   bola('tatu-bola', 44, false);
   bola('chico-bola', 64, true);
+
+  // Asa-branca (Patagioenas picazuro): pombo grande cinza-amarronzado, cabeça acinzentada, faixa branca na asa.
+  tex(scene, 'asa-branca', 64, 48, (c) => {
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    // cauda
+    c.fillStyle = '#5b4e4a';
+    c.beginPath();
+    c.moveTo(8, 22);
+    c.lineTo(0, 30);
+    c.lineTo(14, 32);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    // corpo
+    c.fillStyle = '#8f7b74';
+    c.beginPath();
+    c.ellipse(28, 28, 20, 13, -0.1, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // asa com a faixa branca
+    c.fillStyle = '#7a6760';
+    c.beginPath();
+    c.ellipse(24, 24, 14, 8, -0.2, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(14, 22);
+    c.lineTo(32, 18);
+    c.stroke();
+    // cabeça
+    c.strokeStyle = OUTLINE;
+    c.fillStyle = '#9a9aa6';
+    c.beginPath();
+    c.arc(47, 16, 9, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#1d140e';
+    c.beginPath();
+    c.arc(50, 14, 2.2, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#3a2e2a';
+    c.beginPath();
+    c.moveTo(55, 16);
+    c.lineTo(62, 18);
+    c.lineTo(55, 20);
+    c.closePath();
+    c.fill();
+    // pés
+    c.strokeStyle = '#c0504d';
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.moveTo(26, 40);
+    c.lineTo(26, 46);
+    c.moveTo(33, 40);
+    c.lineTo(33, 46);
+    c.stroke();
+  });
+
+  // Carcará (Caracara plancus): boné escuro, rosto claro com pele alaranjada, corpo escuro, pernas amarelas.
+  tex(scene, 'carcara', 64, 76, (c) => {
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    // pernas
+    c.strokeStyle = '#e8b730';
+    c.lineWidth = 4;
+    c.beginPath();
+    c.moveTo(26, 58);
+    c.lineTo(26, 74);
+    c.moveTo(36, 58);
+    c.lineTo(36, 74);
+    c.stroke();
+    // corpo escuro
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    c.fillStyle = '#3d3029';
+    c.beginPath();
+    c.ellipse(30, 44, 16, 20, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // peito claro listrado
+    c.fillStyle = '#e8dcc2';
+    c.beginPath();
+    c.ellipse(36, 36, 9, 11, 0, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#8a7a66';
+    c.lineWidth = 1.5;
+    for (let y = 30; y < 46; y += 4) {
+      c.beginPath();
+      c.moveTo(29, y);
+      c.lineTo(43, y);
+      c.stroke();
+    }
+    // cabeça clara com boné escuro
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    c.fillStyle = '#efe6d2';
+    c.beginPath();
+    c.arc(38, 18, 11, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#2a211c';
+    c.beginPath();
+    c.arc(38, 16, 11, Math.PI * 1.05, Math.PI * 1.95);
+    c.lineTo(30, 12);
+    c.closePath();
+    c.fill();
+    // pele alaranjada do rosto e bico
+    c.fillStyle = '#e8743b';
+    c.beginPath();
+    c.ellipse(46, 20, 5, 4, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#b9c7d6';
+    c.beginPath();
+    c.moveTo(49, 18);
+    c.quadraticCurveTo(60, 20, 53, 27);
+    c.lineTo(49, 23);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#1d140e';
+    c.beginPath();
+    c.arc(41, 17, 2.2, 0, Math.PI * 2);
+    c.fill();
+  });
+
+  // Preá (Galea spixii): roedor pequeno, pelo cinza-amarronzado, quase sem cauda.
+  tex(scene, 'prea', 52, 34, (c) => {
+    c.strokeStyle = OUTLINE;
+    c.lineWidth = 3;
+    c.fillStyle = '#6e5a48';
+    for (const x of [12, 34]) {
+      rrect(c, x, 24, 7, 9, 3);
+      c.fill();
+      c.stroke();
+    }
+    c.fillStyle = '#9a8468';
+    c.beginPath();
+    c.ellipse(22, 20, 17, 11, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.beginPath();
+    c.ellipse(39, 16, 10, 9, 0.2, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.beginPath();
+    c.ellipse(35, 7, 4, 4, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#1d140e';
+    c.beginPath();
+    c.arc(42, 14, 2.5, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#e6a39a';
+    c.beginPath();
+    c.arc(48, 18, 2, 0, Math.PI * 2);
+    c.fill();
+  });
 }
 
 export function desenharAltoFalante(c: Ctx, cx: number, cy: number, s: number, cor: string) {

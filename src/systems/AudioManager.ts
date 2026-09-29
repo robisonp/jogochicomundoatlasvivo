@@ -24,6 +24,8 @@ class AudioManagerImpl {
   private beat = 0;
   private noiseBuf?: AudioBuffer;
   private querMusica = false;
+  private chuvaFonte?: AudioBufferSourceNode;
+  private chuvaGain?: GainNode;
 
   /** Precisa ser chamado dentro de um gesto do usuário (toque/tecla). */
   desbloquear(): void {
@@ -134,6 +136,55 @@ class AudioManagerImpl {
         this.tom(900, 0.05, { tipo: 'square', ate: 400, vol: 0.08 });
         break;
     }
+  }
+
+  // ---------- Ambiente: chuva (ruído filtrado em laço) e rajadas de vento
+
+  chuva(ligada: boolean): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.noiseBuf) return;
+    if (ligada && !this.chuvaFonte) {
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      const f = ctx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.value = 2500;
+      f.Q.value = 0.6;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 1.5);
+      src.connect(f).connect(g).connect(this.sfxGain!);
+      src.start();
+      this.chuvaFonte = src;
+      this.chuvaGain = g;
+    } else if (!ligada && this.chuvaFonte && this.chuvaGain) {
+      const src = this.chuvaFonte;
+      this.chuvaGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2);
+      src.stop(ctx.currentTime + 2.1);
+      this.chuvaFonte = undefined;
+      this.chuvaGain = undefined;
+    }
+  }
+
+  rajada(): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.noiseBuf) return;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(300, t);
+    f.frequency.exponentialRampToValueAtTime(1400, t + 0.6);
+    f.frequency.exponentialRampToValueAtTime(400, t + 1.6);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    src.connect(f).connect(g).connect(this.sfxGain!);
+    src.start(t, Math.random() * 0.3);
+    src.stop(t + 1.9);
   }
 
   // ---------- Música: baião simples (zabumba + triângulo + melodia na escala nordestina) ----------

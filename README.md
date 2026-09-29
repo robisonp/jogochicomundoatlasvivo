@@ -57,7 +57,7 @@ As fases são trechos desenhados em texto, colados lado a lado (`src/levels/caat
 '###########',     # = chão
 ```
 
-A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q` etc.) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
+A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U` etc.) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
 
 ## Publicação
 

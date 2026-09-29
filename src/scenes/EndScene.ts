@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { botaoGrande, estiloTexto } from '../ui/widgets';
 
 export class EndScene extends Phaser.Scene {
-  private dados!: { faseId: string; proximaId?: string; pegas: number; total: number; tempoMs: number };
+  private dados!: { faseId: string; proximaId?: string; selo?: string; pegas: number; total: number; tempoMs: number };
 
   constructor() {
     super('Fim');
@@ -16,6 +16,12 @@ export class EndScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale;
     this.scene.stop('Hud');
     this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setInteractive();
+
+    // Selo do mundo conquistado: aparece girando no alto da tela.
+    if (this.dados.selo) {
+      const selo = this.add.image(W / 2, H / 2 - 265, this.dados.selo).setScale(0);
+      this.tweens.add({ targets: selo, scale: 1, angle: 360, duration: 900, ease: 'Back.easeOut' });
+    }
 
     // Pegadas encontradas, mostradas como ícones (sem precisar ler números).
     const { pegas, total } = this.dados;
