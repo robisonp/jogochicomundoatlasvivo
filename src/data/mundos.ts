@@ -1,9 +1,9 @@
 // Visual e som de cada mundo. A fase diz em qual mundo está (`mundo` em LevelDef) e a cena usa este tema.
 
-export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico';
+export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico' | 'antartica';
 /** Tema visual: um por mundo, mais variações (a mata de eucaliptos da Austrália). */
 export type TemaId = MundoId | 'australia-mata';
-export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico';
+export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico' | 'antartica';
 
 export interface TemaMundo {
   /** Caractere sólido → [textura interna, textura com topo]. */
@@ -21,11 +21,13 @@ export interface TemaMundo {
   rastro?: string;
   /** Fundo dos túneis (t) e atrás da terra/neve que quebra. Padrão: terra escura. */
   toca?: string;
+  /** O que o vento carrega (< >). Padrão: folhas. */
+  particulaVento?: string;
   /** Camadas de fundo (parallax): textura, altura, quanto a base fica abaixo da linha do chão e fator de rolagem. */
   fundo: { textura: string; altura: number; afundar: number; fator: number }[];
   musica: TemaMusica;
   /** Poder que o botão da pata usa neste mundo. */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga';
 }
 
 export const TEMAS: Record<TemaId, TemaMundo> = {
@@ -120,5 +122,24 @@ export const TEMAS: Record<TemaId, TemaMundo> = {
     ],
     musica: 'artico',
     poderBotao: 'mergulho',
+  },
+  // Antártica: gelo, geleiras, rochas da costa e o mar com gelo flutuante (sem ursos-polares, sem iglus).
+  antartica: {
+    solidos: { '#': ['neve', 'neve-topo'], R: ['rocha-artica', 'rocha-artica-topo'], I: ['gelo', 'gelo-topo'] },
+    laje: 'laje-gelo',
+    espinhos: 'gelo-pontudo',
+    ceu: 'ceu-antartica',
+    sol: true,
+    nuvens: true,
+    plataforma: 'placa-gelo',
+    rastro: 'rastro-pinguim',
+    toca: 'caverna-gelo',
+    particulaVento: 'floco',
+    fundo: [
+      { textura: 'antartica-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'antartica-perto', altura: 220, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'antartica',
+    poderBotao: 'toboga',
   },
 };

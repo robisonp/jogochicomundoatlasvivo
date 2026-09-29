@@ -37,6 +37,11 @@ const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   rena: 'rena',
   foca: 'foca',
   'coruja-das-neves': 'coruja-das-neves',
+  pinguim: 'pinguim',
+  'foca-de-weddell': 'foca-de-weddell',
+  orca: 'orca',
+  jubarte: 'jubarte',
+  albatroz: 'albatroz',
 };
 
 interface Pedregulho {
@@ -152,6 +157,10 @@ export class LevelScene extends Phaser.Scene {
   private grupoNeves!: Phaser.Physics.Arcade.StaticGroup;
   /** Quantas vezes a Mamãe July já tirou o Chico da água gelada nesta fase (a fala não se repete demais). */
   private resgates = 0;
+  /** Submarino do Vovô Marcos (aparece em volta do Chico quando ele está na água). */
+  private submarino?: Phaser.GameObjects.Image;
+  /** Tempestade branca: a tela clareia nas rajadas. */
+  private brancura?: Phaser.GameObjects.Rectangle;
   private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -167,6 +176,8 @@ export class LevelScene extends Phaser.Scene {
     this.cavando = null;
     this.neves = new Map();
     this.resgates = 0;
+    this.submarino = undefined;
+    this.brancura = undefined;
     this.escuridao = undefined;
     this.bichos = [];
     this.fontesPedrinhas = [];
@@ -233,6 +244,12 @@ export class LevelScene extends Phaser.Scene {
     this.player.temPoderSuperPulo = SaveManager.data.poderes.includes('superpulo');
     this.player.temPoderCavar = SaveManager.data.poderes.includes('cavar');
     this.player.temPoderMergulho = SaveManager.data.poderes.includes('mergulho');
+    this.player.temPoderToboga = SaveManager.data.poderes.includes('toboga');
+    if (this.def.submarino) {
+      // No submarino do Vovô Marcos dá para mergulhar mesmo na água funda e gelada.
+      this.player.temPoderOnca = true;
+      this.submarino = this.add.image(0, 0, 'submarino').setDepth(12).setVisible(false);
+    }
     this.player.poderBotao = this.tema.poderBotao;
     this.atualizarPedregulhos();
 
@@ -269,6 +286,23 @@ export class LevelScene extends Phaser.Scene {
     this.iconeAcao = this.add.image(0, 0, 'btn-acao').setScale(0.45).setDepth(20).setVisible(false);
 
     // Noite: tudo escuro, menos uma roda de luz em volta do Chico. Vaga-lumes e o objetivo ficam por cima.
+    // Tempestade branca: neve soprando o tempo todo e a tela clareando nas rajadas
+    if (this.def.nevasca) {
+      const { width, height } = this.scale;
+      this.brancura = this.add.rectangle(0, 0, width * 2, height * 2, 0xf4f8fc, 0.08).setOrigin(0).setScrollFactor(0).setDepth(29);
+      this.add
+        .particles(0, -20, 'floco', {
+          x: { min: 0, max: width * 1.3 },
+          lifespan: 2400,
+          speedY: { min: 120, max: 230 },
+          speedX: { min: -280, max: -140 },
+          scale: { min: 0.4, max: 1 },
+          alpha: { start: 0.9, end: 0.3 },
+          frequency: 35,
+        })
+        .setScrollFactor(0)
+        .setDepth(30);
+    }
     if (this.def.noite) {
       this.escuridao = this.add.image(this.player.x, this.player.y, 'escuridao').setScale(16).setDepth(30);
       this.objetivo.setDepth(31);
@@ -463,7 +497,7 @@ export class LevelScene extends Phaser.Scene {
         while (at(r, c) === ch) c++;
         const area = new Phaser.Geom.Rectangle(c0 * TILE, r * TILE, (c - c0) * TILE, TILE);
         const dir = ch === '>' ? 1 : -1;
-        const folhas = this.add.particles(0, 0, 'folha', {
+        const folhas = this.add.particles(0, 0, this.tema.particulaVento ?? 'folha', {
           lifespan: 1600,
           speedX: { min: dir * 260, max: dir * 420 },
           speedY: { min: -30, max: 30 },
@@ -617,6 +651,10 @@ export class LevelScene extends Phaser.Scene {
             this.pedregulhos.push({ img, x0: img.x, y0: img.y });
             break;
           }
+          case '&':
+            // estação de pesquisa (os países estudam a Antártica juntos; o Brasil tem a Comandante Ferraz)
+            this.add.image(cx + TILE, y + TILE, 'estacao').setOrigin(0.5, 1).setDepth(1.8);
+            break;
           case ':':
             this.add.image(x, y + TILE - 14, this.tema.rastro ?? 'rastro').setOrigin(0).setDepth(1.6);
             break;
@@ -749,7 +787,7 @@ export class LevelScene extends Phaser.Scene {
     // Água sob o centro do Chico
     const sup = this.aguaSuperficie(this.player.x, this.player.y);
     this.player.agua = sup === null ? null : { superficie: sup };
-    if (sup !== null && this.def.aguaGelada && this.player.estado !== 'caido') {
+    if (sup !== null && this.def.aguaGelada && !this.def.submarino && this.player.estado !== 'caido') {
       // Água do mar do Ártico é gelada demais para nadar: a Mamãe July tira o Chico e ele volta ao checkpoint.
       this.morrer('gelada');
     } else if (sup !== null && this.aguaFunda(this.player.x, this.player.y) && !this.player.temPoderOnca && this.player.estado !== 'caido') {
@@ -759,11 +797,23 @@ export class LevelScene extends Phaser.Scene {
     // Gelo sob os pés (qualquer um dos lados do corpo)
     const pb = this.player.body;
     this.player.noGelo = this.caractere(pb.left + 3, pb.bottom + 2) === 'I' || this.caractere(pb.right - 3, pb.bottom + 2) === 'I';
+    // Teto baixo: deitado no tobogã, só levanta quando houver espaço em pé
+    const bloqueia = (x: number, y: number) => {
+      const ch = this.caractere(x, y);
+      return ch in this.tema.solidos || ch === 'F' || ch === 'N';
+    };
+    const topoEmPe = pb.bottom - PLAYER.bodyHeight + 4;
+    this.player.tetoBaixo = this.player.deslizando && (bloqueia(pb.left + 2, topoEmPe) || bloqueia(pb.right - 2, topoEmPe) || bloqueia(pb.center.x, topoEmPe));
 
     this.player.update(this.terminou ? this.semEntrada() : i, dt);
     this.cavar(this.terminou ? this.semEntrada() : i, dt);
     this.mergulharNaNeve();
     this.escuridao?.setPosition(this.player.x, this.player.y - 30);
+    if (this.submarino) {
+      const naAgua = !!this.player.agua && this.player.estado !== 'caido';
+      this.submarino.setVisible(naAgua).setPosition(this.player.x, this.player.y - 6);
+      if (naAgua) this.submarino.setFlipX(this.player.direcao < 0);
+    }
 
     // Câmera antecipa a direção
     const alvo = this.player.direcao * 110 * Math.min(1, Math.abs(this.player.body.velocity.x) / 200);
@@ -811,6 +861,7 @@ export class LevelScene extends Phaser.Scene {
     if (forte && !this.rajadaForte && perto) AudioManager.rajada();
     if (forte !== this.rajadaForte) {
       this.rajadaForte = forte;
+      if (this.brancura) this.tweens.add({ targets: this.brancura, fillAlpha: forte ? 0.35 : 0.08, duration: 700 });
       // folhas mostram a força do vento: muitas na rajada, poucas na calmaria
       for (const v of this.ventos) v.folhas.frequency = forte ? 110 : 600;
     }
@@ -958,6 +1009,7 @@ export class LevelScene extends Phaser.Scene {
     if (p.poderBotao === 'bola') return p.temPoderBola;
     if (p.poderBotao === 'superpulo') return p.temPoderSuperPulo;
     if (p.poderBotao === 'mergulho') return p.temPoderMergulho;
+    if (p.poderBotao === 'toboga') return p.temPoderToboga;
     return p.temPoderArrancada;
   }
 
@@ -1123,6 +1175,32 @@ export class LevelScene extends Phaser.Scene {
           });
         });
       });
+    } else if (def.demo.tipo === 'deslizar') {
+      // O pinguim-de-adélia deita de barriga e desliza no gelo, depois levanta.
+      const { dx } = def.demo;
+      this.time.delayedCall(1100, () => {
+        img.setFlipX(false);
+        this.tweens.killTweensOf(img);
+        img.setScale(1);
+        this.tweens.add({ targets: img, angle: 75, duration: 250 });
+        AudioManager.tocar('toboga');
+        this.tweens.add({
+          targets: img,
+          x: img.x + dx * TILE,
+          delay: 250,
+          duration: 1300,
+          ease: 'Sine.easeOut',
+          onUpdate: () => {
+            if (Math.random() < 0.3) this.flocos.explode(1, img.x - 30, img.y - 4);
+          },
+          onComplete: () => {
+            this.tweens.add({ targets: img, angle: 0, duration: 250 });
+            this.time.delayedCall(400, () => {
+              if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            });
+          },
+        });
+      });
     } else if (def.demo.tipo === 'mergulhar') {
       // A raposa-do-ártico escuta, salta bem alto e cai de cabeça na neve; some e depois aparece de novo.
       const x0 = img.x;
@@ -1215,6 +1293,10 @@ export class LevelScene extends Phaser.Scene {
           this.player.temPoderSuperPulo = true;
           this.events.emit('poder', this.temPoder);
           if (novo) VoiceManager.falar('Agora você pula como o canguru! Aperte o botão da pata para dar um super pulo.', 'narrador', true);
+        } else if (poder === 'toboga') {
+          this.player.temPoderToboga = true;
+          this.events.emit('poder', this.temPoder);
+          if (novo) VoiceManager.falar('Agora você desliza de barriga como o pinguim! Aperte o botão da pata.', 'narrador', true);
         } else if (poder === 'mergulho') {
           this.player.temPoderMergulho = true;
           this.events.emit('poder', this.temPoder);
@@ -1371,11 +1453,21 @@ export class LevelScene extends Phaser.Scene {
       if (!perto) continue;
       // Debaixo d'água, o chamado vira os sinais que o ornitorrinco sente: ondas azuis e um som suave.
       const sinal = AGUA.has(this.caractere(f.x, f.y));
-      for (let k = 0; k < 3; k++) {
-        const onda = this.add.image(f.x, f.y, 'onda').setDepth(12).setScale(0.2).setTint(sinal ? 0x7fe8ff : 0xffd766);
-        this.tweens.add({ targets: onda, scale: sinal ? 1.1 : 1.6, alpha: 0, delay: k * 250, duration: 1200, onComplete: () => onda.destroy() });
+      if (sinal && this.def.submarino) {
+        // debaixo do gelo, bolhas subindo marcam o caminho
+        for (let k = 0; k < 6; k++) {
+          const b = this.add.image(f.x + Phaser.Math.Between(-14, 14), f.y, 'bolha').setDepth(12).setScale(1.4);
+          this.tweens.add({ targets: b, y: f.y - 150, alpha: 0, delay: k * 160, duration: 1500, onComplete: () => b.destroy() });
+        }
+        AudioManager.tocar('bolhas');
+        continue;
       }
-      AudioManager.tocar(sinal ? 'sinal' : 'canto');
+      const baleia = this.def.chamado === 'baleia';
+      for (let k = 0; k < 3; k++) {
+        const onda = this.add.image(f.x, f.y, 'onda').setDepth(12).setScale(0.2).setTint(sinal || baleia ? 0x7fe8ff : 0xffd766);
+        this.tweens.add({ targets: onda, scale: sinal ? 1.1 : baleia ? 2.2 : 1.6, alpha: 0, delay: k * 250, duration: 1200, onComplete: () => onda.destroy() });
+      }
+      AudioManager.tocar(baleia ? 'baleia' : sinal ? 'sinal' : 'canto');
     }
   }
 

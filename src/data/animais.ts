@@ -11,7 +11,10 @@ export type RegiaoMapa =
   | 'africa-leste'
   | 'australia'
   | 'australia-leste'
-  | 'artico';
+  | 'artico'
+  | 'antartica'
+  | 'oceanos'
+  | 'oceano-sul';
 
 export interface FichaAnimal {
   id: string;
@@ -411,6 +414,82 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Pusa hispida · IUCN: Menos Preocupante (global)',
   },
+  // ---------------------------------------------------------------- Antártica e Oceano Austral
+  {
+    id: 'orca',
+    nome: 'Orca',
+    mundo: 'antartica',
+    textura: 'orca',
+    regiao: 'oceanos',
+    falas: {
+      apresentacao: 'Minha família e eu viajamos juntas pelo oceano!',
+      mapa: 'Eu vivo em todos os oceanos do mundo, até perto da Antártida.',
+      comida: 'Depende da minha família: peixes, lulas e outros animais do mar.',
+      tamanho: 'Uma orca grande é comprida como um ônibus pequeno.',
+      curiosidade: 'Apesar do tamanho, eu sou um tipo de golfinho!',
+    },
+    adulto: 'Orcinus orca · IUCN: Dados Insuficientes',
+  },
+  {
+    id: 'pinguim',
+    nome: 'Pinguim-de-adélia',
+    mundo: 'antartica',
+    textura: 'pinguim',
+    regiao: 'antartica',
+    falas: {
+      apresentacao: 'Na neve macia, deslizo de barriga como num tobogã!',
+      mapa: 'Eu vivo na Antártida e nos mares e ilhas perto dela.',
+      comida: 'Eu como krill, peixes e outros bichinhos do mar.',
+      tamanho: 'Sou mais ou menos até a cintura de uma criança pequena.',
+      curiosidade: 'Minhas asas funcionam como nadadeiras debaixo d’água!',
+    },
+    adulto: 'Pygoscelis adeliae · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'foca-de-weddell',
+    nome: 'Foca-de-weddell',
+    mundo: 'antartica',
+    textura: 'foca-de-weddell',
+    regiao: 'antartica',
+    falas: {
+      apresentacao: 'Eu mergulho por baixo do gelo para explorar o mar!',
+      mapa: 'Eu vivo no gelo da costa da Antártida.',
+      comida: 'Eu como peixes, lulas e outros animais do mar.',
+      tamanho: 'Sou comprida como um carro pequeno.',
+      curiosidade: 'Faço sons incríveis debaixo d’água!',
+    },
+    adulto: 'Leptonychotes weddellii · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'jubarte',
+    nome: 'Baleia-jubarte',
+    mundo: 'antartica',
+    textura: 'jubarte',
+    regiao: 'oceanos',
+    falas: {
+      apresentacao: 'Os machos da minha espécie fazem longas canções no oceano!',
+      mapa: 'Eu vivo nos oceanos do mundo e viajo entre mares diferentes.',
+      comida: 'Eu como peixinhos e krill, que eu filtro da água.',
+      tamanho: 'Sou maior que um ônibus da cidade.',
+      curiosidade: 'Viajo milhares de quilômetros entre diferentes mares!',
+    },
+    adulto: 'Megaptera novaeangliae · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'albatroz',
+    nome: 'Albatroz-errante',
+    mundo: 'antartica',
+    textura: 'albatroz',
+    regiao: 'oceano-sul',
+    falas: {
+      apresentacao: 'Com minhas asas enormes, viajo muito longe sem bater asas o tempo todo!',
+      mapa: 'Eu voo sobre os mares do sul do mundo e faço ninho em ilhas no meio do oceano.',
+      comida: 'Eu como animais do mar que encontro perto da superfície.',
+      tamanho: 'Minhas asas abertas são maiores que uma cama de casal.',
+      curiosidade: 'Minhas asas abertas podem passar de três metros!',
+    },
+    adulto: 'Diomedea exulans · IUCN: Vulnerável',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -453,5 +532,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo do Ártico',
     texturaSelo: 'selo-artico',
     abertura: 'No verão, há lugares onde o Sol nem se põe!',
+  },
+  {
+    id: 'antartica',
+    nome: 'Antártica',
+    selo: 'antartica',
+    nomeSelo: 'Selo da Antártica',
+    texturaSelo: 'selo-antartica',
+    abertura: 'Aqui, países trabalham juntos para estudar um continente de gelo!',
   },
 ];

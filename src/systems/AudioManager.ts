@@ -24,7 +24,10 @@ export type Sfx =
   | 'cavar'
   | 'sinal'
   | 'mergulho'
-  | 'neve';
+  | 'neve'
+  | 'toboga'
+  | 'baleia'
+  | 'bolhas';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -169,6 +172,19 @@ class AudioManagerImpl {
         // assobio descendo: a raposa cai de cabeça
         this.tom(900, 0.28, { tipo: 'sine', ate: 300, vol: 0.2 });
         break;
+      case 'toboga':
+        // barriga deslizando na neve: chiado longo
+        this.ruido(0.6, 2200, 0.22);
+        this.tom(420, 0.4, { tipo: 'triangle', ate: 260, vol: 0.12 });
+        break;
+      case 'baleia':
+        // canto da jubarte (estilizado): tons graves que sobem e descem devagar
+        this.tom(160, 1.1, { tipo: 'sine', ate: 320, vol: 0.28 });
+        this.tom(330, 0.9, { tipo: 'sine', ate: 140, vol: 0.22, atraso: 1.0 });
+        break;
+      case 'bolhas':
+        [900, 1200, 1000, 1400].forEach((f, k) => this.tom(f, 0.06, { tipo: 'sine', ate: f * 1.6, vol: 0.1, atraso: k * 0.12 }));
+        break;
       case 'neve':
         // neve fofa quebrando: ruído macio e abafado
         this.ruido(0.18, 1600, 0.3);
@@ -265,6 +281,7 @@ class AudioManagerImpl {
     if (this.tema === 'savana') return this.agendarSavana();
     if (this.tema === 'outback') return this.agendarOutback();
     if (this.tema === 'artico') return this.agendarArtico();
+    if (this.tema === 'antartica') return this.agendarAntartica();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -394,6 +411,31 @@ class AudioManagerImpl {
         this.tomEm(t, escala[idx], 0.9, 'sine', 0.13, dest);
         this.tomEm(t, escala[idx] * 3, 0.3, 'sine', 0.025, dest);
       }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Antártica: vasta e tranquila — acordes longos e graves, sininhos espaçados e um "vento" de ruído bem baixo.
+  private agendarAntartica(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 72 / 2;
+    const acordes = [
+      [220, 261.63, 329.63],
+      [196, 246.94, 293.66],
+      [174.61, 220, 261.63],
+      [196, 246.94, 329.63],
+    ];
+    const sinos = [659.25, 783.99, 880, 987.77, 1174.66];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 8;
+      const acorde = acordes[Math.floor(this.beat / 8) % 4];
+      const dest = this.musicGain!;
+      if (b === 0) for (const f of acorde) this.tomEm(t, f / 2, 2.6, 'sine', 0.16, dest);
+      if (b === 0 || b === 4) this.ruido(1.2, 500, 0.03, t, dest);
+      if (b === 2 || b === 5 || b === 7) this.tomEm(t, sinos[(this.beat * 3) % sinos.length], 1.1, 'sine', 0.1, dest);
       this.nextBeatTime += passo;
       this.beat++;
     }
