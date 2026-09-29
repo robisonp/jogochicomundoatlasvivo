@@ -14,13 +14,15 @@
 //   U  começa a chover quando o Chico passa aqui (na Caatinga, depois fica verde)
 //   ~  água rasa (o Chico boia e nada)   w  água funda (só com o poder "Nado da Onça")
 //   J  cipó (escala como a escada)       Z  chamado de bicho: som + ondas visuais mostram o caminho
+//   B  pedregulho (2x2, marcado no bloco de baixo à esquerda): só se move com a força do elefante
+//   :  rastros de bicho no chão (decoração que mostra o caminho)
 
 import type { Personagem } from '../systems/VoiceManager';
 import type { MundoId } from '../data/mundos';
 
 export const LINHAS = 13;
 
-export type Poder = 'bola' | 'onca';
+export type Poder = 'bola' | 'onca' | 'arrancada' | 'forca';
 
 export interface Fala {
   texto: string;
@@ -29,7 +31,22 @@ export interface Fala {
 
 export interface AnimalNaFase {
   /** Id da ficha do animal (docs/DOSSIE-CIENTIFICO.md). */
-  id: 'moco' | 'tatu-bola' | 'asa-branca' | 'carcara' | 'prea' | 'onca' | 'arara' | 'preguica' | 'boto' | 'perereca';
+  id:
+    | 'moco'
+    | 'tatu-bola'
+    | 'asa-branca'
+    | 'carcara'
+    | 'prea'
+    | 'onca'
+    | 'arara'
+    | 'preguica'
+    | 'boto'
+    | 'perereca'
+    | 'guepardo'
+    | 'elefante'
+    | 'girafa'
+    | 'zebra'
+    | 'avestruz';
   /** Fala tirada do dossiê científico. */
   fala: string;
   curiosidade?: string;
@@ -40,6 +57,7 @@ export interface AnimalNaFase {
     | { tipo: 'correr'; dx: number }
     | { tipo: 'nadar'; dx: number }
     | { tipo: 'ficar' }
+    | { tipo: 'empurrar' }
     | { tipo: 'bola' };
   /** Poder que o Chico ganha depois da demonstração. */
   daPoder?: Poder;

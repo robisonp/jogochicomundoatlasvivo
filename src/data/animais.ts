@@ -1,12 +1,12 @@
 // Fichas do Atlas. Todo conteúdo vem de docs/DOSSIE-CIENTIFICO.md (falas curtas, sem números para a criança).
 // A linha "adulto" traz nome científico e conservação para a família; não é lida em voz alta.
 
-export type RegiaoMapa = 'nordeste' | 'amazonia' | 'brasil' | 'america-do-sul';
+export type RegiaoMapa = 'nordeste' | 'amazonia' | 'brasil' | 'america-do-sul' | 'africa' | 'africa-leste';
 
 export interface FichaAnimal {
   id: string;
   nome: string;
-  mundo: 'caatinga' | 'amazonia';
+  mundo: 'caatinga' | 'amazonia' | 'savana';
   textura: string;
   /** Onde aparece no mapinha. */
   regiao: RegiaoMapa;
@@ -173,6 +173,82 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Trachycephalus resinifictrix · IUCN: Menos Preocupante',
   },
+  // ---------------------------------------------------------------- Savana (Quênia e Tanzânia)
+  {
+    id: 'guepardo',
+    nome: 'Guepardo',
+    mundo: 'savana',
+    textura: 'guepardo',
+    regiao: 'africa',
+    falas: {
+      apresentacao: 'Eu corro muito depressa, mas preciso descansar logo!',
+      mapa: 'Eu vivo em partes da África, como no Quênia e na Tanzânia. Também existem alguns na Ásia.',
+      comida: 'Eu como outros animais.',
+      tamanho: 'Sou do tamanho de um cachorro grande, só que mais alto e magrinho.',
+      curiosidade: 'Sou o mamífero terrestre mais rápido em corridas curtas!',
+    },
+    adulto: 'Acinonyx jubatus · IUCN: Vulnerável',
+  },
+  {
+    id: 'elefante',
+    nome: 'Elefante-africano',
+    mundo: 'savana',
+    textura: 'elefante',
+    regiao: 'africa',
+    falas: {
+      apresentacao: 'Minha tromba e meu corpo forte movem grandes galhos!',
+      mapa: 'Eu vivo em várias partes da África, como no Quênia e na Tanzânia.',
+      comida: 'Eu como capim, folhas, cascas e frutos.',
+      tamanho: 'Sou mais alto que muitos cômodos de uma casa.',
+      curiosidade: 'Sou o maior animal terrestre que vive hoje!',
+    },
+    adulto: 'Loxodonta africana (elefante-africano-da-savana) · IUCN: Em Perigo',
+  },
+  {
+    id: 'girafa',
+    nome: 'Girafa-masai',
+    mundo: 'savana',
+    textura: 'girafa',
+    regiao: 'africa-leste',
+    falas: {
+      apresentacao: 'Meu pescoço alto alcança folhas que ficam lá em cima!',
+      mapa: 'Eu vivo no sul do Quênia e em grande parte da Tanzânia.',
+      comida: 'Eu como folhas e brotos de árvores e arbustos.',
+      tamanho: 'Consigo olhar por cima de uma casa de um andar!',
+      curiosidade: 'Minhas manchas ajudam a reconhecer cada girafa!',
+    },
+    adulto: 'Giraffa tippelskirchi · taxonomia das girafas em revisão',
+  },
+  {
+    id: 'zebra',
+    nome: 'Zebra',
+    mundo: 'savana',
+    textura: 'zebra',
+    regiao: 'africa',
+    falas: {
+      apresentacao: 'Minhas listras são diferentes das listras de qualquer outra zebra!',
+      mapa: 'Eu vivo no leste e no sul da África, e não só no Quênia e na Tanzânia.',
+      comida: 'Eu como principalmente capim.',
+      tamanho: 'Sou do tamanho de um pônei.',
+      curiosidade: 'Eu gosto de viver junto de outras zebras!',
+    },
+    adulto: 'Equus quagga (zebra-da-planície) · IUCN: Quase Ameaçada',
+  },
+  {
+    id: 'avestruz',
+    nome: 'Avestruz',
+    mundo: 'savana',
+    textura: 'avestruz',
+    regiao: 'africa',
+    falas: {
+      apresentacao: 'Eu não voo, mas minhas pernas correm muito depressa!',
+      mapa: 'Eu vivo em lugares abertos de várias partes da África.',
+      comida: 'Eu como principalmente plantas, e às vezes bichinhos.',
+      tamanho: 'Sou muito mais alta que uma pessoa adulta.',
+      curiosidade: 'Sou a maior ave que vive hoje!',
+    },
+    adulto: 'Struthio camelus · IUCN: Menos Preocupante',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -191,5 +267,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo da Amazônia',
     texturaSelo: 'selo-amazonia',
     abertura: 'Uma floresta enorme, cheia de rios, árvores e sons!',
+  },
+  {
+    id: 'savana',
+    nome: 'Savana',
+    selo: 'savana',
+    nomeSelo: 'Selo da Savana',
+    texturaSelo: 'selo-savana',
+    abertura: 'Aqui, campos enormes mudam com a chegada das chuvas!',
   },
 ];

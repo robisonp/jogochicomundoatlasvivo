@@ -150,6 +150,13 @@ export class TouchControls {
     }
   }
 
+  /** Recarga do poder (0 a 1): o botão fica apagadinho até estar pronto de novo. */
+  setCarga(carga: number) {
+    const b = this.botoes.find((x) => x.papel === 'power');
+    if (!b || !b.visivel || touchState.power) return;
+    b.img.setAlpha(carga >= 1 ? 0.85 : 0.25 + carga * 0.35);
+  }
+
   /** Mostra ou esconde o botão do Poder do Bicho (aparece quando o Chico ganha um poder). */
   setPoder(visivel: boolean) {
     const b = this.botoes.find((x) => x.papel === 'power');

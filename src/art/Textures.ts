@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import { TILE } from '../config';
 import { CHICO_VISUAL as V, CAATINGA as C } from '../data/visual';
 import { gerarAmazonia } from './Amazonia';
+import { gerarSavana } from './Savana';
 
 export type Ctx = CanvasRenderingContext2D;
 
@@ -45,6 +46,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarUI(scene);
   gerarAtlas(scene);
   gerarAmazonia(scene);
+  gerarSavana(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -1338,6 +1340,19 @@ const AMAZONIA: [number, number][] = [
   [-79, 1], [-75, 4], [-70, 5], [-64, 6.5], [-60, 5], [-52, 4], [-50, 1], [-48, -1], [-50, -5], [-52, -10],
   [-56, -13], [-62, -15], [-68, -16], [-72, -13], [-76, -10], [-78, -6], [-80, -3],
 ];
+const AFRICA: [number, number][] = [
+  [-6, 35.8], [-9.8, 29], [-17, 21], [-17.5, 14.7], [-15, 11], [-13, 8.5], [-11, 6.9], [-7.5, 4.4], [-3, 5],
+  [2, 6.3], [6, 4.3], [9.5, 3.9], [9.3, 1], [9, -1], [11.8, -4.5], [13, -9], [12, -15], [11.8, -17.5],
+  [14.5, -22.8], [16, -28.6], [18.4, -34.2], [20, -34.8], [25.6, -34], [30, -31], [32.8, -26], [35.5, -23.8],
+  [35, -19], [40.7, -15], [40.5, -10.5], [39.3, -6.8], [39.7, -4], [41.5, -1.5], [44, 1.5], [49, 7.5],
+  [51.2, 11.8], [43.3, 11.5], [39.5, 15.5], [37.3, 21], [35.6, 23.9], [32.5, 29.9], [31, 31.5], [25, 31.8],
+  [20, 30.8], [15.5, 31.5], [10.5, 34], [11, 37], [8, 36.9], [3, 36.8], [-2, 35.1],
+];
+// Quênia e Tanzânia juntos (aproximado)
+const QUENIA_TANZANIA: [number, number][] = [
+  [34, 4.6], [41.9, 3.9], [41, -1.7], [39.3, -4.7], [38.8, -6.5], [39.5, -8], [40.4, -10.4], [35, -11.5],
+  [33, -9.6], [30.5, -8], [29.5, -5], [30.5, -1], [33.9, -1], [34, 1],
+];
 const NORDESTE: [number, number][] = [
   [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
   [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
@@ -1371,6 +1386,35 @@ function gerarAtlas(scene: Phaser.Scene) {
       if (regiao === 'nordeste' || regiao === 'amazonia') {
         c.fillStyle = regiao === 'amazonia' ? '#5cc26a' : '#f2a93b';
         poligono(c, regiao === 'amazonia' ? AMAZONIA : NORDESTE);
+        c.fill();
+        c.stroke();
+      }
+    });
+  }
+
+  // Mapinha da África: continente inteiro ou Quênia/Tanzânia em destaque.
+  const projA = (lon: number, lat: number): [number, number] => [(lon + 19) * 3.0, (38 - lat) * 3.0];
+  const poligonoA = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projA(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['africa', 'africa-leste'] as const) {
+    tex(scene, `mapa-${regiao}`, 220, 228, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'africa' ? '#f2a93b' : '#e9dcb8';
+      poligonoA(c, AFRICA);
+      c.fill();
+      c.stroke();
+      if (regiao === 'africa-leste') {
+        c.fillStyle = '#f2a93b';
+        poligonoA(c, QUENIA_TANZANIA);
         c.fill();
         c.stroke();
       }

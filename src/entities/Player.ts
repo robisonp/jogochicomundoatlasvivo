@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO, AGUA } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -17,6 +17,16 @@ export class Player {
   ventoX = 0;
   /** Poder passivo "Nado da Onça": pode mergulhar e entrar na água funda. */
   temPoderOnca = false;
+  /** Arrancada do guepardo (botão da pata na Savana). */
+  temPoderArrancada = false;
+  /** Força do elefante (passiva): empurrar pedregulhos. A cena usa este valor. */
+  temPoderForca = false;
+  /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
+  poderBotao: 'bola' | 'arrancada' = 'bola';
+  private arrancadaTempo = 0;
+  /** Arrancada em andamento (separado do tempo, que pode chegar a zero antes de encerrar). */
+  private emArrancada = false;
+  private recarga = 0;
   /** Água em que o Chico está neste frame (definida pela cena): y da superfície, ou null fora da água. */
   agua: { superficie: number } | null = null;
   private nadando = false;
@@ -86,6 +96,29 @@ export class Player {
     this.bolaVisual = scene.add.container(x, y, [this.bolaImg, chapeuBola]).setDepth(10).setVisible(false);
   }
 
+  /** 0 a 1: quanto o poder do botão está pronto (a arrancada precisa recarregar). */
+  get cargaPoder() {
+    return this.poderBotao === 'arrancada' ? 1 - this.recarga / ARRANCADA.recargaMs : 1;
+  }
+
+  get arrancando() {
+    return this.arrancadaTempo > 0;
+  }
+
+  /** Poeirinha em um ponto (usada ao empurrar pedregulhos). */
+  soltarPoeira(x: number, y: number) {
+    this.poeira.explode(3, x, y);
+  }
+
+  private encerrarArrancada() {
+    if (!this.emArrancada) return;
+    this.emArrancada = false;
+    this.arrancadaTempo = 0;
+    this.recarga = ARRANCADA.recargaMs;
+    const b = this.sprite.body;
+    if (this.estado === 'normal' && !this.nadando) b.setGravityY(PLAYER.gravity);
+  }
+
   /** Enrolado em bola: espinhos e pedrinhas não machucam. */
   get protegido() {
     return this.estado === 'bola';
@@ -153,7 +186,7 @@ export class Player {
     if (this.noChao && !eraNoChao && b.velocity.y >= 0) this.aterrissou();
 
     // --- Poder "Virar bola": apertar de novo renova o tempo
-    if (i.powerPressed && this.temPoderBola) {
+    if (i.powerPressed && this.poderBotao === 'bola' && this.temPoderBola) {
       if (this.estado === 'bola') this.bolaTempo = BOLA.duracaoMs;
       else if (this.estado === 'normal') this.entrarBola();
     }
@@ -225,6 +258,44 @@ export class Player {
       b.setAllowGravity(false);
       b.setGravityY(0);
       b.setVelocity(0, 0);
+    }
+
+    // --- Arrancada do guepardo: reta, rápida, sem cair; depois recarrega
+    this.recarga = Math.max(0, this.recarga - ms);
+    if (
+      i.powerPressed &&
+      this.poderBotao === 'arrancada' &&
+      this.temPoderArrancada &&
+      this.recarga <= 0 &&
+      this.arrancadaTempo <= 0 &&
+      this.estado === 'normal' &&
+      !naAgua
+    ) {
+      this.arrancadaTempo = ARRANCADA.duracaoMs;
+      this.emArrancada = true;
+      b.setGravityY(0);
+      b.setVelocityY(0);
+      this.squash = 0.75;
+      AudioManager.tocar('arrancada');
+    }
+    if (this.arrancadaTempo > 0) {
+      this.arrancadaTempo -= ms;
+      const bateu = (this.direcao > 0 && b.blocked.right) || (this.direcao < 0 && b.blocked.left);
+      if (this.arrancadaTempo <= 0 || bateu || naAgua || this.estado !== 'normal') this.encerrarArrancada();
+      else {
+        b.setVelocityX(this.direcao * PLAYER.maxRun * ARRANCADA.fatorVelocidade);
+        b.setVelocityY(0);
+        if (Math.floor(this.tempoAnim * 30) % 2 === 0) this.poeira.emitParticleAt(this.x - this.direcao * 20, this.pes - 20);
+        // pular durante a arrancada vira um pulo longo (a velocidade continua e cai aos poucos)
+        if (this.buffer > 0) {
+          this.encerrarArrancada();
+          b.setVelocityY(-PLAYER.jumpVelocity);
+          this.buffer = 0;
+          AudioManager.tocar('pulo');
+        }
+        this.animar(dt);
+        return;
+      }
     }
 
     // --- Corrida horizontal com aceleração suave
@@ -395,6 +466,9 @@ export class Player {
   cair(onDone: () => void) {
     if (this.estado === 'caido') return;
     this.sairBola(false);
+    this.arrancadaTempo = 0;
+    this.emArrancada = false;
+    this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');
     const b = this.sprite.body;
@@ -422,6 +496,8 @@ export class Player {
   }
 
   comemorar() {
+    // Se tocou o objetivo no meio de uma arrancada, volta a gravidade para comemorar no chão.
+    this.encerrarArrancada();
     this.estado = 'festa';
     const b = this.sprite.body;
     b.setVelocityX(0);

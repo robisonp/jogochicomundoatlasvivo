@@ -66,6 +66,10 @@ export class HudScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown', () => AudioManager.desbloquear());
   }
 
+  update() {
+    this.controles.setCarga(this.level.cargaPoder);
+  }
+
   private posicionar() {
     const W = this.scale.width;
     this.btnSom.setPosition(60, 58);

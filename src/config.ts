@@ -43,6 +43,13 @@ export const AGUA = {
   fatorVelocidade: 0.7,
 };
 
+// Arrancada do guepardo: explosão curta de velocidade e depois recarga (dossiê: sprint dura poucos segundos).
+export const ARRANCADA = {
+  duracaoMs: 550,
+  fatorVelocidade: 2.3,
+  recargaMs: 1600,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

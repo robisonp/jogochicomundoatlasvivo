@@ -84,11 +84,11 @@ Animais: onça-pintada, arara-vermelha-grande, preguiça-de-garganta-marrom, bot
 9. **Vozes da Floresta** — seguir sons com ondas visuais.
 10. **Tempestade no Rio** — combina cipó, nado e vento.
 
-### Mundo 3 — Savana (Quênia e Tanzânia)
+### Mundo 3 — Savana (Quênia e Tanzânia) — completo (fases 11 a 15 jogáveis)
 Animais: guepardo, elefante-africano-da-savana, girafa-masai, zebra-da-planície, avestruz.
 11. **Pegadas na Savana** — seguir rastros.
-12. **Corrida do Guepardo** ★ arrancada curta (o guepardo só sustenta a velocidade máxima por segundos: a arrancada acaba e precisa "recarregar").
-13. **A Força do Elefante** ★ empurrar troncos e pedras.
+12. **Corrida do Guepardo** ★ arrancada curta (o guepardo só sustenta a velocidade máxima por segundos: a arrancada acaba e precisa "recarregar"). Na Savana o botão da pata vira arrancada; o anel em volta do botão mostra a recarga.
+13. **A Força do Elefante** ★ empurrar pedregulhos. Poder passivo: sem botão; o pedregulho só anda depois que o elefante ensina. Cada vala é tapada por **um** pedregulho (dois juntos se encavalavam).
 14. **Olhos no Alto** — rotas altas (girafa como referência de altura).
 15. **A Grande Travessia** — arrancada + empurrar.
 

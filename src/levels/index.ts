@@ -9,6 +9,11 @@ import { AMAZONIA_2 } from './amazonia2';
 import { AMAZONIA_3 } from './amazonia3';
 import { AMAZONIA_4 } from './amazonia4';
 import { AMAZONIA_5 } from './amazonia5';
+import { SAVANA_1 } from './savana1';
+import { SAVANA_2 } from './savana2';
+import { SAVANA_3 } from './savana3';
+import { SAVANA_4 } from './savana4';
+import { SAVANA_5 } from './savana5';
 
 /** Ordem da campanha: cada fase leva à próxima. */
 export const CAMPANHA: LevelDef[] = [
@@ -22,6 +27,11 @@ export const CAMPANHA: LevelDef[] = [
   AMAZONIA_3,
   AMAZONIA_4,
   AMAZONIA_5,
+  SAVANA_1,
+  SAVANA_2,
+  SAVANA_3,
+  SAVANA_4,
+  SAVANA_5,
 ];
 
 export const FASES: Record<string, LevelDef> = Object.fromEntries(CAMPANHA.map((f) => [f.id, f]));

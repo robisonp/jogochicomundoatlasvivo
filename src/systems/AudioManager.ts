@@ -17,7 +17,9 @@ export type Sfx =
   | 'pedra'
   | 'splash'
   | 'bracada'
-  | 'canto';
+  | 'canto'
+  | 'arrancada'
+  | 'empurrar';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -143,6 +145,13 @@ class AudioManagerImpl {
       case 'bracada':
         this.ruido(0.12, 900, 0.18);
         break;
+      case 'arrancada':
+        this.ruido(0.3, 2500, 0.25);
+        this.tom(300, 0.25, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
+        break;
+      case 'empurrar':
+        this.ruido(0.18, 300, 0.25);
+        break;
       case 'canto':
         // chamado de ave (estilizado): duas notas agudas e ásperas
         this.tom(1400, 0.12, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
@@ -226,6 +235,7 @@ class AudioManagerImpl {
 
   private agendar(): void {
     if (this.tema === 'mata') return this.agendarMata();
+    if (this.tema === 'savana') return this.agendarSavana();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -279,6 +289,32 @@ class AudioManagerImpl {
           this.tomEm(t, escala[idx] * 2, 0.12, 'sine', 0.05, dest);
         }
       }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Savana: espaço aberto e movimento — arpejos claros em maior, batida leve e constante.
+  private agendarSavana(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 112 / 4;
+    const acordes = [
+      [261.63, 329.63, 392, 523.25],
+      [220, 261.63, 329.63, 440],
+      [174.61, 220, 261.63, 349.23],
+      [196, 246.94, 293.66, 392],
+    ];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const acorde = acordes[Math.floor(this.beat / 16) % 4];
+      const dest = this.musicGain!;
+      if (b % 4 === 0) this.bumbo(t, dest);
+      if (b % 4 === 2) this.ruido(0.06, 5000, 0.06, t, dest);
+      if (b === 0 || b === 8) this.tomEm(t, acorde[0] / 2, 0.45, 'triangle', 0.4, dest);
+      // arpejo dedilhado
+      if (b % 2 === 0) this.tomEm(t, acorde[(b / 2) % 4], 0.22, 'triangle', 0.13, dest);
       this.nextBeatTime += passo;
       this.beat++;
     }

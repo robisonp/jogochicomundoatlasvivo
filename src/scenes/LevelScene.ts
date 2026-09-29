@@ -5,7 +5,7 @@ import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 import { SaveManager } from '../core/SaveManager';
-import { LINHAS, type LevelDef, type AnimalNaFase } from '../levels/types';
+import { LINHAS, type LevelDef, type AnimalNaFase, type Poder } from '../levels/types';
 import { FASES, CAMPANHA, proximaFase } from '../levels';
 import { TEMAS, type TemaMundo } from '../data/mundos';
 
@@ -21,7 +21,18 @@ const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   preguica: 'preguica',
   boto: 'boto',
   perereca: 'perereca',
+  guepardo: 'guepardo',
+  elefante: 'elefante',
+  girafa: 'girafa',
+  zebra: 'zebra',
+  avestruz: 'avestruz',
 };
+
+interface Pedregulho {
+  img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  x0: number;
+  y0: number;
+}
 /** Caracteres de água: rasa (~) e funda (w). */
 const AGUA = new Set(['~', 'w']);
 
@@ -109,6 +120,8 @@ export class LevelScene extends Phaser.Scene {
   private grade: string[] = [];
   private fontesSom: FonteSom[] = [];
   private respingos!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private pedregulhos: Pedregulho[] = [];
+  private grupoPedregulhos!: Phaser.Physics.Arcade.Group;
 
   constructor() {
     super('Level');
@@ -118,6 +131,7 @@ export class LevelScene extends Phaser.Scene {
     this.def = FASES[data.faseId ?? ''] ?? CAMPANHA[0];
     this.tema = TEMAS[this.def.mundo];
     this.fontesSom = [];
+    this.pedregulhos = [];
     this.bichos = [];
     this.fontesPedrinhas = [];
     this.ventos = [];
@@ -173,6 +187,24 @@ export class LevelScene extends Phaser.Scene {
     });
     this.player.temPoderBola = SaveManager.data.poderes.includes('bola');
     this.player.temPoderOnca = SaveManager.data.poderes.includes('onca');
+    this.player.temPoderArrancada = SaveManager.data.poderes.includes('arrancada');
+    this.player.temPoderForca = SaveManager.data.poderes.includes('forca');
+    this.player.poderBotao = this.tema.poderBotao;
+    this.atualizarPedregulhos();
+
+    // Pedregulhos: caem, param com atrito e só se movem com a força do elefante.
+    this.physics.add.collider(this.grupoPedregulhos, this.solidos);
+    this.physics.add.collider(this.grupoPedregulhos, this.grupoPedregulhos);
+    this.physics.add.collider(this.player.sprite, this.grupoPedregulhos, (_p, pd) => {
+      const pb = this.player.body;
+      const bb = (pd as Phaser.Types.Physics.Arcade.ImageWithDynamicBody).body;
+      // em cima do pedregulho dá para pular
+      if (pb.bottom <= bb.top + 6) this.player.apoiar();
+      else if (this.player.temPoderForca && Math.abs(bb.velocity.x) > 20 && Math.random() < 0.15) {
+        AudioManager.tocar('empurrar');
+        this.player.soltarPoeira(bb.x + (bb.velocity.x > 0 ? 0 : bb.width), bb.bottom);
+      }
+    });
     this.player.aoEntrarNaAgua = () => {
       AudioManager.tocar('splash');
       this.respingos.explode(12, this.player.x, this.aguaSuperficie(this.player.x, this.player.y) ?? this.player.y);
@@ -290,6 +322,7 @@ export class LevelScene extends Phaser.Scene {
     this.escadas = this.physics.add.staticGroup();
     this.pegadas = this.physics.add.staticGroup();
     this.pedrinhas = this.physics.add.group();
+    this.grupoPedregulhos = this.physics.add.group();
     this.respingos = this.add.particles(0, 0, 'bolha', {
       lifespan: 600,
       speedX: { min: -140, max: 140 },
@@ -459,6 +492,21 @@ export class LevelScene extends Phaser.Scene {
             this.bichos.push({ img, def, ativado: false });
             break;
           }
+          case 'B': {
+            // Pedregulho 2x2: o "B" marca o bloco de baixo à esquerda.
+            const img = this.physics.add.image(x + TILE, y + TILE, 'pedregulho').setOrigin(0.5, 1).setDepth(6) as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+            this.grupoPedregulhos.add(img);
+            img.body.setSize(TILE * 2 - 8, TILE * 2 - 4);
+            img.body.setGravityY(PLAYER.gravity);
+            img.body.setDragX(2600);
+            img.body.setMaxVelocityX(160);
+            img.body.setMass(4);
+            this.pedregulhos.push({ img, x0: img.x, y0: img.y });
+            break;
+          }
+          case ':':
+            this.add.image(x, y + TILE - 14, 'rastro').setOrigin(0).setDepth(1.6);
+            break;
           case 'U':
             if (this.gatilhoChuva === null) this.gatilhoChuva = cx;
             break;
@@ -557,6 +605,12 @@ export class LevelScene extends Phaser.Scene {
     this.checarPlacas(i.actionPressed);
     this.checarBichos();
     this.atualizarSons(dt);
+    for (const p of this.pedregulhos) {
+      // Pedregulho que caiu num buraco sem fundo volta para o lugar (a fase nunca fica impossível).
+      if (p.img.y > this.alturaMundo + 100) {
+        p.img.body.reset(p.x0, p.y0 - TILE);
+      }
+    }
     this.soltarPedrinhas(dt);
     this.atualizarVento(dt);
     if (this.gatilhoChuva !== null && !this.chovendo && this.player.x > this.gatilhoChuva) this.comecarChuva();
@@ -705,8 +759,17 @@ export class LevelScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ bichos
 
+  /** O botão da pata aparece quando o Chico já tem o poder que o botão usa neste mundo. */
   get temPoder() {
-    return this.player.temPoderBola;
+    return this.player.poderBotao === 'bola' ? this.player.temPoderBola : this.player.temPoderArrancada;
+  }
+
+  get cargaPoder() {
+    return this.player.cargaPoder;
+  }
+
+  private atualizarPedregulhos() {
+    for (const p of this.pedregulhos) p.img.body.pushable = this.player.temPoderForca;
   }
 
   private checarBichos() {
@@ -761,8 +824,33 @@ export class LevelScene extends Phaser.Scene {
       const { dx } = def.demo;
       this.time.delayedCall(1000, () => {
         img.setFlipX(false);
-        this.tweens.add({ targets: img, x: img.x + dx * TILE, duration: 900, ease: 'Quad.easeIn' });
-        this.tweens.add({ targets: img, alpha: 0, delay: 700, duration: 300 });
+        this.tweens.killTweensOf(img);
+        img.setScale(1);
+        // o guepardo dispara e some rapidinho; os outros correm mais devagar
+        const duracao = def.id === 'guepardo' ? 500 : 900;
+        this.tweens.add({ targets: img, x: img.x + dx * TILE, duration: duracao, ease: 'Quad.easeIn' });
+        this.tweens.add({
+          targets: img,
+          alpha: 0,
+          delay: duracao * 0.75,
+          duration: duracao * 0.35,
+          onComplete: () => {
+            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          },
+        });
+      });
+    } else if (def.demo.tipo === 'empurrar') {
+      // O elefante empurra um tronco caído com a tromba e o corpo.
+      const tronco = this.add.image(img.x + img.displayWidth * 0.55, img.y, 'pedregulho').setOrigin(0.5, 1).setScale(0.6).setDepth(7);
+      this.time.delayedCall(1200, () => {
+        img.setFlipX(false);
+        tronco.setX(img.x + img.displayWidth * 0.55);
+        this.tweens.add({ targets: [img, tronco], x: `+=${TILE * 2}`, duration: 1800, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: tronco, angle: 60, duration: 1800 });
+        AudioManager.tocar('empurrar');
+        this.time.delayedCall(1900, () => {
+          if (def.daPoder) this.ganharPoder(def.daPoder, img);
+        });
       });
     } else if (def.demo.tipo === 'nadar') {
       // Onça e boto atravessam a água, subindo e descendo de leve.
@@ -839,7 +927,7 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  private ganharPoder(poder: 'bola' | 'onca', origem: Phaser.GameObjects.Image) {
+  private ganharPoder(poder: Poder, origem: Phaser.GameObjects.Image) {
     const faisca = this.add.image(origem.x, origem.y - 30, 'brilho').setScale(3).setDepth(20).setTint(0xffd766);
     this.tweens.add({
       targets: faisca,
@@ -854,8 +942,17 @@ export class LevelScene extends Phaser.Scene {
         this.cameras.main.flash(200, 255, 240, 170);
         if (poder === 'bola') {
           this.player.temPoderBola = true;
-          this.events.emit('poder', true);
+          this.events.emit('poder', this.temPoder);
           if (novo) VoiceManager.falar('Agora você também pode virar bola! Aperte o botão da pata.', 'narrador', true);
+        } else if (poder === 'arrancada') {
+          this.player.temPoderArrancada = true;
+          this.events.emit('poder', this.temPoder);
+          if (novo) VoiceManager.falar('Agora você corre como o guepardo! Aperte o botão da pata para dar uma arrancada.', 'narrador', true);
+        } else if (poder === 'forca') {
+          // Poder passivo: empurrar pedregulhos andando contra eles.
+          this.player.temPoderForca = true;
+          this.atualizarPedregulhos();
+          if (novo) VoiceManager.falar('Agora você tem a força do elefante! Ande contra as pedras grandes para empurrar.', 'narrador', true);
         } else {
           // Poder passivo: não precisa de botão.
           this.player.temPoderOnca = true;
