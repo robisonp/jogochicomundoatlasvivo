@@ -28,6 +28,10 @@ export interface SaveData {
   poderes: string[];
   /** Selos dos mundos concluídos. */
   selos: string[];
+  /** Mundos cuja chegada já foi mostrada no mapa (rota animada + nome falado). */
+  anunciados: string[];
+  /** A chamada da Tia Marcela contando a história do Atlas já foi vista. */
+  introVista: boolean;
   settings: Settings;
 }
 
@@ -43,7 +47,17 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 function novoSave(): SaveData {
-  return { versao: VERSAO_ATUAL, fases: {}, tentativas: {}, animais: [], poderes: [], selos: [], settings: { ...DEFAULT_SETTINGS } };
+  return {
+    versao: VERSAO_ATUAL,
+    fases: {},
+    tentativas: {},
+    animais: [],
+    poderes: [],
+    selos: [],
+    anunciados: [],
+    introVista: false,
+    settings: { ...DEFAULT_SETTINGS },
+  };
 }
 
 // Cada entrada migra da versão N para N+1. Ex.: migracoes[1] leva um save v1 para v2.
@@ -111,7 +125,7 @@ class SaveManagerImpl {
   }
 
   /** Registra um item numa lista do save (animal do Atlas, poder) sem repetir. */
-  conquistar(lista: 'animais' | 'poderes' | 'selos', id: string): boolean {
+  conquistar(lista: 'animais' | 'poderes' | 'selos' | 'anunciados', id: string): boolean {
     if (this.data[lista].includes(id)) return false;
     this.data[lista].push(id);
     this.salvar();

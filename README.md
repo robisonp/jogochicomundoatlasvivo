@@ -18,6 +18,7 @@ npm run build      # gera dist/
 Parâmetros de URL úteis:
 - `?fase=caatinga-2` abre direto uma fase (ids em `src/levels/`);
 - `?atlas` abre direto o Atlas;
+- `?mapa` abre direto o mapa-múndi;
 - `?toque` mostra os controles de toque no computador;
 - `?debug` mostra as caixas de colisão.
 
@@ -31,7 +32,11 @@ Parâmetros de URL úteis:
 | Poder do Bicho | Botão 🐾 (só quando houver) | C ou Shift | Y / RB / LB |
 | Pausa | ⏸ no canto | Esc ou P | Start |
 
-Atlas: **toque no livro roxo da tela de título**. Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
+Mapa: o **botão verde da tela de título** abre o mapa-múndi com a rota dos 8 mundos. Toque num mundo aberto para escolher a fase, ou no botão verde do mapa para continuar de onde parou. Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro; quando um mundo novo abre, o Chico viaja pela rota e o narrador diz o continente e o país.
+
+Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **Para deixar cada um parecido com a pessoa de verdade, ajuste cores, penteado, óculos, barba etc. em `src/data/familia.ts`** (como `src/data/visual.ts` faz com o Chico).
+
+Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
 Área dos adultos: **segure a engrenagem por 2 segundos** (no título ou na pausa). Lá ficam o lado do direcional, os volumes, "reduzir movimento" e os códigos de save.
 
@@ -42,9 +47,11 @@ src/
   art/Textures.ts       arte desenhada por código (Chico em partes, cenário, objetos, UI)
   core/SaveManager.ts   save local versionado (com migração) + configurações
   data/visual.ts        cores do Chico e da paleta de cada mundo
+  data/familia.ts       aparência e papel de cada pessoa da família
+  data/mapa.ts          os 8 mundos no mapa-múndi (onde ficam e o que o narrador fala)
   entities/Player.ts    física do movimento + animação procedural
   levels/               fases em texto (ver legenda em levels/types.ts)
-  scenes/               Boot, Título, Fase, HUD, Pausa, Fim, Área adulta
+  scenes/               Boot, Título, Mapa, Atlas, Fase, HUD, Pausa, Fim, Área adulta
   systems/              entrada unificada, áudio sintetizado, vozes
   ui/                   controles de toque e widgets
 ```

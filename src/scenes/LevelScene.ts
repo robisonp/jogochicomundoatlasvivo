@@ -8,6 +8,7 @@ import { SaveManager } from '../core/SaveManager';
 import { LINHAS, type LevelDef, type AnimalNaFase, type Poder } from '../levels/types';
 import { FASES, CAMPANHA, proximaFase } from '../levels';
 import { TEMAS, type TemaMundo } from '../data/mundos';
+import { FAMILIA, ehFamiliar } from '../data/familia';
 
 const LINHAS_EXTRAS = 3;
 const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
@@ -89,6 +90,8 @@ interface Placa {
   img: Phaser.GameObjects.Image;
   indice: number;
   ouvida: boolean;
+  /** Quem da família fala nesta placa: em pé ao lado dela, ou pelo Chamador do Atlas (tias que moram longe). */
+  pessoa?: Phaser.GameObjects.GameObject & { x: number; y: number; angle: number };
 }
 
 export class LevelScene extends Phaser.Scene {
@@ -541,7 +544,28 @@ export class LevelScene extends Phaser.Scene {
           }
           case 'S': {
             const img = this.add.image(cx, y + TILE, 'placa').setOrigin(0.5, 1).setDepth(2);
-            this.placas.push({ img, indice: placaIdx++, ouvida: false });
+            const quem = this.def.placas[placaIdx]?.quem;
+            let pessoa: Placa['pessoa'];
+            if (quem && ehFamiliar(quem)) {
+              if (FAMILIA[quem].presencial) {
+                // em pé ao lado da placa, olhando para o Chico (que vem da esquerda); do outro lado se houver parede
+                const lado = solido(r, c + 1) ? -1 : 1;
+                pessoa = this.add
+                  .image(cx + lado * 46, y + TILE, `familia-${quem}`)
+                  .setOrigin(0.5, 1)
+                  .setScale(0.82)
+                  .setFlipX(true)
+                  .setDepth(2.5)
+                  .setData('y0', y + TILE);
+              } else {
+                // chamada de vídeo: o tabletzinho flutua em cima da placa
+                const tela = this.add.image(0, 0, 'chamador');
+                const rosto = this.add.image(0, -8, `rosto-${quem}`).setScale(0.62);
+                pessoa = this.add.container(cx, y - 30, [tela, rosto]).setDepth(2.5).setScale(0.8);
+                this.tweens.add({ targets: pessoa, y: y - 40, yoyo: true, repeat: -1, duration: 1000, ease: 'Sine.easeInOut' });
+              }
+            }
+            this.placas.push({ img, indice: placaIdx++, ouvida: false, pessoa });
             break;
           }
           case 'M':
@@ -911,6 +935,15 @@ export class LevelScene extends Phaser.Scene {
         const f = this.def.placas[perto.indice];
         if (f) VoiceManager.falar(f.texto, f.quem);
         this.tweens.add({ targets: perto.img, scaleX: { from: 1.15, to: 1 }, scaleY: { from: 1.15, to: 1 }, duration: 250 });
+        // quem fala se mexe: um pulinho e um balanço
+        if (perto.pessoa) {
+          const p = perto.pessoa;
+          this.tweens.add({ targets: p, angle: { from: -6, to: 6 }, yoyo: true, repeat: 3, duration: 180, onComplete: () => (p.angle = 0) });
+          if (p instanceof Phaser.GameObjects.Image) {
+            const y0 = p.getData('y0') as number;
+            this.tweens.add({ targets: p, y: { from: y0, to: y0 - 14 }, yoyo: true, repeat: 1, duration: 200, ease: 'Quad.easeOut' });
+          }
+        }
       }
     } else {
       this.iconeAcao.setVisible(false);

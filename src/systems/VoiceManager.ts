@@ -31,6 +31,13 @@ const MASC = /(\bmale|masculin|homem|antonio|daniel|felipe|donato|fabio|julio|hu
 class VoiceManagerImpl {
   private vozes: SpeechSynthesisVoice[] = [];
   private ultima?: { texto: string; quem: Personagem };
+  /** Quem quer saber quando alguém fala (o HUD mostra o rosto de quem da família está falando). */
+  private ouvintes = new Set<(quem: Personagem) => void>();
+
+  aoFalar(fn: (quem: Personagem) => void): () => void {
+    this.ouvintes.add(fn);
+    return () => this.ouvintes.delete(fn);
+  }
 
   constructor() {
     const synth = window.speechSynthesis;
@@ -60,6 +67,7 @@ class VoiceManagerImpl {
    */
   falar(texto: string, quem: Personagem = 'narrador', enfileirar = false): void {
     this.ultima = { texto, quem };
+    for (const fn of this.ouvintes) fn(quem);
     const synth = window.speechSynthesis;
     if (!synth) return;
     const vol = SaveManager.data.settings.volumeVoz;
