@@ -19,7 +19,10 @@ export type Sfx =
   | 'bracada'
   | 'canto'
   | 'arrancada'
-  | 'empurrar';
+  | 'empurrar'
+  | 'superpulo'
+  | 'cavar'
+  | 'sinal';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -152,6 +155,19 @@ class AudioManagerImpl {
       case 'empurrar':
         this.ruido(0.18, 300, 0.25);
         break;
+      case 'superpulo':
+        // mola: sobe bem mais que o pulo normal
+        this.tom(220, 0.3, { tipo: 'triangle', ate: 990, vol: 0.28 });
+        this.tom(440, 0.22, { tipo: 'square', ate: 1320, vol: 0.08, atraso: 0.05 });
+        break;
+      case 'cavar':
+        this.ruido(0.07, 700, 0.22);
+        break;
+      case 'sinal':
+        // sinais debaixo d'água (estilizado): bipes suaves e agudos
+        this.tom(1760, 0.08, { tipo: 'sine', vol: 0.12 });
+        this.tom(2093, 0.1, { tipo: 'sine', vol: 0.1, atraso: 0.12 });
+        break;
       case 'canto':
         // chamado de ave (estilizado): duas notas agudas e ásperas
         this.tom(1400, 0.12, { tipo: 'sawtooth', ate: 900, vol: 0.12 });
@@ -236,6 +252,7 @@ class AudioManagerImpl {
   private agendar(): void {
     if (this.tema === 'mata') return this.agendarMata();
     if (this.tema === 'savana') return this.agendarSavana();
+    if (this.tema === 'outback') return this.agendarOutback();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -315,6 +332,32 @@ class AudioManagerImpl {
       if (b === 0 || b === 8) this.tomEm(t, acorde[0] / 2, 0.45, 'triangle', 0.4, dest);
       // arpejo dedilhado
       if (b % 2 === 0) this.tomEm(t, acorde[(b / 2) % 4], 0.22, 'triangle', 0.13, dest);
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Austrália: ritmo de saltos (compasso composto, "pula-pula"), baixo dedilhado e melodia em pentatônica.
+  // Sem imitar instrumentos tradicionais aborígenes (evita clichê).
+  private agendarOutback(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 100 / 3; // colcheia em 6/8 (semínima pontuada a 100)
+    const escala = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25];
+    const melodia = [0, -1, 2, 3, -1, 2, 4, -1, 3, 2, -1, 1, 0, -1, 2, 4, -1, 5, 6, -1, 5, 4, 3, 2];
+    const baixo = [146.83, 146.83, 196, 220];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 6;
+      const compasso = Math.floor(this.beat / 6);
+      const dest = this.musicGain!;
+      if (b === 0 || b === 3) this.bumbo(t, dest);
+      // bloco de madeira (estalo curto) nos tempos fracos
+      if (b === 2 || b === 5) this.tomEm(t, 1320, 0.04, 'sine', 0.08, dest);
+      if (b === 0) this.tomEm(t, baixo[compasso % 4], 0.5, 'triangle', 0.4, dest);
+      if (b === 3) this.tomEm(t, baixo[compasso % 4] * 1.5, 0.3, 'triangle', 0.3, dest);
+      const idx = melodia[this.beat % melodia.length];
+      if (idx >= 0) this.tomEm(t, escala[idx], passo * 1.6, 'triangle', 0.14, dest);
       this.nextBeatTime += passo;
       this.beat++;
     }

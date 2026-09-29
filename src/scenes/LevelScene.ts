@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, PLAYER, VENTO } from '../config';
+import { TILE, PLAYER, VENTO, CAVAR } from '../config';
 import { Player } from '../entities/Player';
 import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -26,6 +26,11 @@ const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   girafa: 'girafa',
   zebra: 'zebra',
   avestruz: 'avestruz',
+  canguru: 'canguru',
+  wombat: 'wombat',
+  emu: 'emu',
+  ornitorrinco: 'ornitorrinco',
+  coala: 'coala',
 };
 
 interface Pedregulho {
@@ -62,6 +67,8 @@ interface Bicho {
   img: Phaser.GameObjects.Image;
   def: AnimalNaFase;
   ativado: boolean;
+  /** Bicho que corre na frente do Chico mostrando o caminho (o emu). */
+  guia?: { xFinal: number; tempo: number };
 }
 
 interface FontePedrinhas {
@@ -99,7 +106,7 @@ export class LevelScene extends Phaser.Scene {
   private tempo = 0;
   private terminou = false;
   private pausado = false;
-  private fundo: { img: Phaser.GameObjects.TileSprite; fator: number }[] = [];
+  private fundo: { img: Phaser.GameObjects.TileSprite; fator: number; afundar: number }[] = [];
   private olharFrente = 0;
   private dicaMostrada = new Set<number>();
   private iconeAcao!: Phaser.GameObjects.Image;
@@ -122,6 +129,11 @@ export class LevelScene extends Phaser.Scene {
   private respingos!: Phaser.GameObjects.Particles.ParticleEmitter;
   private pedregulhos: Pedregulho[] = [];
   private grupoPedregulhos!: Phaser.Physics.Arcade.Group;
+  /** Terra fofa (F) por "coluna,linha": some quando o Chico cava com o poder do wombat. */
+  private fofas = new Map<string, Phaser.Types.Physics.Arcade.ImageWithStaticBody>();
+  private grupoFofas!: Phaser.Physics.Arcade.StaticGroup;
+  private cavando: { id: string; t: number; som: number } | null = null;
+  private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
     super('Level');
@@ -129,9 +141,12 @@ export class LevelScene extends Phaser.Scene {
 
   init(data: { faseId?: string }) {
     this.def = FASES[data.faseId ?? ''] ?? CAMPANHA[0];
-    this.tema = TEMAS[this.def.mundo];
+    this.tema = TEMAS[this.def.tema ?? this.def.mundo];
     this.fontesSom = [];
     this.pedregulhos = [];
+    this.fofas = new Map();
+    this.cavando = null;
+    this.escuridao = undefined;
     this.bichos = [];
     this.fontesPedrinhas = [];
     this.ventos = [];
@@ -166,6 +181,7 @@ export class LevelScene extends Phaser.Scene {
 
     // Colisões
     this.physics.add.collider(this.player.sprite, this.solidos);
+    this.physics.add.collider(this.player.sprite, this.grupoFofas);
     const apoiar = () => this.player.apoiar();
     this.physics.add.collider(this.player.sprite, this.lajes, apoiar, this.podePisar, this);
     this.physics.add.collider(
@@ -189,6 +205,8 @@ export class LevelScene extends Phaser.Scene {
     this.player.temPoderOnca = SaveManager.data.poderes.includes('onca');
     this.player.temPoderArrancada = SaveManager.data.poderes.includes('arrancada');
     this.player.temPoderForca = SaveManager.data.poderes.includes('forca');
+    this.player.temPoderSuperPulo = SaveManager.data.poderes.includes('superpulo');
+    this.player.temPoderCavar = SaveManager.data.poderes.includes('cavar');
     this.player.poderBotao = this.tema.poderBotao;
     this.atualizarPedregulhos();
 
@@ -224,6 +242,12 @@ export class LevelScene extends Phaser.Scene {
 
     this.iconeAcao = this.add.image(0, 0, 'btn-acao').setScale(0.45).setDepth(20).setVisible(false);
 
+    // Noite: tudo escuro, menos uma roda de luz em volta do Chico. Vaga-lumes e o objetivo ficam por cima.
+    if (this.def.noite) {
+      this.escuridao = this.add.image(this.player.x, this.player.y, 'escuridao').setScale(16).setDepth(30);
+      this.objetivo.setDepth(31);
+    }
+
     this.scene.launch('Hud', { level: this });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop('Hud');
@@ -244,9 +268,13 @@ export class LevelScene extends Phaser.Scene {
   private criarFundo() {
     const { width, height } = this.scale;
     const tema = this.tema;
-    this.add.image(0, 0, tema.ceu).setOrigin(0).setScrollFactor(0).setDisplaySize(width, height).setDepth(-100);
-    if (tema.sol) this.add.image(width * 0.78, 130, 'sol').setScrollFactor(0).setDepth(-99);
-    if (tema.nuvens) {
+    const noite = !!this.def.noite;
+    this.add.image(0, 0, noite ? 'ceu-noite' : tema.ceu).setOrigin(0).setScrollFactor(0).setDisplaySize(width, height).setDepth(-100);
+    if (noite) {
+      this.add.tileSprite(0, 0, 2048, 360, 'estrelas').setOrigin(0).setScrollFactor(0).setDepth(-99.5);
+      this.add.image(width * 0.8, 120, 'lua').setScrollFactor(0).setDepth(-99);
+    } else if (tema.sol) this.add.image(width * 0.78, 130, 'sol').setScrollFactor(0).setDepth(-99);
+    if (tema.nuvens && !noite) {
       for (let i = 0; i < 5; i++) {
         const n = this.add.image(i * 700 + 120, 80 + (i % 3) * 50, 'nuvem').setScrollFactor(0.08, 0).setDepth(-98);
         n.setScale(0.7 + (i % 2) * 0.4);
@@ -254,11 +282,13 @@ export class LevelScene extends Phaser.Scene {
     }
     tema.fundo.forEach((camada, i) => {
       const img = this.add
-        .tileSprite(0, height - camada.base, width, camada.altura, camada.textura)
+        .tileSprite(0, height - camada.altura, width, camada.altura, camada.textura)
         .setOrigin(0)
         .setScrollFactor(0)
         .setDepth(-97 + i);
-      this.fundo.push({ img, fator: camada.fator });
+      // de noite as camadas de fundo ficam azuladas e escuras
+      if (noite) img.setTint(i === 0 ? 0x3a4a7a : 0x2a3558);
+      this.fundo.push({ img, fator: camada.fator, afundar: camada.afundar });
     });
     this.scale.on('resize', this.aoRedimensionar, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', this.aoRedimensionar, this));
@@ -279,7 +309,10 @@ export class LevelScene extends Phaser.Scene {
     // Terra extra abaixo da fase: deixa a câmera mostrar o chão mais alto na tela, acima dos controles de toque.
     const ultima = grade[LINHAS - 1];
     // Embaixo dos rios fica o leito (terra): a água nunca "vaza" pelo fundo da fase.
-    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(ultima.replace(/[^#R~w]/g, '.').replace(/[~w]/g, '#'));
+    // Bicho, pegada ou chamado no fundo do rio (água dos dois lados) também ganham leito embaixo.
+    const noRio = (c: number) => AGUA.has(ultima[c]) || ('AoZ'.includes(ultima[c]) && AGUA.has(ultima[c - 1] ?? '.') && AGUA.has(ultima[c + 1] ?? '.'));
+    const leito = [...ultima].map((ch, c) => (ch === '#' || ch === 'R' ? ch : ch === 'F' || noRio(c) ? '#' : '.')).join('');
+    for (let i = 0; i < LINHAS_EXTRAS; i++) grade.push(leito);
     const linhas = grade.length;
     const cols = grade[0].length;
     this.larguraMundo = cols * TILE;
@@ -291,7 +324,7 @@ export class LevelScene extends Phaser.Scene {
     const aguaEm = (r: number, c: number): string | null => {
       const ch = at(r, c);
       if (AGUA.has(ch)) return ch;
-      if ((ch === 'A' || ch === 'o') && AGUA.has(at(r, c - 1)) && AGUA.has(at(r, c + 1))) return at(r, c - 1);
+      if ((ch === 'A' || ch === 'o' || ch === 'Z') && AGUA.has(at(r, c - 1)) && AGUA.has(at(r, c + 1))) return at(r, c - 1);
       return null;
     };
     this.grade = grade.map((linha, r) => [...linha].map((ch, c) => aguaEm(r, c) ?? ch).join(''));
@@ -309,9 +342,20 @@ export class LevelScene extends Phaser.Scene {
       }
     }
 
+    // Tocas: fundo de terra escura atrás da terra fofa (aparece quando ela é cavada) e dos túneis "t".
+    const naToca = (r: number, c: number) => {
+      const ch = at(r, c);
+      return ch === 't' || ('o*Z'.includes(ch) && (at(r, c - 1) === 't' || at(r, c + 1) === 't'));
+    };
+    for (let r = 0; r < LINHAS; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (at(r, c) === 'F' || naToca(r, c)) this.add.image(c * TILE, r * TILE, 'fundo-toca').setOrigin(0).setDepth(0.5);
+      }
+    }
+
     // Fundo escuro nos buracos (perigo legível para quem não lê).
     for (let c = 0; c < cols; c++) {
-      if (!solido(LINHAS - 1, c) && !AGUA.has(at(LINHAS - 1, c))) {
+      if (!solido(LINHAS - 1, c) && !aguaEm(LINHAS - 1, c) && at(LINHAS - 1, c) !== 'F') {
         this.add.image(c * TILE, (LINHAS - 3) * TILE, 'buraco').setOrigin(0).setDepth(0).setDisplaySize(TILE, (LINHAS_EXTRAS + 3) * TILE);
       }
     }
@@ -323,6 +367,7 @@ export class LevelScene extends Phaser.Scene {
     this.pegadas = this.physics.add.staticGroup();
     this.pedrinhas = this.physics.add.group();
     this.grupoPedregulhos = this.physics.add.group();
+    this.grupoFofas = this.physics.add.staticGroup();
     this.respingos = this.add.particles(0, 0, 'bolha', {
       lifespan: 600,
       speedX: { min: -140, max: 140 },
@@ -354,7 +399,8 @@ export class LevelScene extends Phaser.Scene {
         const c0 = c;
         while (solido(r, c)) {
           const [interno, comTopo] = SOLIDOS[at(r, c)];
-          const temTopo = !solido(r - 1, c);
+          // chão de toca, embaixo da terra fofa ou leito de rio: sem capim por cima
+          const temTopo = !solido(r - 1, c) && at(r - 1, c) !== 'F' && !naToca(r - 1, c) && !aguaEm(r - 1, c);
           this.add.image(c * TILE, r * TILE, temTopo ? comTopo : interno).setOrigin(0).setDepth(1);
           if (temTopo && at(r, c) === '#') this.toposTerra.push({ x: c * TILE, y: r * TILE });
           c++;
@@ -431,9 +477,11 @@ export class LevelScene extends Phaser.Scene {
             this.fontesSom.push({ x: cx, y: y + TILE / 2, t: this.fontesSom.length * 0.8 });
             break;
           case 'H':
-          case 'J': {
-            // H: escada de corda (Vovô Marcos); J: cipó da floresta. Os dois se escalam igual.
-            const h = this.escadas.create(cx, y + TILE / 2, ch === 'J' ? 'cipo' : 'escada').setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+          case 'J':
+          case 'E': {
+            // H: escada de corda (Vovô Marcos); J: cipó da floresta; E: tronco de eucalipto. Todos se escalam igual.
+            const textura = ch === 'J' ? 'cipo' : ch === 'E' ? 'tronco-eucalipto' : 'escada';
+            const h = this.escadas.create(cx, y + TILE / 2, textura).setDepth(2) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
             h.refreshBody();
             h.body.setSize(40, TILE);
             break;
@@ -507,6 +555,21 @@ export class LevelScene extends Phaser.Scene {
           case ':':
             this.add.image(x, y + TILE - 14, 'rastro').setOrigin(0).setDepth(1.6);
             break;
+          case 'F': {
+            const topo = !solido(r - 1, c) && at(r - 1, c) !== 'F';
+            const f = this.grupoFofas.create(x, y, topo ? 'terra-fofa-topo' : 'terra-fofa').setOrigin(0).setDepth(1) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+            f.refreshBody();
+            this.fofas.set(`${c},${r}`, f);
+            break;
+          }
+          case '*': {
+            // Vaga-lume: pisca devagar e passeia um pouquinho; fica por cima da escuridão da noite.
+            const v = this.add.image(cx, y + TILE / 2, 'vagalume').setDepth(31).setBlendMode(Phaser.BlendModes.ADD);
+            const atraso = (c * 131 + r * 57) % 1200;
+            this.tweens.add({ targets: v, alpha: { from: 1, to: 0.35 }, yoyo: true, repeat: -1, duration: 900, delay: atraso, ease: 'Sine.easeInOut' });
+            this.tweens.add({ targets: v, x: cx + 10, y: v.y - 8, yoyo: true, repeat: -1, duration: 1700 + (atraso % 500), ease: 'Sine.easeInOut' });
+            break;
+          }
           case 'U':
             if (this.gatilhoChuva === null) this.gatilhoChuva = cx;
             break;
@@ -587,6 +650,8 @@ export class LevelScene extends Phaser.Scene {
     }
 
     this.player.update(this.terminou ? this.semEntrada() : i, dt);
+    this.cavar(this.terminou ? this.semEntrada() : i, dt);
+    this.escuridao?.setPosition(this.player.x, this.player.y - 30);
 
     // Câmera antecipa a direção
     const alvo = this.player.direcao * 110 * Math.min(1, Math.abs(this.player.body.velocity.x) / 200);
@@ -594,9 +659,14 @@ export class LevelScene extends Phaser.Scene {
     // Chico um pouco abaixo do centro: o chão fica acima da área dos controles de toque.
     this.cameras.main.setFollowOffset(-this.olharFrente, 70);
 
-    // Parallax
+    // Parallax: as camadas de fundo acompanham a linha do chão da fase (onde o Chico começa),
+    // para os morros e árvores aparecerem logo acima do chão em qualquer altura de tela.
     const sx = this.cameras.main.scrollX;
-    for (const f of this.fundo) f.img.tilePositionX = sx * f.fator;
+    const chaoNaTela = this.inicio.y + PLAYER.bodyHeight / 2 - this.cameras.main.scrollY;
+    for (const f of this.fundo) {
+      f.img.tilePositionX = sx * f.fator;
+      f.img.y = chaoNaTela + f.afundar - f.img.height;
+    }
 
     // Caiu no buraco
     if (this.player.y > LINHAS * TILE + 90 && this.player.estado !== 'caido') this.morrer();
@@ -604,6 +674,8 @@ export class LevelScene extends Phaser.Scene {
     this.checarCheckpoints();
     this.checarPlacas(i.actionPressed);
     this.checarBichos();
+    // o emu é só visual: usa o tempo real do quadro (não o limitado da física) para nunca ficar para trás
+    this.guiarBichos(deltaMs / 1000);
     this.atualizarSons(dt);
     for (const p of this.pedregulhos) {
       // Pedregulho que caiu num buraco sem fundo volta para o lugar (a fase nunca fica impossível).
@@ -761,7 +833,10 @@ export class LevelScene extends Phaser.Scene {
 
   /** O botão da pata aparece quando o Chico já tem o poder que o botão usa neste mundo. */
   get temPoder() {
-    return this.player.poderBotao === 'bola' ? this.player.temPoderBola : this.player.temPoderArrancada;
+    const p = this.player;
+    if (p.poderBotao === 'bola') return p.temPoderBola;
+    if (p.poderBotao === 'superpulo') return p.temPoderSuperPulo;
+    return p.temPoderArrancada;
   }
 
   get cargaPoder() {
@@ -896,8 +971,44 @@ export class LevelScene extends Phaser.Scene {
             const t = tw.getValue() ?? 0;
             img.setPosition(x0 + dx * TILE * t, y0 + dy * TILE * t - Math.sin(Math.PI * t) * 140);
           },
+          onComplete: () => {
+            // o canguru ensina o super pulo depois de mostrar o salto
+            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          },
         }),
       );
+    } else if (def.demo.tipo === 'cavar') {
+      // O wombat cava a terra fofa bem na frente dele e entra na toca.
+      const c = Math.floor(img.x / TILE) + 1;
+      const r = Math.floor((img.y - 1) / TILE);
+      this.time.delayedCall(1100, () => {
+        img.setFlipX(false);
+        this.tweens.killTweensOf(img);
+        img.setScale(1);
+        this.tweens.add({ targets: img, x: img.x + 4, yoyo: true, repeat: 7, duration: 90 });
+        for (let k = 0; k < 6; k++) {
+          this.time.delayedCall(k * 150, () => {
+            this.estilhacos.explode(4, (c + 0.1) * TILE, (r + 0.8) * TILE);
+            AudioManager.tocar('cavar');
+          });
+        }
+        this.time.delayedCall(1000, () => {
+          this.removerFofa(c, r);
+          this.removerFofa(c, r - 1);
+          this.tweens.add({ targets: img, x: img.x + TILE * 1.4, alpha: 0, duration: 900, ease: 'Sine.easeIn' });
+          this.time.delayedCall(950, () => {
+            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          });
+        });
+      });
+    } else if (def.demo.tipo === 'guiar') {
+      // O emu corre na frente do Chico, mostrando o caminho, até o fim do trecho.
+      b.guia = { xFinal: img.x + def.demo.ate * TILE, tempo: 0 };
+      this.time.delayedCall(900, () => {
+        img.setFlipX(false);
+        this.tweens.killTweensOf(img);
+        img.setScale(1);
+      });
     } else {
       // O tatu-bola se fecha quando uma pedrinha cai perto, e depois se abre de novo.
       this.time.delayedCall(1400, () => {
@@ -948,6 +1059,14 @@ export class LevelScene extends Phaser.Scene {
           this.player.temPoderArrancada = true;
           this.events.emit('poder', this.temPoder);
           if (novo) VoiceManager.falar('Agora você corre como o guepardo! Aperte o botão da pata para dar uma arrancada.', 'narrador', true);
+        } else if (poder === 'superpulo') {
+          this.player.temPoderSuperPulo = true;
+          this.events.emit('poder', this.temPoder);
+          if (novo) VoiceManager.falar('Agora você pula como o canguru! Aperte o botão da pata para dar um super pulo.', 'narrador', true);
+        } else if (poder === 'cavar') {
+          // Poder passivo: andar contra a terra fofa (ou apertar para baixo em cima dela) cava.
+          this.player.temPoderCavar = true;
+          if (novo) VoiceManager.falar('Agora você cava como o wombat! Ande contra a terra fofa para cavar.', 'narrador', true);
         } else if (poder === 'forca') {
           // Poder passivo: empurrar pedregulhos andando contra eles.
           this.player.temPoderForca = true;
@@ -960,6 +1079,85 @@ export class LevelScene extends Phaser.Scene {
         }
       },
     });
+  }
+
+  // ------------------------------------------------------------------ cavar e guiar
+
+  /** Com o poder do wombat, empurrar contra a terra fofa (ou apertar para baixo em cima dela) cava depois de um instante. */
+  private cavar(i: { left: boolean; right: boolean; down: boolean }, dt: number) {
+    const p = this.player;
+    if (!p.temPoderCavar || p.estado !== 'normal' || !this.fofas.size) {
+      this.cavando = null;
+      return;
+    }
+    const b = p.body;
+    const alvos: [number, number][] = [];
+    const celula = (x: number, y: number): [number, number] => [Math.floor(x / TILE), Math.floor(y / TILE)];
+    if (i.right !== i.left) {
+      const xf = i.right ? b.right + 6 : b.left - 6;
+      alvos.push(celula(xf, b.top + 10), celula(xf, b.bottom - 10));
+    } else if (i.down && b.blocked.down) {
+      alvos.push(celula(b.center.x, b.bottom + 6));
+    }
+    const existentes = alvos.filter(([c, r], k) => this.fofas.has(`${c},${r}`) && alvos.findIndex(([c2, r2]) => c2 === c && r2 === r) === k);
+    if (!existentes.length) {
+      this.cavando = null;
+      return;
+    }
+    const id = existentes.map(([c, r]) => `${c},${r}`).join('|');
+    if (this.cavando?.id !== id) this.cavando = { id, t: 0, som: 0 };
+    this.cavando.t += dt * 1000;
+    this.cavando.som -= dt * 1000;
+    if (this.cavando.som <= 0) {
+      this.cavando.som = 130;
+      const [c, r] = existentes[0];
+      this.estilhacos.explode(3, (c + 0.5) * TILE, (r + 0.5) * TILE);
+      AudioManager.tocar('cavar');
+    }
+    if (this.cavando.t >= CAVAR.tempoMs) {
+      for (const [c, r] of existentes) this.removerFofa(c, r);
+      this.cavando = null;
+    }
+  }
+
+  private removerFofa(c: number, r: number) {
+    const f = this.fofas.get(`${c},${r}`);
+    if (!f) return;
+    this.fofas.delete(`${c},${r}`);
+    this.estilhacos.explode(10, f.x + TILE / 2, f.y + TILE / 2);
+    f.destroy();
+    const linha = this.grade[r];
+    if (linha) this.grade[r] = linha.slice(0, c) + '.' + linha.slice(c + 1);
+  }
+
+  /** Topo do chão na coluna do ponto x, procurando a partir de um pouco acima de y. */
+  private chaoEm(x: number, y: number): number | null {
+    const c = Math.floor(x / TILE);
+    for (let r = Math.max(0, Math.floor(y / TILE) - 3); r < LINHAS; r++) {
+      const ch = this.grade[r]?.[c] ?? '.';
+      if (ch in this.tema.solidos || ch === 'F' || ch === '=') return r * TILE;
+    }
+    return null;
+  }
+
+  /** O emu corre à frente do Chico (sem física: acompanha o chão e salta os buracos). */
+  private guiarBichos(dt: number) {
+    for (const b of this.bichos) {
+      const g = b.guia;
+      if (!g || !b.ativado) continue;
+      g.tempo += dt;
+      if (g.tempo < 1) continue;
+      const img = b.img;
+      const alvo = Math.min(g.xFinal, Math.max(img.x, this.player.x + TILE * 5));
+      // corre um pouco mais rápido que o Chico e acelera se ficar para trás
+      const passo = Math.min(alvo - img.x, Math.max(430, (alvo - img.x) * 2) * dt);
+      img.x += passo;
+      const chao = this.chaoEm(img.x, img.y);
+      const correndo = passo > 1;
+      // no chão, acompanha o terreno; sobre um buraco, mantém a altura (passa num passo largo)
+      if (chao !== null) img.y = Phaser.Math.Linear(img.y, chao, Math.min(1, dt * 12));
+      img.angle = correndo ? Math.sin(g.tempo * 18) * 4 : 0;
+    }
   }
 
   // ------------------------------------------------------------------ água e chamados
@@ -991,11 +1189,13 @@ export class LevelScene extends Phaser.Scene {
       f.t = 2.4;
       const perto = Math.abs(f.x - this.player.x) < 900 && Math.abs(f.y - this.player.y) < 700;
       if (!perto) continue;
+      // Debaixo d'água, o chamado vira os sinais que o ornitorrinco sente: ondas azuis e um som suave.
+      const sinal = AGUA.has(this.caractere(f.x, f.y));
       for (let k = 0; k < 3; k++) {
-        const onda = this.add.image(f.x, f.y, 'onda').setDepth(9).setScale(0.2).setTint(0xffd766);
-        this.tweens.add({ targets: onda, scale: 1.6, alpha: 0, delay: k * 250, duration: 1200, onComplete: () => onda.destroy() });
+        const onda = this.add.image(f.x, f.y, 'onda').setDepth(12).setScale(0.2).setTint(sinal ? 0x7fe8ff : 0xffd766);
+        this.tweens.add({ targets: onda, scale: sinal ? 1.1 : 1.6, alpha: 0, delay: k * 250, duration: 1200, onComplete: () => onda.destroy() });
       }
-      AudioManager.tocar('canto');
+      AudioManager.tocar(sinal ? 'sinal' : 'canto');
     }
   }
 

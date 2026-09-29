@@ -50,6 +50,19 @@ export const ARRANCADA = {
   recargaMs: 1600,
 };
 
+// Super pulo do canguru: pulo bem mais alto e mais longo, só a partir do chão (dossiê: saltos longos).
+// A velocidade fica logo abaixo do limite de queda do motor (maxFall), que também limita a subida.
+export const SUPERPULO = {
+  velocidade: 1140,
+  fatorVelocidade: 1.25,
+  bufferMs: 160,
+};
+
+// Cavar do wombat (passivo): só terra fofa, e leva um instante (dossiê: não cavar qualquer material de uma vez).
+export const CAVAR = {
+  tempoMs: 380,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

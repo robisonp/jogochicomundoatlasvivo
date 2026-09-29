@@ -5,6 +5,7 @@ import { TILE } from '../config';
 import { CHICO_VISUAL as V, CAATINGA as C } from '../data/visual';
 import { gerarAmazonia } from './Amazonia';
 import { gerarSavana } from './Savana';
+import { gerarAustralia } from './Australia';
 
 export type Ctx = CanvasRenderingContext2D;
 
@@ -47,6 +48,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarAtlas(scene);
   gerarAmazonia(scene);
   gerarSavana(scene);
+  gerarAustralia(scene);
 }
 
 // ------------------------------------------------------------------ Chico (recortado em partes)
@@ -1353,6 +1355,24 @@ const QUENIA_TANZANIA: [number, number][] = [
   [34, 4.6], [41.9, 3.9], [41, -1.7], [39.3, -4.7], [38.8, -6.5], [39.5, -8], [40.4, -10.4], [35, -11.5],
   [33, -9.6], [30.5, -8], [29.5, -5], [30.5, -1], [33.9, -1], [34, 1],
 ];
+const AUSTRALIA: [number, number][] = [
+  [113.5, -22], [114, -26.5], [115, -30], [115, -33.5], [117.5, -35], [121, -33.8], [124, -33], [126, -32.3],
+  [129, -31.6], [132, -32], [134, -32.8], [135.8, -34.8], [137.5, -33.5], [138, -35.6], [140, -37.5],
+  [143.5, -38.8], [146.3, -39], [148, -37.8], [150, -37.5], [150.3, -35.5], [151.3, -33.5], [153, -31.5],
+  [153.6, -28.2], [153, -25.5], [151, -23.5], [149.5, -22.3], [146.3, -19], [145.3, -15], [143.5, -14],
+  [142.5, -10.7], [141.5, -13], [141.6, -16.5], [140.5, -17.6], [139, -17], [136, -15.5], [135.5, -14.5],
+  [136.8, -12.2], [133, -11.3], [131, -12], [130, -13], [129.5, -15], [127.5, -14], [126, -14.3], [124, -16.3],
+  [122.2, -17.8], [121, -19.5], [118, -20.4], [116, -20.8], [114, -21.8],
+];
+const TASMANIA: [number, number][] = [
+  [144.6, -40.7], [148.3, -40.9], [148.3, -42.2], [147, -43.6], [145.9, -43.5], [145.2, -42.2],
+];
+// Leste e sudeste (rios do ornitorrinco, matas dos coalas e dos wombats), aproximado
+const AUSTRALIA_LESTE: [number, number][] = [
+  [145.3, -15], [146.3, -19], [149.5, -22.3], [151, -23.5], [153, -25.5], [153.6, -28.2], [153, -31.5],
+  [151.3, -33.5], [150.3, -35.5], [150, -37.5], [148, -37.8], [146.3, -39], [143.5, -38.8], [140, -37.5],
+  [138, -35.6], [139.5, -34], [142, -33], [146, -30], [148, -26], [146.5, -22], [144.5, -18],
+];
 const NORDESTE: [number, number][] = [
   [-46, -1], [-44, -2.5], [-39, -3], [-35, -5.5], [-34.8, -7.5], [-35.5, -9.5], [-38.5, -13], [-39.5, -18],
   [-41, -15.5], [-44, -14.5], [-46, -11], [-48.5, -6], [-47.5, -3],
@@ -1417,6 +1437,39 @@ function gerarAtlas(scene: Phaser.Scene) {
         poligonoA(c, QUENIA_TANZANIA);
         c.fill();
         c.stroke();
+      }
+    });
+  }
+
+  // Mapinha da Austrália: país inteiro ou o leste (com a Tasmânia) em destaque.
+  const projO = (lon: number, lat: number): [number, number] => [(lon - 111) * 4.9, (-9 - lat) * 4.9];
+  const poligonoO = (c: Ctx, pts: [number, number][]) => {
+    c.beginPath();
+    pts.forEach(([lon, lat], i) => {
+      const [x, y] = projO(lon, lat);
+      if (i === 0) c.moveTo(x, y);
+      else c.lineTo(x, y);
+    });
+    c.closePath();
+  };
+  for (const regiao of ['australia', 'australia-leste'] as const) {
+    tex(scene, `mapa-${regiao}`, 220, 180, (c) => {
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 2;
+      c.fillStyle = regiao === 'australia' ? '#f2a93b' : '#e9dcb8';
+      for (const p of [AUSTRALIA, TASMANIA]) {
+        poligonoO(c, p);
+        c.fill();
+        c.stroke();
+      }
+      if (regiao === 'australia-leste') {
+        c.fillStyle = '#f2a93b';
+        for (const p of [AUSTRALIA_LESTE, TASMANIA]) {
+          poligonoO(c, p);
+          c.fill();
+          c.stroke();
+        }
       }
     });
   }

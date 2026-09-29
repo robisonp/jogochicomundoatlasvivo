@@ -16,13 +16,17 @@
 //   J  cipó (escala como a escada)       Z  chamado de bicho: som + ondas visuais mostram o caminho
 //   B  pedregulho (2x2, marcado no bloco de baixo à esquerda): só se move com a força do elefante
 //   :  rastros de bicho no chão (decoração que mostra o caminho)
+//   F  terra fofa: sólida, mas com o poder do wombat o Chico cava (empurrando contra ela ou apertando para baixo)
+//   E  tronco de eucalipto (escala como a escada)
+//   *  vaga-lume (luz que mostra o caminho nas fases de noite)
+//   t  túnel/toca: vazio com fundo de terra escura (debaixo do chão)
 
 import type { Personagem } from '../systems/VoiceManager';
-import type { MundoId } from '../data/mundos';
+import type { MundoId, TemaId } from '../data/mundos';
 
 export const LINHAS = 13;
 
-export type Poder = 'bola' | 'onca' | 'arrancada' | 'forca';
+export type Poder = 'bola' | 'onca' | 'arrancada' | 'forca' | 'superpulo' | 'cavar';
 
 export interface Fala {
   texto: string;
@@ -46,7 +50,12 @@ export interface AnimalNaFase {
     | 'elefante'
     | 'girafa'
     | 'zebra'
-    | 'avestruz';
+    | 'avestruz'
+    | 'canguru'
+    | 'wombat'
+    | 'emu'
+    | 'ornitorrinco'
+    | 'coala';
   /** Fala tirada do dossiê científico. */
   fala: string;
   curiosidade?: string;
@@ -58,7 +67,11 @@ export interface AnimalNaFase {
     | { tipo: 'nadar'; dx: number }
     | { tipo: 'ficar' }
     | { tipo: 'empurrar' }
-    | { tipo: 'bola' };
+    | { tipo: 'bola' }
+    /** Cava a terra fofa logo à frente e entra na toca. */
+    | { tipo: 'cavar' }
+    /** Corre na frente do Chico, mostrando o caminho, até `ate` blocos adiante. */
+    | { tipo: 'guiar'; ate: number };
   /** Poder que o Chico ganha depois da demonstração. */
   daPoder?: Poder;
 }
@@ -67,6 +80,10 @@ export interface LevelDef {
   id: string;
   nome: string;
   mundo: MundoId;
+  /** Visual diferente dentro do mesmo mundo (ex.: mata de eucaliptos na Austrália). Padrão: o do mundo. */
+  tema?: TemaId;
+  /** Fase de noite: céu escuro, só uma luz em volta do Chico; vaga-lumes (*) mostram o caminho. */
+  noite?: boolean;
   /** Fala ao começar a fase. */
   abertura?: Fala;
   /** Uma fala por placa "S", na ordem em que aparecem da esquerda para a direita. */

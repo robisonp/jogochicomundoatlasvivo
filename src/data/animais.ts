@@ -1,12 +1,21 @@
 // Fichas do Atlas. Todo conteúdo vem de docs/DOSSIE-CIENTIFICO.md (falas curtas, sem números para a criança).
 // A linha "adulto" traz nome científico e conservação para a família; não é lida em voz alta.
+import type { MundoId } from './mundos';
 
-export type RegiaoMapa = 'nordeste' | 'amazonia' | 'brasil' | 'america-do-sul' | 'africa' | 'africa-leste';
+export type RegiaoMapa =
+  | 'nordeste'
+  | 'amazonia'
+  | 'brasil'
+  | 'america-do-sul'
+  | 'africa'
+  | 'africa-leste'
+  | 'australia'
+  | 'australia-leste';
 
 export interface FichaAnimal {
   id: string;
   nome: string;
-  mundo: 'caatinga' | 'amazonia' | 'savana';
+  mundo: MundoId;
   textura: string;
   /** Onde aparece no mapinha. */
   regiao: RegiaoMapa;
@@ -249,6 +258,82 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Struthio camelus · IUCN: Menos Preocupante',
   },
+  // ---------------------------------------------------------------- Austrália
+  {
+    id: 'canguru',
+    nome: 'Canguru-vermelho',
+    mundo: 'australia',
+    textura: 'canguru',
+    regiao: 'australia',
+    falas: {
+      apresentacao: 'Minhas pernas fortes me levam bem longe a cada salto!',
+      mapa: 'Eu vivo na Austrália, nos lugares secos e abertos do interior.',
+      comida: 'Eu como capim e outras plantas.',
+      tamanho: 'Um canguru grande, em pé, fica quase da altura de um adulto.',
+      curiosidade: 'Sou o maior marsupial vivo!',
+    },
+    adulto: 'Osphranter rufus (antes Macropus rufus) · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'wombat',
+    nome: 'Wombat',
+    mundo: 'australia',
+    textura: 'wombat',
+    regiao: 'australia-leste',
+    falas: {
+      apresentacao: 'Minhas patas fortes cavam túneis debaixo da terra!',
+      mapa: 'Eu vivo na Austrália, em matas abertas, campos e matagais.',
+      comida: 'Eu como capim e outras plantas.',
+      tamanho: 'Sou do tamanho de um cachorro médio, mas bem mais forte e gordinho.',
+      curiosidade: 'Minha casa pode ficar escondida no chão!',
+    },
+    adulto: 'Vombatus ursinus (wombat-comum) · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'emu',
+    nome: 'Emu',
+    mundo: 'australia',
+    textura: 'emu',
+    regiao: 'australia',
+    falas: {
+      apresentacao: 'Minhas asas são pequenas, mas minhas pernas são ótimas para correr!',
+      mapa: 'Eu vivo em muitos lugares abertos da Austrália.',
+      comida: 'Eu como sementes, frutos, plantas e bichinhos pequenos.',
+      tamanho: 'Posso ficar tão alto quanto uma pessoa adulta.',
+      curiosidade: 'Sou uma ave enorme que não precisa voar!',
+    },
+    adulto: 'Dromaius novaehollandiae · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'ornitorrinco',
+    nome: 'Ornitorrinco',
+    mundo: 'australia',
+    textura: 'ornitorrinco',
+    regiao: 'australia-leste',
+    falas: {
+      apresentacao: 'Debaixo d’água, sinto pequenos sinais elétricos ao meu redor!',
+      mapa: 'Eu vivo em rios e riachos do leste da Austrália e da ilha da Tasmânia.',
+      comida: 'Eu como bichinhos pequenos que vivem na água.',
+      tamanho: 'Sou mais ou menos do comprimento de um gato.',
+      curiosidade: 'Sou um mamífero que põe ovos!',
+    },
+    adulto: 'Ornithorhynchus anatinus · IUCN: Quase Ameaçado',
+  },
+  {
+    id: 'coala',
+    nome: 'Coala',
+    mundo: 'australia',
+    textura: 'coala',
+    regiao: 'australia-leste',
+    falas: {
+      apresentacao: 'Minhas garras me seguram firme nos eucaliptos!',
+      mapa: 'Eu vivo nas matas de eucalipto da Austrália.',
+      comida: 'Eu como folhas de alguns tipos de eucalipto.',
+      tamanho: 'Sou do tamanho de um cachorro pequeno, bem redondinho.',
+      curiosidade: 'Eu sou um marsupial, não um urso!',
+    },
+    adulto: 'Phascolarctos cinereus · IUCN: Vulnerável (algumas populações: Em Perigo na lei australiana)',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -275,5 +360,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo da Savana',
     texturaSelo: 'selo-savana',
     abertura: 'Aqui, campos enormes mudam com a chegada das chuvas!',
+  },
+  {
+    id: 'australia',
+    nome: 'Austrália',
+    selo: 'australia',
+    nomeSelo: 'Selo da Austrália',
+    texturaSelo: 'selo-australia',
+    abertura: 'A Austrália não é toda deserto: tem interior seco e matas de eucalipto!',
   },
 ];

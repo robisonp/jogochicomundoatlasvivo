@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -21,8 +21,15 @@ export class Player {
   temPoderArrancada = false;
   /** Força do elefante (passiva): empurrar pedregulhos. A cena usa este valor. */
   temPoderForca = false;
+  /** Super pulo do canguru (botão da pata na Austrália). */
+  temPoderSuperPulo = false;
+  /** Cavar do wombat (passivo): a cena cava a terra fofa quando o Chico empurra contra ela. */
+  temPoderCavar = false;
   /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
-  poderBotao: 'bola' | 'arrancada' = 'bola';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' = 'bola';
+  /** Super pulo no ar: não é cortado ao soltar o pulo e corre um pouco mais rápido. */
+  private emSuperPulo = false;
+  private bufferPoder = 0;
   private arrancadaTempo = 0;
   /** Arrancada em andamento (separado do tempo, que pode chegar a zero antes de encerrar). */
   private emArrancada = false;
@@ -98,7 +105,14 @@ export class Player {
 
   /** 0 a 1: quanto o poder do botão está pronto (a arrancada precisa recarregar). */
   get cargaPoder() {
-    return this.poderBotao === 'arrancada' ? 1 - this.recarga / ARRANCADA.recargaMs : 1;
+    if (this.poderBotao === 'arrancada') return 1 - this.recarga / ARRANCADA.recargaMs;
+    // o super pulo só sai do chão: no ar o botão fica meio apagado
+    if (this.poderBotao === 'superpulo') return this.coyote > 0 || this.estado !== 'normal' ? 1 : 0.5;
+    return 1;
+  }
+
+  get noChaoAgora() {
+    return this.noChao;
   }
 
   get arrancando() {
@@ -184,6 +198,7 @@ export class Player {
     const eraNoChao = this.noChao;
     this.noChao = b.blocked.down || apoiado;
     if (this.noChao && !eraNoChao && b.velocity.y >= 0) this.aterrissou();
+    if (this.emSuperPulo && ((this.noChao && b.velocity.y >= 0) || this.estado !== 'normal' || this.agua)) this.emSuperPulo = false;
 
     // --- Poder "Virar bola": apertar de novo renova o tempo
     if (i.powerPressed && this.poderBotao === 'bola' && this.temPoderBola) {
@@ -315,7 +330,8 @@ export class Player {
     let nvx = vx;
     // O vento desloca o ponto de equilíbrio: contra ele o Chico anda devagar; parado, é empurrado.
     const vento = this.estado === 'escalando' ? 0 : this.ventoX * (enrolado ? VENTO.fatorBola : 1);
-    const meta = alvo * PLAYER.maxRun * (enrolado ? BOLA.fatorVelocidade : 1) * (naAgua ? AGUA.fatorVelocidade : 1) + vento;
+    const fator = enrolado ? BOLA.fatorVelocidade : naAgua ? AGUA.fatorVelocidade : this.emSuperPulo ? SUPERPULO.fatorVelocidade : 1;
+    const meta = alvo * PLAYER.maxRun * fator + vento;
     if (nvx < meta) nvx = Math.min(meta, nvx + a * dt);
     else if (nvx > meta) nvx = Math.max(meta, nvx - a * dt);
     b.setVelocityX(nvx);
@@ -331,7 +347,27 @@ export class Player {
       AudioManager.tocar('pulo');
       this.poeira.explode(5, this.x, this.pes);
     }
-    if (!naAgua && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
+    // --- Super pulo do canguru: sai do chão (com a mesma folga do pulo) e não é cortado ao soltar
+    this.bufferPoder = i.powerPressed ? SUPERPULO.bufferMs : Math.max(0, this.bufferPoder - ms);
+    if (
+      this.bufferPoder > 0 &&
+      this.poderBotao === 'superpulo' &&
+      this.temPoderSuperPulo &&
+      this.estado === 'normal' &&
+      !naAgua &&
+      this.coyote > 0
+    ) {
+      this.bufferPoder = 0;
+      this.buffer = 0;
+      this.coyote = 0;
+      this.noChao = false;
+      this.emSuperPulo = true;
+      b.setVelocityY(-SUPERPULO.velocidade);
+      this.squash = 0.65;
+      AudioManager.tocar('superpulo');
+      this.poeira.explode(10, this.x, this.pes);
+    }
+    if (!naAgua && !this.emSuperPulo && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
       b.setVelocityY(b.velocity.y * PLAYER.jumpCutFactor);
     }
 
@@ -468,6 +504,7 @@ export class Player {
     this.sairBola(false);
     this.arrancadaTempo = 0;
     this.emArrancada = false;
+    this.emSuperPulo = false;
     this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');
