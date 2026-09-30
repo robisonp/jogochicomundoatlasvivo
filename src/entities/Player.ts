@@ -5,6 +5,28 @@ import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO, TOBOGA
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
+/**
+ * Montagem do Chico a partir da folha "chico" (public/chico, recortada da arte da família).
+ * A folha foi reduzida a 0,56 da arte original e o jogo desenha a 0,5 disso (~125 px de altura).
+ * Posições em pixels do jogo, relativas aos pés; cada peça tem a própria escala para as proporções da arte.
+ */
+const C = {
+  cabecaY: -70,
+  cabecaEscala: 0.5,
+  olhosX: 9.2,
+  olhosY: -23.4,
+  camisaY: -73.4,
+  camisaEscala: 0.37,
+  bermudaY: -20.7,
+  bermudaEscala: 0.33,
+  bracoX: 12.3,
+  bracoY: -70,
+  bracoEscala: 0.36,
+  pernaX: 3.6,
+  pernaY: -34.4,
+  pernaEscala: 0.33,
+};
+
 type Estado = 'normal' | 'escalando' | 'caido' | 'festa' | 'bola';
 
 export class Player {
@@ -62,14 +84,14 @@ export class Player {
   aoEntrarNaAgua?: () => void;
 
   private partes: {
-    corpo: Phaser.GameObjects.Image;
+    camisa: Phaser.GameObjects.Image;
+    bermuda: Phaser.GameObjects.Image;
     cabeca: Phaser.GameObjects.Container;
-    olhos: Phaser.GameObjects.Image;
+    piscar: Phaser.GameObjects.Image;
     bracoFrente: Phaser.GameObjects.Image;
     bracoTras: Phaser.GameObjects.Image;
     pernaFrente: Phaser.GameObjects.Image;
     pernaTras: Phaser.GameObjects.Image;
-    mochila: Phaser.GameObjects.Image;
   };
   private coyote = 0;
   private buffer = 0;
@@ -93,20 +115,23 @@ export class Player {
     this.sprite.body.setGravityY(PLAYER.gravity);
     this.sprite.setCollideWorldBounds(false);
 
-    // Montagem do boneco (coordenadas relativas aos pés).
-    const pernaTras = scene.add.image(-6, -30, 'chico-perna').setOrigin(0.5, 0.05).setTint(0xd8d8d8);
-    const bracoTras = scene.add.image(-4, -58, 'chico-braco').setOrigin(0.5, 0.1).setTint(0xd0d0d0);
-    const mochila = scene.add.image(-17, -52, 'chico-mochila');
-    const pernaFrente = scene.add.image(6, -30, 'chico-perna').setOrigin(0.5, 0.05);
-    const corpo = scene.add.image(0, -48, 'chico-corpo');
-    const cabecaImg = scene.add.image(0, 0, 'chico-cabeca');
-    const olhos = scene.add.image(8, -4, 'chico-olhos');
-    const chapeu = scene.add.image(-2, -24, 'chico-chapeu');
-    const cabeca = scene.add.container(2, -90, [cabecaImg, olhos, chapeu]);
-    const bracoFrente = scene.add.image(4, -60, 'chico-braco').setOrigin(0.5, 0.1);
-    this.visual = scene.add.container(x, y, [pernaTras, bracoTras, mochila, pernaFrente, corpo, cabeca, bracoFrente]);
+    // Montagem do boneco com as peças da arte do Chico (folha "chico"); coordenadas relativas aos pés,
+    // olhando para a direita. Braços giram no ombro e pernas no quadril, por baixo da bermuda.
+    const peca = (x: number, y: number, quadro: string, escala: number, ox = 0.5, oy = 0.5) =>
+      scene.add.image(x, y, 'chico', quadro).setOrigin(ox, oy).setScale(escala);
+    const pernaTras = peca(-C.pernaX, C.pernaY, 'perna', C.pernaEscala, 0.45, 0.06).setTint(0xd8d8d8);
+    const bracoTras = peca(-C.bracoX, C.bracoY, 'braco', C.bracoEscala, 0.3, 0.06).setFlipX(true).setTint(0xd0d0d0);
+    const pernaFrente = peca(C.pernaX, C.pernaY, 'perna', C.pernaEscala, 0.45, 0.06);
+    const bermuda = peca(0, C.bermudaY, 'bermuda', C.bermudaEscala, 0.5, 1);
+    const camisa = peca(0, C.camisaY, 'camisa', C.camisaEscala, 0.5, 0);
+    const cabecaImg = peca(0, 0, 'cabeca', C.cabecaEscala, 0.5, 1);
+    // pálpebras por cima dos olhos da arte (aparecem só na piscada)
+    const piscar = scene.add.image(C.olhosX, C.olhosY, 'chico-piscar').setScale(0.5).setVisible(false);
+    const cabeca = scene.add.container(0, C.cabecaY, [cabecaImg, piscar]);
+    const bracoFrente = peca(C.bracoX, C.bracoY, 'braco', C.bracoEscala, 0.3, 0.06);
+    this.visual = scene.add.container(x, y, [pernaTras, bracoTras, pernaFrente, bermuda, camisa, cabeca, bracoFrente]);
     this.visual.setDepth(10);
-    this.partes = { corpo, cabeca, olhos, bracoFrente, bracoTras, pernaFrente, pernaTras, mochila };
+    this.partes = { camisa, bermuda, cabeca, piscar, bracoFrente, bracoTras, pernaFrente, pernaTras };
 
     this.poeira = scene.add.particles(0, 0, 'poeira', {
       lifespan: 380,
@@ -118,10 +143,10 @@ export class Player {
     });
     this.poeira.setDepth(9);
 
-    // Chico enrolado: bola de carapaça com o chapéu por cima (o chapéu não gira).
+    // Chico enrolado: bola de carapaça com os cachos dele aparecendo por cima (a cabeça não gira).
     this.bolaImg = scene.add.image(0, 0, 'chico-bola');
-    const chapeuBola = scene.add.image(0, -30, 'chico-chapeu').setScale(0.8);
-    this.bolaVisual = scene.add.container(x, y, [this.bolaImg, chapeuBola]).setDepth(10).setVisible(false);
+    const cabecaBola = scene.add.image(0, -18, 'chico', 'cabeca').setOrigin(0.5, 1).setScale(0.26);
+    this.bolaVisual = scene.add.container(x, y, [cabecaBola, this.bolaImg]).setDepth(10).setVisible(false);
   }
 
   /** 0 a 1: quanto o poder do botão está pronto (a arrancada precisa recarregar). */
@@ -555,9 +580,9 @@ export class Player {
     // piscar
     this.proximaPiscada -= dt;
     if (this.proximaPiscada < 0) {
-      p.olhos.setTexture('chico-olhos-fechados');
+      p.piscar.setVisible(true);
       if (this.proximaPiscada < -0.12) {
-        p.olhos.setTexture('chico-olhos');
+        p.piscar.setVisible(false);
         this.proximaPiscada = 2 + Math.random() * 3;
       }
     }
@@ -662,11 +687,11 @@ export class Player {
     p.pernaTras.rotation = pernaT;
     p.bracoFrente.rotation = bracoF;
     p.bracoTras.rotation = bracoT;
-    p.corpo.y = -48 + quique * 0.6;
-    p.mochila.y = -52 + quique * 0.6;
-    p.bracoFrente.y = -60 + quique * 0.6;
-    p.bracoTras.y = -58 + quique * 0.6;
-    p.cabeca.y = -90 + quique;
+    p.camisa.y = C.camisaY + quique * 0.6;
+    p.bermuda.y = C.bermudaY + quique * 0.4;
+    p.bracoFrente.y = C.bracoY + quique * 0.6;
+    p.bracoTras.y = C.bracoY + quique * 0.6;
+    p.cabeca.y = C.cabecaY + quique;
     v.rotation = inclinacao;
   }
 

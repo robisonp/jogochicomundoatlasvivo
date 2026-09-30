@@ -63,162 +63,25 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarMapa(scene);
 }
 
-// ------------------------------------------------------------------ Chico (recortado em partes)
+// ------------------------------------------------------------------ Chico
+// O Chico vem da arte da família (folha "chico" em public/chico, carregada no Boot). Aqui fica só a pálpebra
+// da piscada, desenhada por cima dos olhos da arte (em 2x, o jogo mostra a 0,5).
 
 function gerarChico(scene: Phaser.Scene) {
-  tex(scene, 'chico-cabeca', 64, 64, (c) => {
-    // orelha
-    c.fillStyle = V.pele;
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    c.beginPath();
-    c.ellipse(16, 36, 7, 9, 0, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-    // rosto
-    c.beginPath();
-    c.ellipse(34, 34, 25, 25, 0, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-    // bochecha
-    c.fillStyle = 'rgba(230,110,90,0.35)';
-    c.beginPath();
-    c.ellipse(46, 44, 6, 4, 0, 0, Math.PI * 2);
-    c.fill();
-    // cabelo (cachos na nuca e franja)
-    c.fillStyle = V.cabelo;
-    for (const [x, y, r] of [
-      [14, 22, 9],
-      [22, 14, 10],
-      [34, 11, 10],
-      [46, 13, 9],
-      [12, 32, 7],
-      [55, 20, 7],
-    ]) {
+  tex(scene, 'chico-piscar', 48, 28, (c) => {
+    for (const x of [13.8, 34.2]) {
+      c.fillStyle = V.pele;
       c.beginPath();
-      c.arc(x, y, r, 0, Math.PI * 2);
+      c.ellipse(x, 14, 9, 10.5, 0, 0, Math.PI * 2);
       c.fill();
+      c.strokeStyle = OUTLINE;
+      c.lineWidth = 3;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(x - 7, 14);
+      c.quadraticCurveTo(x, 20, x + 7, 14);
+      c.stroke();
     }
-    // boca (sorriso)
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 2.5;
-    c.beginPath();
-    c.arc(47, 45, 6, 0.15 * Math.PI, 0.75 * Math.PI);
-    c.stroke();
-  });
-
-  tex(scene, 'chico-olhos', 24, 14, (c) => {
-    c.fillStyle = '#fff';
-    c.beginPath();
-    c.ellipse(6, 7, 5, 6.5, 0, 0, Math.PI * 2);
-    c.ellipse(18, 7, 5, 6.5, 0, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = V.olhos;
-    c.beginPath();
-    c.arc(7.5, 8, 3.2, 0, Math.PI * 2);
-    c.arc(19.5, 8, 3.2, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = '#fff';
-    c.fillRect(8, 5.5, 1.6, 1.6);
-    c.fillRect(20, 5.5, 1.6, 1.6);
-  });
-
-  tex(scene, 'chico-olhos-fechados', 24, 14, (c) => {
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 2.5;
-    c.lineCap = 'round';
-    c.beginPath();
-    c.moveTo(2, 8);
-    c.quadraticCurveTo(6, 11, 10, 8);
-    c.moveTo(14, 8);
-    c.quadraticCurveTo(18, 11, 22, 8);
-    c.stroke();
-  });
-
-  tex(scene, 'chico-chapeu', 76, 34, (c) => {
-    c.fillStyle = V.chapeu;
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    // aba
-    c.beginPath();
-    c.ellipse(38, 26, 35, 6, 0, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-    // copa
-    c.beginPath();
-    c.moveTo(14, 26);
-    c.bezierCurveTo(14, 2, 62, 2, 62, 26);
-    c.closePath();
-    c.fill();
-    c.stroke();
-    // faixa
-    c.fillStyle = V.chapeuFaixa;
-    c.fillRect(15, 17, 46, 6);
-  });
-
-  tex(scene, 'chico-corpo', 40, 40, (c) => {
-    c.fillStyle = V.camisa;
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    rrect(c, 4, 2, 32, 30, 10);
-    c.fill();
-    c.stroke();
-    c.fillStyle = V.camisaSombra;
-    c.fillRect(6, 22, 28, 8);
-    // bermuda
-    c.fillStyle = V.bermuda;
-    rrect(c, 5, 26, 30, 12, 4);
-    c.fill();
-    c.stroke();
-    // alça da mochila
-    c.strokeStyle = V.mochila;
-    c.lineWidth = 4;
-    c.beginPath();
-    c.moveTo(12, 3);
-    c.lineTo(20, 27);
-    c.stroke();
-  });
-
-  tex(scene, 'chico-mochila', 24, 32, (c) => {
-    c.fillStyle = V.mochila;
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    rrect(c, 2, 2, 20, 28, 7);
-    c.fill();
-    c.stroke();
-    c.fillStyle = 'rgba(0,0,0,0.18)';
-    rrect(c, 5, 16, 14, 10, 3);
-    c.fill();
-  });
-
-  tex(scene, 'chico-braco', 16, 34, (c) => {
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    c.fillStyle = V.camisa;
-    rrect(c, 2, 1, 12, 13, 5);
-    c.fill();
-    c.stroke();
-    c.fillStyle = V.pele;
-    rrect(c, 3, 12, 10, 16, 5);
-    c.fill();
-    c.stroke();
-    c.beginPath();
-    c.arc(8, 28, 5, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-  });
-
-  tex(scene, 'chico-perna', 18, 34, (c) => {
-    c.strokeStyle = OUTLINE;
-    c.lineWidth = 3;
-    c.fillStyle = V.pele;
-    rrect(c, 4, 1, 10, 24, 4);
-    c.fill();
-    c.stroke();
-    c.fillStyle = V.sapato;
-    rrect(c, 2, 23, 16, 9, 4);
-    c.fill();
-    c.stroke();
   });
 }
 

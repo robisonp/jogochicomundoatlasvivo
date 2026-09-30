@@ -28,7 +28,9 @@ const game = new Phaser.Game({
     arcade: { gravity: { x: 0, y: 0 }, debug: new URLSearchParams(location.search).has('debug') },
   },
   input: { gamepad: true, activePointers: 4 },
-  render: { antialias: true },
+  // No máximo 4 texturas por lote de desenho: com mais, peças do Chico e da família apareciam cortadas
+  // (visto no navegador de teste). Custa algumas chamadas de desenho a mais, sem diferença perceptível.
+  render: { antialias: true, maxTextures: 4 },
   // A ordem define quem é desenhado por cima.
   scene: [BootScene, TitleScene, MapaScene, AtlasScene, LevelScene, HudScene, PauseScene, EndScene, CestosScene, EsqueletoScene, AdultScene],
 });
