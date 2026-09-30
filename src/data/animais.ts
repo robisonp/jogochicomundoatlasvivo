@@ -16,7 +16,11 @@ export type RegiaoMapa =
   | 'oceanos'
   | 'oceano-sul'
   | 'mares-tropicais'
-  | 'litoral-brasil';
+  | 'litoral-brasil'
+  | 'rio-grande-do-sul'
+  | 'argentina'
+  | 'mongolia'
+  | 'america-do-norte';
 
 export interface FichaAnimal {
   id: string;
@@ -568,6 +572,142 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Hippocampus reidi (cavalo-marinho-de-focinho-longo) · Brasil: Vulnerável',
   },
+  // ---------------------------------------------------------------- Dinossauros (fósseis: "encontrados onde hoje fica...")
+  {
+    id: 'pegadas-sousa',
+    nome: 'Pegadas de Sousa',
+    mundo: 'dinossauros',
+    textura: 'pegadas-sousa',
+    regiao: 'nordeste',
+    falas: {
+      apresentacao: 'Aqui não encontramos o dinossauro: encontramos os passos que ele deixou!',
+      mapa: 'Estas pegadas foram encontradas onde hoje fica Sousa, na Paraíba, no Brasil.',
+      comida: 'Quem deixou as pegadas? Principalmente terópodes, e também saurópodes e ornitópodes.',
+      tamanho: 'São centenas de pegadas e trilhas, em muitos lugares da região.',
+      curiosidade: 'Hoje, o Vale dos Dinossauros tem passarelas para visitar as pegadas!',
+    },
+    adulto: 'Formação Sousa, Bacia do Rio do Peixe (PB) · Cretáceo Inferior, cerca de 145 a 125 milhões de anos',
+  },
+  {
+    id: 'irritator',
+    nome: 'Irritator',
+    mundo: 'dinossauros',
+    textura: 'irritator',
+    regiao: 'nordeste',
+    falas: {
+      apresentacao: 'Meu esqueleto não apareceu inteiro: cientistas estudam principalmente meu crânio!',
+      mapa: 'Meu fóssil foi encontrado onde hoje fica a Chapada do Araripe, no Ceará.',
+      comida: 'Eu era carnívoro e provavelmente comia peixes e outros animais.',
+      tamanho: 'Meu tamanho é estimado comparando com dinossauros parentes.',
+      curiosidade: 'Eu sou um espinossaurídeo, e meu crânio ajuda a entender todo o grupo!',
+    },
+    adulto: 'Irritator challengeri · Formação Romualdo, Cretáceo Inferior (fim do Aptiano) · crânio amplamente preservado',
+  },
+  {
+    id: 'pterossauro',
+    nome: 'Pterossauro',
+    mundo: 'dinossauros',
+    textura: 'pterossauro',
+    regiao: 'nordeste',
+    falas: {
+      apresentacao: 'Eu voava na época dos dinossauros, mas não sou um dinossauro!',
+      mapa: 'Meus fósseis foram encontrados onde hoje fica a região do Araripe, no Nordeste do Brasil.',
+      comida: 'Depende do tipo de pterossauro: alguns pegavam peixes.',
+      tamanho: 'Os cientistas descobrem meu tamanho pelos ossos que ficaram na rocha.',
+      curiosidade: 'No Araripe, meus ossos ficaram guardados na rocha com muitos detalhes!',
+    },
+    adulto: 'Pterossauros do Araripe (ex.: Tupandactylus imperator, Anhanguera) · Cretáceo Inferior · répteis voadores, não dinossauros',
+  },
+  {
+    id: 'staurikosaurus',
+    nome: 'Staurikosaurus',
+    mundo: 'dinossauros',
+    textura: 'staurikosaurus',
+    regiao: 'rio-grande-do-sul',
+    falas: {
+      apresentacao: 'Eu vivi no Brasil quando os primeiros dinossauros estavam aparecendo!',
+      mapa: 'Meu fóssil foi encontrado onde hoje fica o Rio Grande do Sul, no Brasil.',
+      comida: 'Eu era carnívoro.',
+      tamanho: 'Eu tinha cerca de dois metros de comprimento.',
+      curiosidade: 'Eu sou um dos dinossauros mais antigos conhecidos!',
+    },
+    adulto: 'Staurikosaurus pricei · Triássico Superior, cerca de 227 a 221 milhões de anos · esqueleto incompleto',
+  },
+  {
+    id: 'buriolestes',
+    nome: 'Buriolestes',
+    mundo: 'dinossauros',
+    textura: 'buriolestes',
+    regiao: 'rio-grande-do-sul',
+    falas: {
+      apresentacao: 'Meu esqueleto foi encontrado quase completo!',
+      mapa: 'Meu fóssil foi encontrado onde hoje fica São João do Polêsine, no Rio Grande do Sul.',
+      comida: 'Os cientistas estudam meus dentes para descobrir o que eu comia.',
+      tamanho: 'Os cientistas medem meus ossos para descobrir meu tamanho.',
+      curiosidade: 'Eu vivi muito, muito tempo atrás: há cerca de duzentos e trinta e três milhões de anos!',
+    },
+    adulto: 'Buriolestes schultzi · Triássico Superior, cerca de 233 milhões de anos · esqueleto quase completo e articulado',
+  },
+  {
+    id: 'carnotaurus',
+    nome: 'Carnotaurus',
+    mundo: 'dinossauros',
+    textura: 'carnotaurus',
+    regiao: 'argentina',
+    falas: {
+      apresentacao: 'Meus fósseis guardaram até marcas da pele!',
+      mapa: 'Meu fóssil foi encontrado onde hoje fica a Argentina.',
+      comida: 'Eu era carnívoro.',
+      tamanho: 'Eu tinha cerca de oito metros de comprimento.',
+      curiosidade: 'Eu tinha dois chifres acima dos olhos e braços bem pequenos!',
+    },
+    adulto: 'Carnotaurus sastrei · Cretáceo Superior, cerca de 71 a 69 milhões de anos',
+  },
+  {
+    id: 'argentinosaurus',
+    nome: 'Argentinosaurus',
+    mundo: 'dinossauros',
+    textura: 'argentinosaurus',
+    regiao: 'argentina',
+    falas: {
+      apresentacao: 'Sou enorme, mas os cientistas precisaram estimar meu tamanho pelos ossos encontrados!',
+      mapa: 'Meus fósseis foram encontrados onde hoje fica a Argentina.',
+      comida: 'Eu era herbívoro: comia plantas.',
+      tamanho: 'Estou entre os maiores dinossauros conhecidos!',
+      curiosidade: 'Não existe um esqueleto meu inteiro para simplesmente medir!',
+    },
+    adulto: 'Argentinosaurus huinculensis · Cretáceo Superior, cerca de 90 a 95 milhões de anos · cerca de 30 a 35 m (estimativa)',
+  },
+  {
+    id: 'velociraptor',
+    nome: 'Velociraptor',
+    mundo: 'dinossauros',
+    textura: 'velociraptor',
+    regiao: 'mongolia',
+    falas: {
+      apresentacao: 'Eu era menor que nos filmes, e meu corpo tinha penas!',
+      mapa: 'Meus fósseis foram encontrados onde hoje fica a Mongólia, na Ásia.',
+      comida: 'Eu era carnívoro.',
+      tamanho: 'Eu tinha quase dois metros de comprimento, contando a cauda.',
+      curiosidade: 'Meus braços tinham penas longas!',
+    },
+    adulto: 'Velociraptor mongoliensis · Cretáceo Superior, cerca de 74 a 70 milhões de anos · evidência de penas nos braços',
+  },
+  {
+    id: 'trex',
+    nome: 'Tiranossauro rex',
+    mundo: 'dinossauros',
+    textura: 'trex',
+    regiao: 'america-do-norte',
+    falas: {
+      apresentacao: 'Vivi bem no final da era dos grandes dinossauros não aviários!',
+      mapa: 'Meus fósseis foram encontrados onde hoje ficam os Estados Unidos e o Canadá.',
+      comida: 'Eu era carnívoro, com dentes enormes e fortes.',
+      tamanho: 'Um adulto grande tinha cerca de doze metros de comprimento.',
+      curiosidade: 'Eu vivi mais perto do fim dos dinossauros do que muitos dinossauros famosos!',
+    },
+    adulto: 'Tyrannosaurus rex · final do Cretáceo, cerca de 68 a 66 milhões de anos',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -626,5 +766,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo da Praia',
     texturaSelo: 'selo-praia',
     abertura: 'Entre a terra e o mar, o manguezal vira abrigo para muitos filhotes!',
+  },
+  {
+    id: 'dinossauros',
+    nome: 'Dinossauros',
+    selo: 'dinossauros',
+    nomeSelo: 'Selo dos Dinossauros',
+    texturaSelo: 'selo-dinossauros',
+    abertura: 'Um fóssil é uma parte ou marca de um ser vivo muito antigo guardada nas rochas.',
   },
 ];

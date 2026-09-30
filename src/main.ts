@@ -5,6 +5,8 @@ import { TitleScene } from './scenes/TitleScene';
 import { LevelScene } from './scenes/LevelScene';
 import { HudScene } from './scenes/HudScene';
 import { PauseScene } from './scenes/PauseScene';
+import { CestosScene } from './scenes/CestosScene';
+import { EsqueletoScene } from './scenes/EsqueletoScene';
 import { EndScene } from './scenes/EndScene';
 import { AdultScene } from './scenes/AdultScene';
 import { AtlasScene } from './scenes/AtlasScene';
@@ -28,7 +30,7 @@ const game = new Phaser.Game({
   input: { gamepad: true, activePointers: 4 },
   render: { antialias: true },
   // A ordem define quem é desenhado por cima.
-  scene: [BootScene, TitleScene, MapaScene, AtlasScene, LevelScene, HudScene, PauseScene, EndScene, AdultScene],
+  scene: [BootScene, TitleScene, MapaScene, AtlasScene, LevelScene, HudScene, PauseScene, EndScene, CestosScene, EsqueletoScene, AdultScene],
 });
 
 // Exposto apenas para testes automatizados.

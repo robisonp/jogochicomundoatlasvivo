@@ -1,4 +1,5 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
+import type { PoderBotao } from '../data/mundos';
 import Phaser from 'phaser';
 import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO, TOBOGA, GIRO } from '../config';
 import type { Intent } from '../systems/InputManager';
@@ -30,7 +31,7 @@ export class Player {
   /** Chão de gelo sob os pés neste frame (definido pela cena). */
   noGelo = false;
   /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' | 'giro' = 'bola';
+  poderBotao: PoderBotao = 'bola';
   /** Salto giratório do golfinho-rotador (botão da pata na Praia; só na água). */
   temPoderGiro = false;
   /** No ar depois do salto giratório. */
@@ -153,6 +154,13 @@ export class Player {
     this.recarga = ARRANCADA.recargaMs;
     const b = this.sprite.body;
     if (this.estado === 'normal' && !this.nadando) b.setGravityY(PLAYER.gravity);
+  }
+
+  /** A fase final troca o poder do botão da pata a cada trecho. */
+  trocarPoderBotao(p: PoderBotao) {
+    if (p === this.poderBotao) return;
+    this.encerrarArrancada();
+    this.poderBotao = p;
   }
 
   /** Enrolado em bola: espinhos e pedrinhas não machucam. */

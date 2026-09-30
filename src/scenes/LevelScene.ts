@@ -47,6 +47,18 @@ const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   golfinho: 'golfinho',
   caranguejo: 'caranguejo',
   'cavalo-marinho': 'cavalo-marinho',
+  'pegadas-sousa': 'pegadas-sousa',
+  irritator: 'irritator',
+  pterossauro: 'pterossauro',
+  staurikosaurus: 'staurikosaurus',
+  buriolestes: 'buriolestes',
+  carnotaurus: 'carnotaurus',
+  argentinosaurus: 'argentinosaurus',
+  velociraptor: 'velociraptor',
+  trex: 'trex',
+  teropode: 'teropode',
+  sauropode: 'sauropode',
+  ornitopode: 'ornitopode',
 };
 
 /** Coluna com maré: onde fica a superfície na maré alta e na baixa, e o fundo da água da maré. */
@@ -98,6 +110,10 @@ interface Bicho {
   ativado: boolean;
   /** Bicho que corre na frente do Chico mostrando o caminho (o emu). */
   guia?: { xFinal: number; tempo: number };
+  /** Fóssil ainda enterrado (monte de escavação). */
+  escondido?: boolean;
+  /** O narrador já explicou como escavar este monte. */
+  avisado?: boolean;
 }
 
 interface FontePedrinhas {
@@ -184,6 +200,8 @@ export class LevelScene extends Phaser.Scene {
   private lixos!: Phaser.Physics.Arcade.StaticGroup;
   private totalLixo = 0;
   private lixoPego = 0;
+  /** Coluna onde começa cada trecho (para o poder por trecho da fase final). */
+  private inicioTrechos: number[] = [];
   private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -394,7 +412,9 @@ export class LevelScene extends Phaser.Scene {
   private construirFase() {
     // Junta os trechos em uma grade só.
     const grade: string[] = Array.from({ length: LINHAS }, () => '');
+    this.inicioTrechos = [];
     for (const trecho of this.def.trechos) {
+      this.inicioTrechos.push(grade[0].length);
       const largura = Math.max(...trecho.map((l) => l.length));
       const linhas = [...Array(LINHAS - trecho.length).fill(''), ...trecho];
       for (let r = 0; r < LINHAS; r++) grade[r] += linhas[r].padEnd(largura, '.');
@@ -679,13 +699,28 @@ export class LevelScene extends Phaser.Scene {
             // Os desenhos olham para a direita; o bicho espera o Chico olhando para a esquerda.
             // A preguiça fica pendurada no galho que está no bloco logo acima dela.
             const pendurada = def.id === 'preguica';
+            // fóssil enterrado: primeiro aparece o monte de escavação
+            const textura = def.fossil ? 'monte-escavacao' : TEXTURA_BICHO[def.id];
             const img = this.add
-              .image(cx, pendurada ? y - TILE + 18 : y + TILE, TEXTURA_BICHO[def.id])
+              .image(cx, pendurada ? y - TILE + 18 : y + TILE, textura)
               .setOrigin(0.5, pendurada ? 0 : 1)
-              .setDepth(aguaEm(r, c) ? 10 : 8)
-              .setFlipX(true);
-            this.tweens.add({ targets: img, scaleY: 0.95, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
-            this.bichos.push({ img, def, ativado: false });
+              .setDepth(aguaEm(r, c) ? 10 : def.semFicha ? 1.7 : 8)
+              .setFlipX(!def.fossil);
+            // silhuetas dos grupos de dinossauros: grandes, como sombras do passado
+            // páginas do Atlas: tamanho proporcional ao bicho (o Velociraptor é pequeno, como no dossiê)
+            const escala =
+              { teropode: 1.6, sauropode: 2.4, ornitopode: 1.4, argentinosaurus: 2.4, trex: 1.7, carnotaurus: 1.4 }[def.id as string] ?? 1;
+            img.setScale(escala).setData('escala', escala);
+            if (def.semFicha) img.setAlpha(0.85);
+            if (!def.fossil) this.tweens.add({ targets: img, scaleY: escala * 0.95, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
+            if (def.pagina) {
+              // página do Atlas Vivo: o dinossauro aparece como uma projeção de luz saindo do livro
+              const luz = this.add.ellipse(cx, y + TILE - img.displayHeight / 2, img.displayWidth + 60, img.displayHeight + 40, 0xfff1a8, 0.35).setDepth(7.9);
+              this.tweens.add({ targets: luz, alpha: 0.15, yoyo: true, repeat: -1, duration: 900 });
+              this.add.image(cx, y + TILE + 4, 'atlas').setOrigin(0.5, 1).setScale(0.45).setDepth(8.1);
+              img.setAlpha(0.9);
+            }
+            this.bichos.push({ img, def, ativado: false, escondido: !!def.fossil });
             break;
           }
           case 'B': {
@@ -755,7 +790,7 @@ export class LevelScene extends Phaser.Scene {
             break;
           }
           case 'G': {
-            const textura = this.def.selo ? `selo-${this.def.selo.id}` : 'atlas';
+            const textura = this.def.selo ? `selo-${this.def.selo.id}` : this.def.portal ? 'portal' : 'atlas';
             this.objetivo = this.physics.add.staticImage(cx, y + TILE, textura).setOrigin(0.5, 1).setDepth(3);
             this.objetivo.refreshBody();
             this.tweens.add({ targets: this.objetivo, y: this.objetivo.y - 10, yoyo: true, repeat: -1, duration: 1100, ease: 'Sine.easeInOut' });
@@ -894,7 +929,9 @@ export class LevelScene extends Phaser.Scene {
 
     this.checarCheckpoints();
     this.checarPlacas(i.actionPressed);
+    this.checarEscavacao(i.actionPressed);
     this.checarBichos();
+    this.atualizarPoderPorTrecho();
     // o emu é só visual: usa o tempo real do quadro (não o limitado da física) para nunca ficar para trás
     this.guiarBichos(deltaMs / 1000);
     this.atualizarSons(dt);
@@ -1081,9 +1118,62 @@ export class LevelScene extends Phaser.Scene {
     for (const p of this.pedregulhos) p.img.body.pushable = this.player.temPoderForca;
   }
 
+  /** Fósseis enterrados: perto do monte, o botão Ação escava (pincel e espátula) e revela o fóssil. */
+  private checarEscavacao(acao: boolean) {
+    for (const b of this.bichos) {
+      if (!b.escondido || b.ativado) continue;
+      const perto = Math.abs(this.player.x - b.img.x) < 130 && Math.abs(this.player.y - (b.img.y - 30)) < 120;
+      if (!perto) continue;
+      this.iconeAcao.setVisible(true).setPosition(b.img.x, b.img.y - 130 + Math.sin(this.time.now / 180) * 6);
+      if (!b.avisado) {
+        // primeira vez perto: explica sem precisar ler
+        b.avisado = true;
+        VoiceManager.falar('Um fóssil está escondido aqui! Aperte o botão da mão para escavar.', 'narrador');
+      }
+      if (acao) this.escavar(b);
+      return;
+    }
+  }
+
+  private escavar(b: Bicho) {
+    b.ativado = true;
+    this.iconeAcao.setVisible(false);
+    for (let k = 0; k < 6; k++) {
+      this.time.delayedCall(k * 220, () => {
+        AudioManager.tocar('escavar');
+        this.estilhacos.explode(6, b.img.x + Phaser.Math.Between(-40, 40), b.img.y - 20);
+      });
+    }
+    this.tweens.add({ targets: b.img, x: b.img.x + 3, yoyo: true, repeat: 10, duration: 60 });
+    this.time.delayedCall(1400, () => {
+      b.img.setTexture(b.def.fossil!).setScale(0.3);
+      this.tweens.add({ targets: b.img, scale: 1, duration: 500, ease: 'Back.easeOut' });
+      VoiceManager.falar('Achamos um fóssil!', 'narrador');
+      b.escondido = false;
+      b.ativado = false;
+      this.ativarBicho(b);
+    });
+  }
+
+  /** Fase final: cada trecho usa o poder de um mundo no botão da pata. */
+  private atualizarPoderPorTrecho() {
+    const lista = this.def.poderPorTrecho;
+    if (!lista) return;
+    const col = this.player.x / TILE;
+    let idx = 0;
+    this.inicioTrechos.forEach((c0, i) => {
+      if (col >= c0) idx = i;
+    });
+    const poder = lista[Math.min(idx, lista.length - 1)];
+    if (poder !== this.player.poderBotao) {
+      this.player.trocarPoderBotao(poder);
+      this.events.emit('poder', this.temPoder);
+    }
+  }
+
   private checarBichos() {
     for (const b of this.bichos) {
-      if (b.ativado) continue;
+      if (b.ativado || b.escondido) continue;
       if (Math.abs(this.player.x - b.img.x) < 260 && Math.abs(this.player.y - b.img.y) < 240) this.ativarBicho(b);
     }
   }
@@ -1092,9 +1182,9 @@ export class LevelScene extends Phaser.Scene {
     b.ativado = true;
     const { def, img } = b;
     // Página do Atlas: o animal fica registrado para a coleção.
-    SaveManager.conquistar('animais', def.id);
-    VoiceManager.falar(def.fala, 'bicho');
-    if (def.curiosidade) VoiceManager.falar(def.curiosidade, 'bicho', true);
+    if (!def.semFicha) SaveManager.conquistar('animais', def.id);
+    VoiceManager.falar(def.fala, def.quem ?? 'bicho');
+    if (def.curiosidade) VoiceManager.falar(def.curiosidade, def.quem ?? 'bicho', true);
     this.add.particles(img.x, img.y - 30, 'brilho', {
       lifespan: 700,
       speed: { min: 60, max: 160 },
@@ -1187,8 +1277,25 @@ export class LevelScene extends Phaser.Scene {
         });
       });
     } else if (def.demo.tipo === 'ficar') {
-      // A preguiça continua no galho, bem firme.
-      this.tweens.add({ targets: img, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 1800, ease: 'Sine.easeInOut' });
+      // A preguiça continua no galho, bem firme (fósseis ficam parados na rocha).
+      if (!def.fossil) this.tweens.add({ targets: img, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 1800, ease: 'Sine.easeInOut' });
+    } else if (def.demo.tipo === 'andar') {
+      // Silhuetas de dinossauros: andam devagar, deixando o caminho das pegadas.
+      const { dx } = def.demo;
+      const x0 = img.x;
+      const y0 = img.y;
+      img.setFlipX(dx < 0);
+      this.tweens.killTweensOf(img);
+      img.setScale((img.getData('escala') as number) ?? 1);
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: Math.abs(dx) * 450,
+        onUpdate: (tw) => {
+          const t = tw.getValue() ?? 0;
+          img.setPosition(x0 + dx * TILE * t, y0 - Math.abs(Math.sin(t * Math.abs(dx) * Math.PI)) * 4);
+        },
+      });
     } else if (def.demo.tipo === 'pular') {
       // O mocó sobe o lajedo num salto, mostrando o caminho pelas pedras.
       const { dx, dy } = def.demo;
@@ -1703,6 +1810,11 @@ export class LevelScene extends Phaser.Scene {
     if (this.def.selo) {
       SaveManager.conquistar('selos', this.def.selo.id);
       VoiceManager.falar(this.def.selo.fala.texto, this.def.selo.fala.quem);
+    } else if (this.def.portal) {
+      AudioManager.tocar('portal');
+      VoiceManager.falar(this.def.portal.texto, this.def.portal.quem);
+      // o Chico entra no Portal do Tempo girando e sumindo
+      this.tweens.add({ targets: this.player.visual, alpha: 0, angle: 360, delay: 500, duration: 900, ease: 'Sine.easeIn' });
     } else {
       VoiceManager.falar('Você achou o Atlas! Muito bem, Chico!', 'narrador');
     }
@@ -1725,13 +1837,19 @@ export class LevelScene extends Phaser.Scene {
     }).setDepth(30).explode(80);
 
     this.time.delayedCall(1800, () => {
-      this.scene.launch('Fim', {
+      const fim = {
         faseId: this.def.id,
         proximaId: proximaFase(this.def.id)?.id,
         selo: this.def.selo ? `selo-${this.def.selo.id}` : undefined,
+        final: this.def.final,
         ...this.contarPegadasFase(),
         tempoMs: this.tempo,
-      });
+      };
+      // minijogo da fase (cestos do Araripe, esqueleto do Buriolestes) antes da tela de fim
+      if (this.def.minijogo) {
+        this.scene.stop('Hud');
+        this.scene.launch(this.def.minijogo === 'cestos' ? 'Cestos' : 'Esqueleto', { fim });
+      } else this.scene.launch('Fim', fim);
       this.scene.pause();
     });
   }

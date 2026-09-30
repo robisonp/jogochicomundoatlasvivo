@@ -1,9 +1,9 @@
 // Visual e som de cada mundo. A fase diz em qual mundo está (`mundo` em LevelDef) e a cena usa este tema.
 
-export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico' | 'antartica' | 'praia';
+export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico' | 'antartica' | 'praia' | 'dinossauros';
 /** Tema visual: um por mundo, mais variações (a mata de eucaliptos da Austrália). */
-export type TemaId = MundoId | 'australia-mata' | 'praia-mangue';
-export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico' | 'antartica' | 'praia';
+export type TemaId = MundoId | 'australia-mata' | 'praia-mangue' | 'dino-antigo' | 'dino-araripe';
+export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico' | 'antartica' | 'praia' | 'dinos';
 
 export interface TemaMundo {
   /** Caractere sólido → [textura interna, textura com topo]. */
@@ -27,8 +27,10 @@ export interface TemaMundo {
   fundo: { textura: string; altura: number; afundar: number; fator: number }[];
   musica: TemaMusica;
   /** Poder que o botão da pata usa neste mundo. */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' | 'giro';
+  poderBotao: PoderBotao;
 }
+
+export type PoderBotao = 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' | 'giro';
 
 export const TEMAS: Record<TemaId, TemaMundo> = {
   caatinga: {
@@ -175,5 +177,54 @@ export const TEMAS: Record<TemaId, TemaMundo> = {
     ],
     musica: 'praia',
     poderBotao: 'giro',
+  },
+  // Vale dos Dinossauros (Sousa, PB), hoje: lajedo com pegadas, passarelas de madeira, Caatinga em volta.
+  dinossauros: {
+    solidos: { '#': ['rocha-sousa', 'rocha-sousa-topo'], R: ['rocha', 'rocha-topo'] },
+    laje: 'passarela',
+    espinhos: 'espinhos',
+    ceu: 'ceu',
+    sol: true,
+    nuvens: true,
+    rastro: 'pegada-dino',
+    fundo: [
+      { textura: 'serra', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'mata-fundo', altura: 260, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'dinos',
+    poderBotao: 'superpulo',
+  },
+  // Muito tempo atrás (Cretáceo em Sousa, Triássico no Rio Grande do Sul): samambaias, cavalinhas e coníferas.
+  // Sem flores nem capim moderno, sem vulcão "de filme".
+  'dino-antigo': {
+    solidos: { '#': ['terra-antiga', 'terra-antiga-topo'], R: ['rocha-antiga', 'rocha-antiga-topo'] },
+    laje: 'galho-conifera',
+    espinhos: 'espinhos-antigos',
+    ceu: 'ceu-antigo',
+    sol: true,
+    nuvens: true,
+    rastro: 'pegada-dino',
+    fundo: [
+      { textura: 'antigo-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'antigo-perto', altura: 300, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'dinos',
+    poderBotao: 'superpulo',
+  },
+  // Chapada do Araripe (CE), hoje: camadas de rocha calcária, escavação dos paleontólogos.
+  'dino-araripe': {
+    solidos: { '#': ['calcario', 'calcario-topo'], R: ['calcario-escuro', 'calcario-escuro-topo'] },
+    laje: 'passarela',
+    espinhos: 'espinhos',
+    ceu: 'ceu',
+    sol: true,
+    nuvens: true,
+    rastro: 'pegada-dino',
+    fundo: [
+      { textura: 'chapada-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'mata-fundo', altura: 260, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'dinos',
+    poderBotao: 'superpulo',
   },
 };

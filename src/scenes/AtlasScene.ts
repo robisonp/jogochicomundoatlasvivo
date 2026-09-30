@@ -71,22 +71,26 @@ export class AtlasScene extends Phaser.Scene {
       this.tocavel(vazio, () => VoiceManager.falar(`Complete todas as aventuras da ${mundo.nome} para ganhar este selo.`, 'narrador'));
     }
 
-    // Figurinhas: 3 em cima, 2 embaixo
-    const posicoes = [
-      [-170, 0],
-      [0, 0],
-      [170, 0],
-      [-85, 160],
-      [85, 160],
-    ];
+    // Figurinhas: 3 em cima e 2 embaixo; com mais de 5 (dinossauros), grade de 3 por linha e cartas menores
+    const grade = animais.length > 5;
+    const escalaCarta = grade ? 0.74 : 1;
+    const posicoes = grade
+      ? animais.map((_, i) => [((i % 3) - 1) * 150, -60 + Math.floor(i / 3) * 118])
+      : [
+          [-170, 0],
+          [0, 0],
+          [170, 0],
+          [-85, 160],
+          [85, 160],
+        ];
     const encontrados = SaveManager.data.animais;
     animais.forEach((ficha, i) => {
       const [dx, dy] = posicoes[i];
       const x = esquerdaX + dx * s;
       const y = this.topo + (225 + dy) * s;
-      const fundo = this.add.image(x, y, 'carta').setScale(s);
+      const fundo = this.add.image(x, y, 'carta').setScale(s * escalaCarta);
       const img = this.add.image(x, y, `${ficha.textura}-hd`);
-      img.setScale(Math.min((120 * s) / img.width, (95 * s) / img.height));
+      img.setScale(Math.min((120 * s * escalaCarta) / img.width, (95 * s * escalaCarta) / img.height));
       const achou = encontrados.includes(ficha.id);
       if (!achou) {
         // Silhueta: dá para ver a forma, mas o bicho ainda não foi encontrado.

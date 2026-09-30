@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { botaoGrande, estiloTexto } from '../ui/widgets';
+import type { Familiar } from '../data/familia';
+import { AudioManager } from '../systems/AudioManager';
+import { VoiceManager } from '../systems/VoiceManager';
 
 export class EndScene extends Phaser.Scene {
-  private dados!: { faseId: string; proximaId?: string; selo?: string; pegas: number; total: number; tempoMs: number };
+  private dados!: { faseId: string; proximaId?: string; selo?: string; final?: boolean; pegas: number; total: number; tempoMs: number };
 
   constructor() {
     super('Fim');
@@ -15,7 +18,7 @@ export class EndScene extends Phaser.Scene {
   create() {
     const { width: W, height: H } = this.scale;
     this.scene.stop('Hud');
-    this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setInteractive().setDepth(-2);
 
     // Selo do mundo conquistado: aparece girando no alto da tela.
     if (this.dados.selo) {
@@ -40,6 +43,8 @@ export class EndScene extends Phaser.Scene {
     }
     this.add.text(W / 2, H / 2 - 60 + Math.floor((total - 1) / porLinha) * esp, `${pegas}/${total}`, estiloTexto(40)).setOrigin(0.5);
 
+    if (this.dados.final) this.festaFinal(W, H);
+
     const recomecar = () => {
       this.scene.stop('Level');
       this.scene.start('Level', { faseId: this.dados.faseId });
@@ -62,8 +67,46 @@ export class EndScene extends Phaser.Scene {
       botaoGrande(this, W / 2 - 250, H / 2 + 160, 'btn-denovo', recomecar, 0.65);
       botaoGrande(this, W / 2 + 250, H / 2 + 160, 'btn-casa', casa, 0.65);
     } else {
-      botaoGrande(this, W / 2 - 150, H / 2 + 140, 'btn-denovo', recomecar, 0.8);
-      botaoGrande(this, W / 2 + 150, H / 2 + 140, 'btn-casa', casa, 0.8);
+      // na festa final, os botões sobem para a família caber embaixo
+      const yb = this.dados.final ? H / 2 + 90 : H / 2 + 140;
+      botaoGrande(this, W / 2 - 150, yb, 'btn-denovo', recomecar, 0.8);
+      botaoGrande(this, W / 2 + 150, yb, 'btn-casa', casa, 0.8);
     }
+  }
+
+  /** Fim do jogo: a família inteira comemora (Kelly e Laura pelo Chamador do Atlas). */
+  private festaFinal(W: number, H: number) {
+    const presentes: Familiar[] = ['lili', 'marcos', 'july', 'marcela', 'robi'];
+    presentes.forEach((id, i) => {
+      const x = W / 2 + (i - 2) * 110;
+      // desenhada antes do texto do placar: misturar texto e a folha da família no mesmo lote cortava as figuras
+      const p = this.add.image(x, H + 10, 'familia', `corpo-${id}`).setOrigin(0.5, 1).setScale(0.38).setDepth(-1);
+      this.tweens.add({ targets: p, y: H - 4, delay: 300 + i * 150, duration: 500, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: p, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, delay: 900, duration: 400 + i * 60 });
+    });
+    (['kelly', 'laura'] as Familiar[]).forEach((id, i) => {
+      const tela = this.add.image(0, 0, 'chamador');
+      const rosto = this.add.image(0, -8, 'familia', `rosto-${id}`).setScale(0.62);
+      const c = this.add.container(i ? W - 110 : 110, H * 0.5, [tela, rosto]).setScale(0).setDepth(-1);
+      this.tweens.add({ targets: c, scale: 0.8, delay: 1200 + i * 200, duration: 400, ease: 'Back.easeOut' });
+    });
+    for (let k = 0; k < 6; k++) {
+      this.time.delayedCall(400 + k * 700, () =>
+        this.add
+          .particles(Phaser.Math.Between(100, W - 100), H * 0.2, 'brilho', {
+            lifespan: 1600,
+            speed: { min: 150, max: 380 },
+            gravityY: 500,
+            scale: { start: 1.4, end: 0.2 },
+            tint: [0xff6b6b, 0xffd766, 0x5cc26a, 0x5bb0e8, 0xc77dff],
+            emitting: false,
+          })
+          .explode(40),
+      );
+    }
+    AudioManager.tocar('vitoria');
+    VoiceManager.falar('Parabéns, Chico! Você completou o Atlas Vivo!', 'narrador', true);
+    VoiceManager.falar('Estamos muito orgulhosos de você, filho!', 'july', true);
+    VoiceManager.falar('O mundo inteiro cabe no seu Atlas. E ainda tem muito para descobrir!', 'marcela', true);
   }
 }
