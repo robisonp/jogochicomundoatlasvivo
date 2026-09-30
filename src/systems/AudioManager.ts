@@ -27,7 +27,9 @@ export type Sfx =
   | 'neve'
   | 'toboga'
   | 'baleia'
-  | 'bolhas';
+  | 'bolhas'
+  | 'giro'
+  | 'lixo';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -182,6 +184,14 @@ class AudioManagerImpl {
         this.tom(160, 1.1, { tipo: 'sine', ate: 320, vol: 0.28 });
         this.tom(330, 0.9, { tipo: 'sine', ate: 140, vol: 0.22, atraso: 1.0 });
         break;
+      case 'giro':
+        this.ruido(0.3, 1200, 0.3);
+        [523, 659, 784, 1047].forEach((f, k) => this.tom(f, 0.1, { tipo: 'triangle', vol: 0.2, atraso: k * 0.06 }));
+        break;
+      case 'lixo':
+        this.tom(660, 0.08, { tipo: 'square', vol: 0.15 });
+        this.tom(990, 0.12, { tipo: 'square', vol: 0.15, atraso: 0.08 });
+        break;
       case 'bolhas':
         [900, 1200, 1000, 1400].forEach((f, k) => this.tom(f, 0.06, { tipo: 'sine', ate: f * 1.6, vol: 0.1, atraso: k * 0.12 }));
         break;
@@ -282,6 +292,7 @@ class AudioManagerImpl {
     if (this.tema === 'outback') return this.agendarOutback();
     if (this.tema === 'artico') return this.agendarArtico();
     if (this.tema === 'antartica') return this.agendarAntartica();
+    if (this.tema === 'praia') return this.agendarPraia();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -436,6 +447,36 @@ class AudioManagerImpl {
       if (b === 0) for (const f of acorde) this.tomEm(t, f / 2, 2.6, 'sine', 0.16, dest);
       if (b === 0 || b === 4) this.ruido(1.2, 500, 0.03, t, dest);
       if (b === 2 || b === 5 || b === 7) this.tomEm(t, sinos[(this.beat * 3) % sinos.length], 1.1, 'sine', 0.1, dest);
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Praia: balanço alegre de beira-mar — violão dedilhado (triângulo), ganzá nas semicolcheias e marcação no grave.
+  private agendarPraia(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 96 / 4;
+    const acordes = [
+      [293.66, 369.99, 440, 554.37],
+      [246.94, 293.66, 369.99, 440],
+      [196, 246.94, 293.66, 392],
+      [220, 277.18, 329.63, 440],
+    ];
+    const melodia = [4, -1, 5, 4, 2, -1, 0, -1, 2, 4, -1, 7, 5, -1, 4, -1];
+    const escala = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25, 739.99];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const acorde = acordes[Math.floor(this.beat / 16) % 4];
+      const dest = this.musicGain!;
+      this.ruido(b % 2 === 0 ? 0.04 : 0.02, 6500, b % 4 === 2 ? 0.08 : 0.04, t, dest);
+      if (b === 0 || b === 10) this.tomEm(t, acorde[0] / 2, 0.4, 'triangle', 0.4, dest);
+      if (b % 4 === 2) this.tomEm(t, acorde[1 + ((b / 4) | 0) % 3], 0.2, 'triangle', 0.1, dest);
+      if (b % 2 === 0) {
+        const idx = melodia[(this.beat / 2) % melodia.length];
+        if (idx >= 0 && Math.floor(this.beat / 32) % 2 === 1) this.tomEm(t, escala[idx], 0.25, 'sine', 0.12, dest);
+      }
       this.nextBeatTime += passo;
       this.beat++;
     }

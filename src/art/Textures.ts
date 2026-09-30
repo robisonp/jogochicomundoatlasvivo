@@ -8,6 +8,7 @@ import { gerarSavana } from './Savana';
 import { gerarAustralia } from './Australia';
 import { gerarArtico } from './Artico';
 import { gerarAntartica } from './Antartica';
+import { gerarPraia } from './Praia';
 import { gerarFamilia } from './Familia';
 import { gerarMapa } from './Mapa';
 
@@ -55,6 +56,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarAustralia(scene);
   gerarArtico(scene);
   gerarAntartica(scene);
+  gerarPraia(scene);
   gerarFamilia(scene);
   gerarMapa(scene);
 }
@@ -1418,7 +1420,7 @@ function gerarAtlas(scene: Phaser.Scene) {
     });
     c.closePath();
   };
-  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul'] as const) {
+  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul', 'litoral-brasil'] as const) {
     tex(scene, `mapa-${regiao}`, 170, 240, (c) => {
       c.lineJoin = 'round';
       c.strokeStyle = '#6b5a3a';
@@ -1436,6 +1438,21 @@ function gerarAtlas(scene: Phaser.Scene) {
         poligono(c, regiao === 'amazonia' ? AMAZONIA : NORDESTE);
         c.fill();
         c.stroke();
+      }
+      if (regiao === 'litoral-brasil') {
+        // faixa grossa ao longo da costa atlântica do Brasil (do Amapá ao Rio Grande do Sul)
+        c.save();
+        c.lineCap = 'round';
+        c.strokeStyle = '#2f8fd8';
+        c.lineWidth = 7;
+        c.beginPath();
+        BRASIL.slice(1, 17).forEach(([lon, lat], i) => {
+          const [x, y] = proj(lon, lat);
+          if (i === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+        });
+        c.stroke();
+        c.restore();
       }
     });
   }

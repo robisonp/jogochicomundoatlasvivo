@@ -14,7 +14,9 @@ export type RegiaoMapa =
   | 'artico'
   | 'antartica'
   | 'oceanos'
-  | 'oceano-sul';
+  | 'oceano-sul'
+  | 'mares-tropicais'
+  | 'litoral-brasil';
 
 export interface FichaAnimal {
   id: string;
@@ -490,6 +492,82 @@ export const ANIMAIS: FichaAnimal[] = [
     },
     adulto: 'Diomedea exulans · IUCN: Vulnerável',
   },
+  // ---------------------------------------------------------------- Praia e oceano do Brasil
+  {
+    id: 'tartaruga',
+    nome: 'Tartaruga-de-pente',
+    mundo: 'praia',
+    textura: 'tartaruga',
+    regiao: 'mares-tropicais',
+    falas: {
+      apresentacao: 'Eu vivo no mar, mas as mamães voltam à praia para colocar ovos!',
+      mapa: 'Eu vivo nos mares quentes do mundo. No Brasil, faço ninhos principalmente no Nordeste.',
+      comida: 'Eu como esponjas e outros bichinhos do mar.',
+      tamanho: 'Meu casco é do comprimento do corpo de uma criança.',
+      curiosidade: 'Existem várias espécies de tartarugas marinhas no Brasil!',
+    },
+    adulto: 'Eretmochelys imbricata · IUCN: Criticamente Em Perigo · Brasil: Em Perigo',
+  },
+  {
+    id: 'peixe-boi',
+    nome: 'Peixe-boi-marinho',
+    mundo: 'praia',
+    textura: 'peixe-boi',
+    regiao: 'litoral-brasil',
+    falas: {
+      apresentacao: 'Meu nome diz peixe, mas eu sou um mamífero!',
+      mapa: 'Eu vivo nas Américas. No Brasil, fico no litoral do Norte e do Nordeste.',
+      comida: 'Eu como plantas: capins marinhos, folhas de mangue e algas.',
+      tamanho: 'Um adulto pode ser tão comprido quanto um carro pequeno.',
+      curiosidade: 'Minha cauda larga me empurra devagar pela água!',
+    },
+    adulto: 'Trichechus manatus · Brasil: Em Perigo',
+  },
+  {
+    id: 'golfinho',
+    nome: 'Golfinho-rotador',
+    mundo: 'praia',
+    textura: 'golfinho',
+    regiao: 'mares-tropicais',
+    falas: {
+      apresentacao: 'Eu nado rápido e posso girar no ar quando salto!',
+      mapa: 'Eu vivo nos mares quentes do mundo. No Brasil, sou muito estudado em Fernando de Noronha.',
+      comida: 'Eu como peixes e lulas.',
+      tamanho: 'Sou mais ou menos do comprimento da altura de um adulto.',
+      curiosidade: 'Meu giro no salto deu origem ao nome golfinho-rotador!',
+    },
+    adulto: 'Stenella longirostris · IUCN: Menos Preocupante',
+  },
+  {
+    id: 'caranguejo',
+    nome: 'Caranguejo-uçá',
+    mundo: 'praia',
+    textura: 'caranguejo',
+    regiao: 'litoral-brasil',
+    falas: {
+      apresentacao: 'Minha toca fica escondida no chão do manguezal!',
+      mapa: 'Eu vivo nos manguezais de grande parte do litoral do Brasil.',
+      comida: 'Eu como principalmente folhas do mangue.',
+      tamanho: 'Meu corpo cabe na mão de um adulto, sem contar as pernas.',
+      curiosidade: 'Ajudo a transformar folhas velhas do mangue!',
+    },
+    adulto: 'Ucides cordatus · Brasil: Quase Ameaçado',
+  },
+  {
+    id: 'cavalo-marinho',
+    nome: 'Cavalo-marinho',
+    mundo: 'praia',
+    textura: 'cavalo-marinho',
+    regiao: 'litoral-brasil',
+    falas: {
+      apresentacao: 'Minha cauda funciona como uma mãozinha para eu me segurar!',
+      mapa: 'Eu vivo no mar do lado de cá do Atlântico, e também no litoral do Brasil.',
+      comida: 'Eu como bichinhos bem pequenos, como pequenos crustáceos.',
+      tamanho: 'Sou do tamanho de um lápis, curto ou grande.',
+      curiosidade: 'Nos cavalos-marinhos, o papai carrega os filhotes!',
+    },
+    adulto: 'Hippocampus reidi (cavalo-marinho-de-focinho-longo) · Brasil: Vulnerável',
+  },
 ];
 
 export const MUNDOS_ATLAS = [
@@ -540,5 +618,13 @@ export const MUNDOS_ATLAS = [
     nomeSelo: 'Selo da Antártica',
     texturaSelo: 'selo-antartica',
     abertura: 'Aqui, países trabalham juntos para estudar um continente de gelo!',
+  },
+  {
+    id: 'praia',
+    nome: 'Praia',
+    selo: 'praia',
+    nomeSelo: 'Selo da Praia',
+    texturaSelo: 'selo-praia',
+    abertura: 'Entre a terra e o mar, o manguezal vira abrigo para muitos filhotes!',
   },
 ];

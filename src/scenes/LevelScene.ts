@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, PLAYER, VENTO, CAVAR } from '../config';
+import { TILE, PLAYER, VENTO, CAVAR, MARE } from '../config';
 import { Player } from '../entities/Player';
 import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -42,7 +42,22 @@ const TEXTURA_BICHO: Record<AnimalNaFase['id'], string> = {
   orca: 'orca',
   jubarte: 'jubarte',
   albatroz: 'albatroz',
+  tartaruga: 'tartaruga',
+  'peixe-boi': 'peixe-boi',
+  golfinho: 'golfinho',
+  caranguejo: 'caranguejo',
+  'cavalo-marinho': 'cavalo-marinho',
 };
+
+/** Coluna com maré: onde fica a superfície na maré alta e na baixa, e o fundo da água da maré. */
+interface ColunaMare {
+  alta: number;
+  baixa: number;
+  /** y onde a água da maré acaba (chão ou a água que nunca seca). */
+  fundo: number;
+  topo: Phaser.GameObjects.Image;
+  corpo: Phaser.GameObjects.TileSprite;
+}
 
 interface Pedregulho {
   img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
@@ -161,6 +176,14 @@ export class LevelScene extends Phaser.Scene {
   private submarino?: Phaser.GameObjects.Image;
   /** Tempestade branca: a tela clareia nas rajadas. */
   private brancura?: Phaser.GameObjects.Rectangle;
+  /** Maré: colunas com água "%" e o relógio dela (0 = baixa, 1 = alta). */
+  private mare = new Map<number, ColunaMare>();
+  private nivelMare = 0;
+  private relogioMare = 0;
+  /** Lixo trazido pelo mar (l). */
+  private lixos!: Phaser.Physics.Arcade.StaticGroup;
+  private totalLixo = 0;
+  private lixoPego = 0;
   private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -178,6 +201,11 @@ export class LevelScene extends Phaser.Scene {
     this.resgates = 0;
     this.submarino = undefined;
     this.brancura = undefined;
+    this.mare = new Map();
+    this.nivelMare = 0;
+    this.relogioMare = 0;
+    this.totalLixo = 0;
+    this.lixoPego = 0;
     this.escuridao = undefined;
     this.bichos = [];
     this.fontesPedrinhas = [];
@@ -245,6 +273,7 @@ export class LevelScene extends Phaser.Scene {
     this.player.temPoderCavar = SaveManager.data.poderes.includes('cavar');
     this.player.temPoderMergulho = SaveManager.data.poderes.includes('mergulho');
     this.player.temPoderToboga = SaveManager.data.poderes.includes('toboga');
+    this.player.temPoderGiro = SaveManager.data.poderes.includes('giro');
     if (this.def.submarino) {
       // No submarino do Vovô Marcos dá para mergulhar mesmo na água funda e gelada.
       this.player.temPoderOnca = true;
@@ -274,6 +303,7 @@ export class LevelScene extends Phaser.Scene {
       this.pegar(peg as Phaser.Types.Physics.Arcade.ImageWithStaticBody),
     );
     this.physics.add.overlap(this.player.sprite, this.objetivo, () => this.concluir());
+    this.physics.add.overlap(this.player.sprite, this.lixos, (_p, l) => this.recolherLixo(l as Phaser.Types.Physics.Arcade.ImageWithStaticBody));
 
     // Câmera: segue com suavidade e antecipa a direção do movimento
     const cam = this.cameras.main;
@@ -398,11 +428,29 @@ export class LevelScene extends Phaser.Scene {
         const ch = aguaEm(r, c);
         if (!ch) continue;
         const funda = ch === 'w';
-        const topo = !aguaEm(r - 1, c);
+        const topo = !aguaEm(r - 1, c) && at(r - 1, c) !== '%';
         const textura = `agua-${funda ? 'funda' : 'rasa'}${topo ? '-topo' : ''}`;
         const img = this.add.image(c * TILE, r * TILE, textura).setOrigin(0).setDepth(11);
         if (topo) this.tweens.add({ targets: img, y: img.y + 3, yoyo: true, repeat: -1, duration: 900 + (c % 4) * 120, ease: 'Sine.easeInOut' });
       }
+    }
+
+    // Maré: em cada coluna com "%", a água sobe até o topo do "%" (alta) e desce até a base (baixa)
+    for (let c = 0; c < cols; c++) {
+      let r0 = -1;
+      for (let r = 0; r < LINHAS; r++) if (at(r, c) === '%') { r0 = r; break; }
+      if (r0 < 0) continue;
+      let r1 = r0;
+      while (at(r1, c) === '%') r1++;
+      const debaixoEAgua = AGUA.has(at(r1, c));
+      const col: ColunaMare = {
+        alta: r0 * TILE + 8,
+        baixa: debaixoEAgua ? r1 * TILE + 8 : r1 * TILE,
+        fundo: r1 * TILE,
+        topo: this.add.image(c * TILE, r1 * TILE, 'agua-rasa-topo').setOrigin(0).setDepth(11),
+        corpo: this.add.tileSprite(c * TILE, r1 * TILE, TILE, 1, 'agua-rasa').setOrigin(0).setDepth(11),
+      };
+      this.mare.set(c, col);
     }
 
     // Tocas: fundo de terra escura atrás da terra fofa (aparece quando ela é cavada) e dos túneis "t".
@@ -432,6 +480,7 @@ export class LevelScene extends Phaser.Scene {
     this.grupoPedregulhos = this.physics.add.group();
     this.grupoFofas = this.physics.add.staticGroup();
     this.grupoNeves = this.physics.add.staticGroup();
+    this.lixos = this.physics.add.staticGroup();
     this.respingos = this.add.particles(0, 0, 'bolha', {
       lifespan: 600,
       speedX: { min: -140, max: 140 },
@@ -672,6 +721,14 @@ export class LevelScene extends Phaser.Scene {
             this.neves.set(`${c},${r}`, n);
             break;
           }
+          case 'l': {
+            const tipos = ['lixo-garrafa', 'lixo-lata', 'lixo-rede'];
+            const l = this.lixos.create(cx, y + TILE - 18, tipos[(c + r) % 3]).setDepth(4) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+            l.setAngle(((c * 37) % 40) - 20);
+            l.refreshBody();
+            this.totalLixo++;
+            break;
+          }
           case '*': {
             // Vaga-lume: pisca devagar e passeia um pouquinho; fica por cima da escuridão da noite.
             const v = this.add.image(cx, y + TILE / 2, 'vagalume').setDepth(31).setBlendMode(Phaser.BlendModes.ADD);
@@ -783,6 +840,8 @@ export class LevelScene extends Phaser.Scene {
       escadaX = (e as Phaser.GameObjects.Image).x;
     });
     this.player.marcarEscada(escadaX);
+
+    this.atualizarMare(deltaMs);
 
     // Água sob o centro do Chico
     const sup = this.aguaSuperficie(this.player.x, this.player.y);
@@ -1010,6 +1069,7 @@ export class LevelScene extends Phaser.Scene {
     if (p.poderBotao === 'superpulo') return p.temPoderSuperPulo;
     if (p.poderBotao === 'mergulho') return p.temPoderMergulho;
     if (p.poderBotao === 'toboga') return p.temPoderToboga;
+    if (p.poderBotao === 'giro') return p.temPoderGiro;
     return p.temPoderArrancada;
   }
 
@@ -1175,6 +1235,33 @@ export class LevelScene extends Phaser.Scene {
           });
         });
       });
+    } else if (def.demo.tipo === 'girar') {
+      // O golfinho-rotador salta da água girando no ar e mergulha de novo.
+      const x0 = img.x;
+      const y0 = img.y;
+      this.time.delayedCall(1100, () => {
+        img.setFlipX(false);
+        this.tweens.killTweensOf(img);
+        img.setScale(1);
+        AudioManager.tocar('giro');
+        this.respingos.explode(12, x0, y0 - 20);
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: 1400,
+          onUpdate: (tw) => {
+            const t = tw.getValue() ?? 0;
+            img.setPosition(x0 + TILE * 4 * t, y0 - Math.sin(Math.PI * t) * 260);
+            img.setAngle(t * 720);
+          },
+          onComplete: () => {
+            img.setAngle(0);
+            AudioManager.tocar('splash');
+            this.respingos.explode(14, img.x, y0 - 20);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          },
+        });
+      });
     } else if (def.demo.tipo === 'deslizar') {
       // O pinguim-de-adélia deita de barriga e desliza no gelo, depois levanta.
       const { dx } = def.demo;
@@ -1293,6 +1380,10 @@ export class LevelScene extends Phaser.Scene {
           this.player.temPoderSuperPulo = true;
           this.events.emit('poder', this.temPoder);
           if (novo) VoiceManager.falar('Agora você pula como o canguru! Aperte o botão da pata para dar um super pulo.', 'narrador', true);
+        } else if (poder === 'giro') {
+          this.player.temPoderGiro = true;
+          this.events.emit('poder', this.temPoder);
+          if (novo) VoiceManager.falar('Agora você salta girando como o golfinho! Na água, aperte o botão da pata.', 'narrador', true);
         } else if (poder === 'toboga') {
           this.player.temPoderToboga = true;
           this.events.emit('poder', this.temPoder);
@@ -1432,11 +1523,50 @@ export class LevelScene extends Phaser.Scene {
 
   /** Y da superfície da água na coluna, se o ponto estiver dentro da água; senão null. */
   private aguaSuperficie(x: number, y: number): number | null {
-    if (!AGUA.has(this.caractere(x, y))) return null;
-    let r = Math.floor(y / TILE);
     const c = Math.floor(x / TILE);
+    const ch = this.caractere(x, y);
+    const m = this.mare.get(c);
+    if (m && ch === '%') {
+      const s = this.superficieMare(m);
+      return y >= s ? s : null;
+    }
+    if (!AGUA.has(ch)) return null;
+    let r = Math.floor(y / TILE);
     while (r > 0 && AGUA.has(this.grade[r - 1]?.[c] ?? '.')) r--;
-    return r * TILE + 8;
+    const normal = r * TILE + 8;
+    return m ? Math.min(normal, this.superficieMare(m)) : normal;
+  }
+
+  private superficieMare(m: ColunaMare) {
+    return m.baixa - this.nivelMare * (m.baixa - m.alta);
+  }
+
+  /** A maré sobe e desce devagar (começa baixa). A água é desenhada da superfície até o fundo da maré. */
+  private atualizarMare(deltaMs: number) {
+    if (!this.mare.size) return;
+    this.relogioMare += deltaMs;
+    this.nivelMare = (1 - Math.cos((this.relogioMare / MARE.periodoMs) * Math.PI * 2)) / 2;
+    for (const m of this.mare.values()) {
+      const s = this.superficieMare(m);
+      const alt = Math.max(0, m.fundo - s);
+      m.topo.setVisible(alt > 1).setY(s - 8).setCrop(0, 0, TILE, Math.min(TILE, alt + 8));
+      m.corpo.setVisible(alt > TILE - 8).setY(s + TILE - 8);
+      m.corpo.height = Math.max(1, alt - TILE + 8);
+    }
+  }
+
+  private recolherLixo(l: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+    if (!l.body.enable) return;
+    l.body.enable = false;
+    this.lixoPego++;
+    AudioManager.tocar('lixo');
+    this.tweens.add({ targets: l, x: this.player.x, y: this.player.y - 40, scale: 0.3, alpha: 0, duration: 400, onComplete: () => l.destroy() });
+    this.events.emit('lixo', { pegos: this.lixoPego, total: this.totalLixo });
+    if (this.lixoPego === this.totalLixo) VoiceManager.falar('Você recolheu todo o lixo! Obrigada por cuidar da praia, filho!', 'july');
+  }
+
+  contarLixo() {
+    return { pegos: this.lixoPego, total: this.totalLixo };
   }
 
   private aguaFunda(x: number, y: number) {

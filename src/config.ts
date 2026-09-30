@@ -86,6 +86,17 @@ export const TOBOGA = {
   altura: 34,
 };
 
+// Salto do golfinho-rotador: na água, o Chico salta bem alto girando (dossiê: salta e gira em torno do próprio eixo).
+export const GIRO = {
+  velocidade: 1120,
+  voltasPorSegundo: 2.2,
+};
+
+// Maré (fases com água "%"): sobe e desce devagar, e o Chico pode esperar por ela.
+export const MARE = {
+  periodoMs: 16000,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

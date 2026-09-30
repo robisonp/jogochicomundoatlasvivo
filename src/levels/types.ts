@@ -23,13 +23,15 @@
 //   I  gelo: chão escorregadio (o Chico demora para frear e para acelerar)
 //   N  neve fofa: sólida, mas o mergulho da raposa-do-ártico quebra de cima para baixo
 //   &  estação de pesquisa (decoração, 3 blocos de largura, apoiada no chão)
+//   %  água da maré: fica cheia na maré alta e seca na baixa (sobe e desce devagar)
+//   l  lixo trazido pelo mar (o Chico recolhe encostando)
 
 import type { Personagem } from '../systems/VoiceManager';
 import type { MundoId, TemaId } from '../data/mundos';
 
 export const LINHAS = 13;
 
-export type Poder = 'bola' | 'onca' | 'arrancada' | 'forca' | 'superpulo' | 'cavar' | 'mergulho' | 'toboga';
+export type Poder = 'bola' | 'onca' | 'arrancada' | 'forca' | 'superpulo' | 'cavar' | 'mergulho' | 'toboga' | 'giro';
 
 export interface Fala {
   texto: string;
@@ -68,7 +70,12 @@ export interface AnimalNaFase {
     | 'foca-de-weddell'
     | 'orca'
     | 'jubarte'
-    | 'albatroz';
+    | 'albatroz'
+    | 'tartaruga'
+    | 'peixe-boi'
+    | 'golfinho'
+    | 'caranguejo'
+    | 'cavalo-marinho';
   /** Fala tirada do dossiê científico. */
   fala: string;
   curiosidade?: string;
@@ -88,7 +95,9 @@ export interface AnimalNaFase {
     /** Salta alto e cai de cabeça na neve (raposa-do-ártico), sumindo e voltando. */
     | { tipo: 'mergulhar' }
     /** Deita de barriga e desliza no gelo (pinguim), depois levanta. */
-    | { tipo: 'deslizar'; dx: number };
+    | { tipo: 'deslizar'; dx: number }
+    /** Salta da água girando no ar (golfinho-rotador). */
+    | { tipo: 'girar' };
   /** Poder que o Chico ganha depois da demonstração. */
   daPoder?: Poder;
 }

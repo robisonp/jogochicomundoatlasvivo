@@ -69,7 +69,7 @@ const ANTARTIDA: Poly = [
 function mapinhas(scene: Phaser.Scene) {
   const terras: Poly[] = [AMERICA_NORTE, AMERICA_DO_SUL, EURASIA, AFRICA, AUSTRALIA, TASMANIA, ARQUIPELAGO_CANADA, ISLANDIA, SVALBARD, GROENLANDIA, ...ILHAS];
   // Mundo inteiro pequeno: oceanos em destaque (orca, jubarte) ou só os mares do sul (albatroz)
-  const mundo = (key: string, destaque: 'oceanos' | 'sul') =>
+  const mundo = (key: string, destaque: 'oceanos' | 'sul' | 'tropicos') =>
     tex(scene, key, 220, 112, (c, w, h) => {
       const sx = w / MAPA.largura;
       const sy = h / MAPA.altura;
@@ -90,6 +90,13 @@ function mapinhas(scene: Phaser.Scene) {
         c.fillStyle = '#f2a93b';
         c.fillRect(1, y * sy, w - 2, h - y * sy - 1);
       }
+      if (destaque === 'tropicos') {
+        // mares quentes: faixa entre os trópicos
+        const [, y1] = lonLatParaMapa(0, 30);
+        const [, y2] = lonLatParaMapa(0, -30);
+        c.fillStyle = '#f2a93b';
+        c.fillRect(1, y1 * sy, w - 2, (y2 - y1) * sy);
+      }
       c.lineJoin = 'round';
       c.strokeStyle = '#6b5a3a';
       c.lineWidth = 1.2;
@@ -105,6 +112,7 @@ function mapinhas(scene: Phaser.Scene) {
     });
   mundo('mapa-oceanos', 'oceanos');
   mundo('mapa-oceano-sul', 'sul');
+  mundo('mapa-mares-tropicais', 'tropicos');
 
   // Antártida vista de baixo (polo sul no meio), recortada em 50° S: aparece a pontinha da América do Sul
   tex(scene, 'mapa-antartica', 220, 220, (c) => {
