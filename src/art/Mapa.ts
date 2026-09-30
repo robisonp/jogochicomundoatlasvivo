@@ -69,7 +69,7 @@ const ANTARTIDA: Poly = [
 function mapinhas(scene: Phaser.Scene) {
   const terras: Poly[] = [AMERICA_NORTE, AMERICA_DO_SUL, EURASIA, AFRICA, AUSTRALIA, TASMANIA, ARQUIPELAGO_CANADA, ISLANDIA, SVALBARD, GROENLANDIA, ...ILHAS];
   // Mundo inteiro pequeno: oceanos em destaque (orca, jubarte) ou só os mares do sul (albatroz)
-  const mundo = (key: string, destaque: 'oceanos' | 'sul' | 'tropicos') =>
+  const mundo = (key: string, destaque: 'oceanos' | 'sul' | 'tropicos' | 'nenhum', alfinete?: [number, number]) =>
     tex(scene, key, 220, 112, (c, w, h) => {
       const sx = w / MAPA.largura;
       const sy = h / MAPA.altura;
@@ -106,11 +106,25 @@ function mapinhas(scene: Phaser.Scene) {
         c.fill();
         c.stroke();
       }
+      if (alfinete) {
+        const [x, y] = lonLatParaMapa(alfinete[0], alfinete[1]);
+        c.fillStyle = '#e04a3a';
+        c.strokeStyle = '#fff';
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.arc(x * sx, y * sy, 6, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+      }
+      c.strokeStyle = '#6b5a3a';
       c.lineWidth = 2;
       rrect(c, 1, 1, w - 2, h - 2, 8);
       c.stroke();
     });
   mundo('mapa-oceanos', 'oceanos');
+  // fósseis encontrados onde hoje ficam a Mongólia (Velociraptor) e os Estados Unidos e o Canadá (T. rex)
+  mundo('mapa-mongolia', 'nenhum', [104, 45]);
+  mundo('mapa-america-do-norte', 'nenhum', [-106, 47]);
   mundo('mapa-oceano-sul', 'sul');
   mundo('mapa-mares-tropicais', 'tropicos');
 

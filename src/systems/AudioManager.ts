@@ -29,7 +29,12 @@ export type Sfx =
   | 'baleia'
   | 'bolhas'
   | 'giro'
-  | 'lixo';
+  | 'lixo'
+  | 'escavar'
+  | 'portal'
+  | 'encaixe'
+  | 'certo'
+  | 'quase';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -188,6 +193,29 @@ class AudioManagerImpl {
         this.ruido(0.3, 1200, 0.3);
         [523, 659, 784, 1047].forEach((f, k) => this.tom(f, 0.1, { tipo: 'triangle', vol: 0.2, atraso: k * 0.06 }));
         break;
+      case 'escavar':
+        // pincel e espátula limpando a rocha
+        this.ruido(0.12, 3000, 0.18);
+        if (this.ctx) this.ruido(0.1, 1800, 0.14, this.ctx.currentTime + 0.16);
+        break;
+      case 'portal':
+        // Portal do Tempo: brilho que sobe e desce
+        [392, 523, 659, 784, 1047, 784, 1047, 1319].forEach((f, k) => this.tom(f, 0.18, { tipo: 'sine', vol: 0.14, atraso: k * 0.07 }));
+        this.tom(110, 1.2, { tipo: 'triangle', ate: 220, vol: 0.2 });
+        break;
+      case 'encaixe':
+        // osso encaixando no lugar
+        this.tom(220, 0.08, { tipo: 'square', ate: 160, vol: 0.18 });
+        this.tom(880, 0.12, { tipo: 'triangle', vol: 0.15, atraso: 0.07 });
+        break;
+      case 'certo':
+        [659, 784, 1047].forEach((f, k) => this.tom(f, 0.14, { tipo: 'triangle', vol: 0.2, atraso: k * 0.09 }));
+        break;
+      case 'quase':
+        // sem som de "erro" feio: duas notas suaves descendo
+        this.tom(523, 0.16, { tipo: 'sine', vol: 0.16 });
+        this.tom(440, 0.22, { tipo: 'sine', vol: 0.14, atraso: 0.16 });
+        break;
       case 'lixo':
         this.tom(660, 0.08, { tipo: 'square', vol: 0.15 });
         this.tom(990, 0.12, { tipo: 'square', vol: 0.15, atraso: 0.08 });
@@ -293,6 +321,7 @@ class AudioManagerImpl {
     if (this.tema === 'artico') return this.agendarArtico();
     if (this.tema === 'antartica') return this.agendarAntartica();
     if (this.tema === 'praia') return this.agendarPraia();
+    if (this.tema === 'dinos') return this.agendarDinos();
     const ctx = this.ctx;
     if (!ctx) return;
     const passo = 60 / 104 / 4; // semicolcheia a 104 bpm
@@ -477,6 +506,32 @@ class AudioManagerImpl {
         const idx = melodia[(this.beat / 2) % melodia.length];
         if (idx >= 0 && Math.floor(this.beat / 32) % 2 === 1) this.tomEm(t, escala[idx], 0.25, 'sine', 0.12, dest);
       }
+      this.nextBeatTime += passo;
+      this.beat++;
+    }
+  }
+
+  // Dinossauros: passos graves e lentos (como passos de gigante), marimba de descoberta e um coro suave.
+  private agendarDinos(): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const passo = 60 / 88 / 4;
+    const escala = [220, 246.94, 261.63, 293.66, 329.63, 349.23, 392, 440, 523.25];
+    const melodia = [0, -1, 2, -1, 4, -1, 7, -1, 6, -1, 4, -1, 5, -1, -1, -1, 4, -1, 2, -1, 4, -1, 8, -1, 7, -1, 6, 4, 2, -1, -1, -1];
+    const baixo = [110, 87.31, 98, 82.41];
+    while (this.nextBeatTime < ctx.currentTime + 0.2) {
+      const t = this.nextBeatTime;
+      const b = this.beat % 16;
+      const compasso = Math.floor(this.beat / 16);
+      const dest = this.musicGain!;
+      if (b === 0 || b === 8) this.bumbo(t, dest);
+      if (b === 0) this.tomEm(t, baixo[compasso % 4], 1.2, 'triangle', 0.35, dest);
+      if (b % 4 === 2) this.ruido(0.03, 4000, 0.05, t, dest);
+      if (b % 2 === 0) {
+        const idx = melodia[(this.beat / 2) % melodia.length];
+        if (idx >= 0) this.tomEm(t, escala[idx], 0.35, 'sine', 0.13, dest);
+      }
+      if (b === 0 && compasso % 2 === 1) this.tomEm(t, baixo[compasso % 4] * 4, passo * 14, 'sine', 0.05, dest);
       this.nextBeatTime += passo;
       this.beat++;
     }

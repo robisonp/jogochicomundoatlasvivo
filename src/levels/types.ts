@@ -25,9 +25,10 @@
 //   &  estação de pesquisa (decoração, 3 blocos de largura, apoiada no chão)
 //   %  água da maré: fica cheia na maré alta e seca na baixa (sobe e desce devagar)
 //   l  lixo trazido pelo mar (o Chico recolhe encostando)
+//   A com `fossil`: fóssil enterrado (monte de escavação); o Chico escava com o botão Ação
 
 import type { Personagem } from '../systems/VoiceManager';
-import type { MundoId, TemaId } from '../data/mundos';
+import type { MundoId, PoderBotao, TemaId } from '../data/mundos';
 
 export const LINHAS = 13;
 
@@ -75,9 +76,31 @@ export interface AnimalNaFase {
     | 'peixe-boi'
     | 'golfinho'
     | 'caranguejo'
-    | 'cavalo-marinho';
+    | 'cavalo-marinho'
+    // Mundo 8: fósseis e dinossauros (páginas do Atlas)
+    | 'pegadas-sousa'
+    | 'irritator'
+    | 'pterossauro'
+    | 'staurikosaurus'
+    | 'buriolestes'
+    | 'carnotaurus'
+    | 'argentinosaurus'
+    | 'velociraptor'
+    | 'trex'
+    // silhuetas de grupos (sem ficha: ninguém sabe a espécie de quem deixou cada pegada)
+    | 'teropode'
+    | 'sauropode'
+    | 'ornitopode';
   /** Fala tirada do dossiê científico. */
   fala: string;
+  /** Quem fala (padrão: o próprio bicho). */
+  quem?: Personagem;
+  /** Não vira figurinha do Atlas (silhuetas de grupos de dinossauros). */
+  semFicha?: boolean;
+  /** Fóssil enterrado: aparece um monte de escavação; com o botão Ação, o Chico escava e revela esta textura. */
+  fossil?: string;
+  /** Página do Atlas Vivo: o bicho aparece como uma projeção brilhante do livro (dinossauros de outros países). */
+  pagina?: boolean;
   curiosidade?: string;
   /** Demonstração ao encontrar o Chico. */
   demo:
@@ -97,7 +120,9 @@ export interface AnimalNaFase {
     /** Deita de barriga e desliza no gelo (pinguim), depois levanta. */
     | { tipo: 'deslizar'; dx: number }
     /** Salta da água girando no ar (golfinho-rotador). */
-    | { tipo: 'girar' };
+    | { tipo: 'girar' }
+    /** Anda devagar e fica (silhuetas de dinossauros). */
+    | { tipo: 'andar'; dx: number };
   /** Poder que o Chico ganha depois da demonstração. */
   daPoder?: Poder;
 }
@@ -130,5 +155,13 @@ export interface LevelDef {
   chuva?: { comeca: Fala; verde: Fala };
   /** Última fase do mundo: o objetivo é o Selo do mundo em vez do Atlas. */
   selo?: { id: string; fala: Fala };
+  /** O objetivo é o Portal do Tempo (Mundo 8) em vez do Atlas. */
+  portal?: Fala;
+  /** Minijogo ao tocar o objetivo, antes da tela de fim. */
+  minijogo?: 'cestos' | 'esqueleto';
+  /** Poder do botão da pata em cada trecho (fase final, que junta os poderes). */
+  poderPorTrecho?: PoderBotao[];
+  /** Última fase do jogo: festa com a família inteira. */
+  final?: boolean;
   trechos: string[][];
 }

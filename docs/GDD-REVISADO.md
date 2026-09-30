@@ -133,13 +133,13 @@ A volta para casa: mar quente, então o Chico **nada normalmente** de novo. Mec�
 34. **O Berçário do Mar** — manguezal (lama, raízes, galhos, ostras). "Berçário para muitos animais" (não para todos, cuidado do dossiê). O caranguejo-uçá corre para a toca; o cavalo-marinho se segura com a cauda ("o papai carrega os filhotes").
 35. **Praia Depois da Tempestade** — o mar trouxe lixo (`l`): o Chico recolhe encostando (contador no alto da tela; recolher tudo é opcional e a Mamãe July agradece). Maré, ouriços e giro juntos. Termina no **Selo da Praia**.
 
-### Mundo 8 — O Brasil dos Dinossauros
-O Portal do Tempo abre em Sousa (PB) e leva o Chico a três lugares do Brasil onde fósseis foram encontrados. Outros dinossauros (Carnotaurus, Argentinosaurus, Velociraptor, T. rex) entram como **páginas do Atlas**.
-36. **O Vale dos Dinossauros** (Sousa, PB) — hoje: centenas de pegadas na rocha. O Portal do Tempo se abre.
-37. **Pegadas do Cretáceo** (Sousa, entre 145 e 125 milhões de anos atrás) — seguir as trilhas. Os dinossauros aparecem como silhuetas de **grupos** (terópode, saurópode, ornitópode), porque ninguém sabe a espécie exata de quem deixou cada pegada.
-38. **Escavação no Araripe** (CE) ★ cavar (botão Ação) e limpar fósseis: o crânio do Irritator e um pterossauro. Minijogo rápido de dois cestos: "é dinossauro" / "não é dinossauro".
-39. **Monte o Esqueleto** (RS) — o único minijogo grande: montar o **Buriolestes** em 5 peças (crânio; coluna e costelas; braços; bacia; pernas e cauda). O esqueleto dele foi encontrado quase completo.
-40. **O Atlas Inteiro** — final com todos os poderes e a família inteira.
+### Mundo 8 — O Brasil dos Dinossauros — completo (fases 36 a 40 jogáveis)
+O Portal do Tempo abre em Sousa (PB) e leva o Chico a lugares do Brasil onde fósseis foram encontrados. Sempre "fósseis encontrados onde hoje fica...". Outros dinossauros (Carnotaurus, Argentinosaurus, Velociraptor, T. rex) entram como **páginas do Atlas**. Figurinhas do Atlas deste mundo (9): Pegadas de Sousa, Irritator, pterossauro, Staurikosaurus, Buriolestes e as quatro páginas.
+36. **O Vale dos Dinossauros** (Sousa, PB, hoje) — lajedo com pegadas de três dedos e passarelas por cima das valas ("aqui não encontramos o dinossauro: encontramos os passos que ele deixou!"; centenas de pegadas, sem número exato). Termina no **Portal do Tempo**.
+37. **Pegadas do Cretáceo** (Sousa, entre cerca de 145 e 125 milhões de anos) — seguir as trilhas; os dinossauros são **silhuetas de grupos** (terópode, saurópode, ornitópode), porque ninguém sabe a espécie exata de quem deixou cada pegada. Sem flores, capim moderno ou vulcão de filme: samambaias, cicadáceas, cavalinhas e coníferas. As silhuetas não viram figurinha.
+38. **Escavação no Araripe** (CE) ★ escavar: perto do monte de terra, o **botão Ação** escava (pincel e espátula) e revela o **crânio do Irritator** e um **pterossauro** na pedra. No fim, minijogo dos **dois cestos** ("é dinossauro" com pegada verde / "não é" com X vermelho): Staurikosaurus, pterossauro, asa-branca (os passarinhos de hoje são dinossauros!), réptil marinho e Irritator. Dá para arrastar a figura ou tocar no cesto; errar só explica e deixa tentar de novo.
+39. **Monte o Esqueleto** (RS, Triássico) — o Staurikosaurus (um dos dinossauros mais antigos conhecidos) e a Pangeia. No fim, o minijogo grande: montar o **Buriolestes** em 5 peças (crânio; coluna e costelas; braços; bacia; pernas e cauda), arrastando cada osso para a sombra dele. Tocar numa peça diz o nome.
+40. **O Atlas Inteiro** — o botão da pata muda a cada trecho: bola (tatu-bola) nos espinhos, arrancada (guepardo) nos buracos, super pulo (canguru) na pedra alta, tobogã (pinguim) no túnel e salto girando (golfinho) no mar. No fim, a família inteira (Kelly e Laura pelo Chamador) e as páginas do Atlas Vivo com Carnotaurus, Argentinosaurus (enorme), Velociraptor (pequeno e com penas) e T. rex. Termina no **Selo dos Dinossauros** e na festa do Atlas completo.
 
 ## 4. Curva de dificuldade (ajustada)
 

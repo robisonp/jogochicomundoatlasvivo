@@ -4,7 +4,7 @@
 import type { MundoId } from './mundos';
 
 export interface MundoNoMapa {
-  id: MundoId | 'dinossauros';
+  id: MundoId;
   nome: string;
   /** Fala da chegada: onde fica. */
   lugar: string;
@@ -25,5 +25,5 @@ export const MAPA_MUNDOS: MundoNoMapa[] = [
   { id: 'artico', nome: 'Ártico', lugar: 'no norte do mundo, perto do Canadá e da Noruega', lon: 15, lat: 76, mostrar: { lon: 15, lat: 70 }, selo: 'selo-artico', seloId: 'artico' },
   { id: 'antartica', nome: 'Antártica', lugar: 'no extremo sul do planeta, um continente sem um único país', lon: 0, lat: -75, mostrar: { lon: -10, lat: -68 }, selo: 'selo-antartica', seloId: 'antartica' },
   { id: 'praia', nome: 'Praia', lugar: 'no litoral do Brasil, pertinho de casa', lon: -32.4, lat: -3.9, mostrar: { lon: -22, lat: 3 }, selo: 'selo-praia', seloId: 'praia' },
-  { id: 'dinossauros', nome: 'Brasil dos Dinossauros', lugar: 'em Sousa, na Paraíba, no Brasil', lon: -38.2, lat: -6.8, mostrar: { lon: -29, lat: -24 } },
+  { id: 'dinossauros', nome: 'Brasil dos Dinossauros', lugar: 'em Sousa, na Paraíba, no Brasil', lon: -38.2, lat: -6.8, mostrar: { lon: -29, lat: -24 }, selo: 'selo-dinossauros', seloId: 'dinossauros' },
 ];

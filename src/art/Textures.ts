@@ -9,6 +9,7 @@ import { gerarAustralia } from './Australia';
 import { gerarArtico } from './Artico';
 import { gerarAntartica } from './Antartica';
 import { gerarPraia } from './Praia';
+import { gerarDinossauros } from './Dinossauros';
 import { gerarFamilia } from './Familia';
 import { gerarMapa } from './Mapa';
 
@@ -57,6 +58,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarArtico(scene);
   gerarAntartica(scene);
   gerarPraia(scene);
+  gerarDinossauros(scene);
   gerarFamilia(scene);
   gerarMapa(scene);
 }
@@ -1420,7 +1422,7 @@ function gerarAtlas(scene: Phaser.Scene) {
     });
     c.closePath();
   };
-  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul', 'litoral-brasil'] as const) {
+  for (const regiao of ['nordeste', 'amazonia', 'brasil', 'america-do-sul', 'litoral-brasil', 'rio-grande-do-sul', 'argentina'] as const) {
     tex(scene, `mapa-${regiao}`, 170, 240, (c) => {
       c.lineJoin = 'round';
       c.strokeStyle = '#6b5a3a';
@@ -1436,6 +1438,18 @@ function gerarAtlas(scene: Phaser.Scene) {
       if (regiao === 'nordeste' || regiao === 'amazonia') {
         c.fillStyle = regiao === 'amazonia' ? '#5cc26a' : '#f2a93b';
         poligono(c, regiao === 'amazonia' ? AMAZONIA : NORDESTE);
+        c.fill();
+        c.stroke();
+      }
+      // fósseis: um alfinete onde foram encontrados (Rio Grande do Sul; Patagônia argentina)
+      const alfinete = regiao === 'rio-grande-do-sul' ? [-53.5, -29.7] : regiao === 'argentina' ? [-68.5, -40] : null;
+      if (alfinete) {
+        const [x, y] = proj(alfinete[0], alfinete[1]);
+        c.fillStyle = '#e04a3a';
+        c.strokeStyle = '#fff';
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(x, y, 8, 0, Math.PI * 2);
         c.fill();
         c.stroke();
       }

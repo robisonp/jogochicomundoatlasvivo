@@ -36,6 +36,8 @@ Mapa: o **botão verde da tela de título** abre o mapa-múndi com a rota dos 8 
 
 Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **A aparência vem da arte feita pela família**, recortada numa folha só (`public/familia/familia.png`, com os quadros `corpo-<id>` e `rosto-<id>` descritos em `familia.json`). O papel de cada um no jogo fica em `src/data/familia.ts`; as cores do Chico (que é animado em partes) ficam em `src/data/visual.ts`.
 
+Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é dinossauro; na 39, montar o esqueleto do Buriolestes. Os dois são falados e funcionam só arrastando ou tocando (`src/scenes/CestosScene.ts` e `EsqueletoScene.ts`). A fase 40 muda o poder do botão da pata a cada trecho (`poderPorTrecho`).
+
 Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
 Área dos adultos: **segure a engrenagem por 2 segundos** (no título ou na pausa). Lá ficam o lado do direcional, os volumes, "reduzir movimento" e os códigos de save.
@@ -67,7 +69,7 @@ As fases são trechos desenhados em texto, colados lado a lado (`src/levels/caat
 '###########',     # = chão
 ```
 
-A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U`, água rasa `~` e funda `w`, cipó `J`, chamado de bicho `Z`, pedregulho `B`, rastros `:`, terra fofa `F`, tronco de eucalipto `E`, vaga-lume `*`, túnel `t`, gelo `I`, neve fofa `N`, estação de pesquisa `&`, água da maré `%`, lixo do mar `l` etc.) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
+A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U`, água rasa `~` e funda `w`, cipó `J`, chamado de bicho `Z`, pedregulho `B`, rastros `:`, terra fofa `F`, tronco de eucalipto `E`, vaga-lume `*`, túnel `t`, gelo `I`, neve fofa `N`, estação de pesquisa `&`, água da maré `%`, lixo do mar `l` etc.; um animal `A` com `fossil` vira monte de escavação, aberto com o botão Ação) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
 
 ## Publicação
 
