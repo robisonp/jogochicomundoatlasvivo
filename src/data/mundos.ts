@@ -1,9 +1,9 @@
 // Visual e som de cada mundo. A fase diz em qual mundo está (`mundo` em LevelDef) e a cena usa este tema.
 
-export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico' | 'antartica';
+export type MundoId = 'caatinga' | 'amazonia' | 'savana' | 'australia' | 'artico' | 'antartica' | 'praia';
 /** Tema visual: um por mundo, mais variações (a mata de eucaliptos da Austrália). */
-export type TemaId = MundoId | 'australia-mata';
-export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico' | 'antartica';
+export type TemaId = MundoId | 'australia-mata' | 'praia-mangue';
+export type TemaMusica = 'baiao' | 'mata' | 'savana' | 'outback' | 'artico' | 'antartica' | 'praia';
 
 export interface TemaMundo {
   /** Caractere sólido → [textura interna, textura com topo]. */
@@ -27,7 +27,7 @@ export interface TemaMundo {
   fundo: { textura: string; altura: number; afundar: number; fator: number }[];
   musica: TemaMusica;
   /** Poder que o botão da pata usa neste mundo. */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' | 'giro';
 }
 
 export const TEMAS: Record<TemaId, TemaMundo> = {
@@ -141,5 +141,39 @@ export const TEMAS: Record<TemaId, TemaMundo> = {
     ],
     musica: 'antartica',
     poderBotao: 'toboga',
+  },
+  // Praia do Nordeste: areia, pedras com ouriços, coqueiros, píer e jangada do Vovô Marcos.
+  praia: {
+    solidos: { '#': ['areia', 'areia-topo'], R: ['pedra-praia', 'pedra-praia-topo'] },
+    laje: 'pier',
+    espinhos: 'ouricos',
+    ceu: 'ceu-praia',
+    sol: true,
+    nuvens: true,
+    plataforma: 'jangada',
+    rastro: 'rastro-tartaruga',
+    fundo: [
+      { textura: 'praia-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'praia-perto', altura: 300, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'praia',
+    poderBotao: 'giro',
+  },
+  // Manguezal: lama rica (não é "lama suja"), raízes do mangue, ostras nas raízes.
+  'praia-mangue': {
+    solidos: { '#': ['lama-mangue', 'lama-mangue-topo'], R: ['raiz-mangue', 'raiz-mangue'] },
+    laje: 'galho-mangue',
+    espinhos: 'ostras',
+    ceu: 'ceu-praia',
+    sol: true,
+    nuvens: true,
+    plataforma: 'jangada',
+    rastro: 'rastro-tartaruga',
+    fundo: [
+      { textura: 'mangue-longe', altura: 320, afundar: 20, fator: 0.15 },
+      { textura: 'mangue-perto', altura: 300, afundar: 10, fator: 0.4 },
+    ],
+    musica: 'praia',
+    poderBotao: 'giro',
   },
 };

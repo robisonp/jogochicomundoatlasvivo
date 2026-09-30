@@ -124,13 +124,14 @@ Como no Ártico, o Chico **não nada no mar gelado**: cair na água é resgate d
 29. **O Canto das Baleias** — o canto da jubarte (som grave e ondas azuis) marca por onde passam as placas de gelo. Sem dizer que a baleia canta "porque está apaixonada" (cuidado do dossiê).
 30. **Tempestade Branca** — ventania do Viravolta com neve soprando e a tela clareando nas rajadas; deitado no tobogã o vento quase não empurra. O albatroz-errante plana no vento. Termina no **Selo da Antártica**.
 
-### Mundo 7 — Oceano e Praia (Brasil)
+### Mundo 7 — Oceano e Praia (Brasil) — completo (fases 31 a 35 jogáveis)
 Animais: tartaruga-de-pente, peixe-boi-marinho, golfinho-rotador, caranguejo-uçá, cavalo-marinho-de-focinho-longo.
-31. **Um Dia na Praia** — chegada perto de casa.
-32. **A Maré Mudou** ◆ maré sobe e desce.
-33. **Salto do Golfinho** ★ salto giratório para fora d'água (referência: golfinhos-rotadores de Fernando de Noronha).
-34. **O Berçário do Mar** — manguezal.
-35. **Praia Depois da Tempestade** — exploração e cuidado com a praia.
+A volta para casa: mar quente, então o Chico **nada normalmente** de novo. Mecânica nova do mundo: a **maré** (`%` nas fases) — a água sobe e desce devagar (a Lua puxa a água e o Sol ajuda, como no dossiê).
+31. **Um Dia na Praia** — chegada perto de casa (sem dizer a cidade). Rastros da tartaruga na areia até o mar; a jangada do Vovô Marcos; pedras com ouriços; o píer.
+32. **A Maré Mudou** ◆ maré alta leva o Chico até a pedra que ele não alcança pulando e cobre os ouriços do fundo (na maré baixa eles machucam). O peixe-boi nada devagar ("meu nome diz peixe, mas eu sou um mamífero").
+33. **Salto do Golfinho** ★ salto girando. Na Praia o botão da pata vira o salto do golfinho: **dentro da água**, o Chico sai bem alto girando e alcança pedras altas. Junta com a maré: a pedra mais alta só com maré alta + giro. Referência: golfinhos-rotadores de Fernando de Noronha.
+34. **O Berçário do Mar** — manguezal (lama, raízes, galhos, ostras). "Berçário para muitos animais" (não para todos, cuidado do dossiê). O caranguejo-uçá corre para a toca; o cavalo-marinho se segura com a cauda ("o papai carrega os filhotes").
+35. **Praia Depois da Tempestade** — o mar trouxe lixo (`l`): o Chico recolhe encostando (contador no alto da tela; recolher tudo é opcional e a Mamãe July agradece). Maré, ouriços e giro juntos. Termina no **Selo da Praia**.
 
 ### Mundo 8 — O Brasil dos Dinossauros
 O Portal do Tempo abre em Sousa (PB) e leva o Chico a três lugares do Brasil onde fósseis foram encontrados. Outros dinossauros (Carnotaurus, Argentinosaurus, Velociraptor, T. rex) entram como **páginas do Atlas**.

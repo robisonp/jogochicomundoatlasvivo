@@ -13,6 +13,8 @@ export class HudScene extends Phaser.Scene {
   private btnPausa!: Phaser.GameObjects.Image;
   private iconePegada!: Phaser.GameObjects.Image;
   private textoPegadas!: Phaser.GameObjects.Text;
+  private iconeLixo?: Phaser.GameObjects.Image;
+  private textoLixo?: Phaser.GameObjects.Text;
   private retrato!: Phaser.GameObjects.Image;
   private sumirRetrato?: Phaser.Time.TimerEvent;
 
@@ -54,6 +56,26 @@ export class HudScene extends Phaser.Scene {
       strokeThickness: 8,
     });
     this.atualizarPegadas(this.level.contarPegadasFase());
+    // Lixo da praia (só nas fases que têm)
+    const lixo = this.level.contarLixo();
+    if (lixo.total > 0) {
+      this.iconeLixo = this.add.image(0, 0, 'lixo-garrafa').setScale(0.9);
+      this.textoLixo = this.add.text(0, 0, '', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '34px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#1d2b3a',
+        strokeThickness: 7,
+      });
+      const aoLixo = (l: { pegos: number; total: number }) => {
+        this.textoLixo?.setText(`${l.pegos}/${l.total}`);
+        if (this.iconeLixo) this.tweens.add({ targets: this.iconeLixo, scale: { from: 1.3, to: 0.9 }, duration: 250 });
+      };
+      aoLixo(lixo);
+      this.level.events.on('lixo', aoLixo);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('lixo', aoLixo));
+    }
     this.level.events.on('pegadas', this.atualizarPegadas, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('pegadas', this.atualizarPegadas, this));
 
@@ -98,6 +120,8 @@ export class HudScene extends Phaser.Scene {
     this.textoPegadas.setPosition(172, 34);
     this.btnPausa.setPosition(W - 60, 58);
     this.retrato.setPosition(W / 2, 66);
+    this.iconeLixo?.setPosition(140, 124);
+    this.textoLixo?.setPosition(172, 104);
   }
 
   private atualizarPegadas(p: { pegas: number; total: number }) {

@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO, TOBOGA } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO, TOBOGA, GIRO } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -30,7 +30,12 @@ export class Player {
   /** Chão de gelo sob os pés neste frame (definido pela cena). */
   noGelo = false;
   /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' = 'bola';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' | 'giro' = 'bola';
+  /** Salto giratório do golfinho-rotador (botão da pata na Praia; só na água). */
+  temPoderGiro = false;
+  /** No ar depois do salto giratório. */
+  girando = false;
+  private giroAngulo = 0;
   /** Tobogã do pinguim (botão da pata na Antártica). */
   temPoderToboga = false;
   /** Deslizando de barriga: corpo baixinho. */
@@ -123,6 +128,8 @@ export class Player {
     if (this.poderBotao === 'arrancada') return 1 - this.recarga / ARRANCADA.recargaMs;
     // o super pulo só sai do chão: no ar o botão fica meio apagado
     if (this.poderBotao === 'superpulo' || this.poderBotao === 'toboga') return this.coyote > 0 || this.estado !== 'normal' ? 1 : 0.5;
+    // o salto do golfinho sai da água: fora dela o botão fica meio apagado
+    if (this.poderBotao === 'giro') return this.nadando ? 1 : 0.5;
     return 1;
   }
 
@@ -228,7 +235,12 @@ export class Player {
     const enrolado = this.estado === 'bola';
 
     // --- Água: boiar, braçada, mergulho (com o poder da onça) e sair pulando
-    const naAgua = this.agua !== null && this.estado !== 'escalando';
+    // subindo no salto do golfinho, a água que ele acabou de deixar não segura o Chico
+    const saltandoGiro = this.girando && b.velocity.y < 0;
+    const naAgua = this.agua !== null && this.estado !== 'escalando' && !saltandoGiro;
+    if (this.girando && ((this.noChao && b.velocity.y >= 0) || (naAgua && b.velocity.y >= 0) || this.estado !== 'normal')) {
+      this.girando = false;
+    }
     if (naAgua !== this.nadando) {
       this.nadando = naAgua;
       b.setGravityY(naAgua ? PLAYER.gravity * AGUA.fatorGravidade : this.estado === 'escalando' ? 0 : PLAYER.gravity);
@@ -253,7 +265,18 @@ export class Player {
         vy = b.top < sup + 14 ? -PLAYER.jumpVelocity * AGUA.saltoSaida : -AGUA.bracada;
         AudioManager.tocar('bracada');
       }
-      b.setVelocityY(Phaser.Math.Clamp(vy, -PLAYER.jumpVelocity, AGUA.maxQueda));
+      if (i.powerPressed && this.poderBotao === 'giro' && this.temPoderGiro && this.estado === 'normal') {
+        // salto do golfinho: sai da água bem alto, girando
+        this.girando = true;
+        this.giroAngulo = 0;
+        this.nadando = false;
+        b.setGravityY(PLAYER.gravity);
+        b.setMaxVelocityY(Math.max(PLAYER.maxFall, GIRO.velocidade));
+        b.setVelocityY(-GIRO.velocidade);
+        AudioManager.tocar('giro');
+      } else {
+        b.setVelocityY(Phaser.Math.Clamp(vy, -PLAYER.jumpVelocity, AGUA.maxQueda));
+      }
       this.noChao = false;
       this.coyote = 0;
     }
@@ -442,7 +465,7 @@ export class Player {
     if (this.mergulhando) {
       b.setVelocity(alvo * MERGULHO.velocidadeX, MERGULHO.queda);
     }
-    if (!naAgua && !this.emSuperPulo && !this.mergulhoArmado && !this.mergulhando && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
+    if (!naAgua && !this.emSuperPulo && !this.girando && !this.mergulhoArmado && !this.mergulhando && !i.jumpHeld && b.velocity.y < 0 && !this.noChao) {
       b.setVelocityY(b.velocity.y * PLAYER.jumpCutFactor);
     }
 
@@ -545,7 +568,18 @@ export class Player {
     let quique = 0;
     let inclinacao = 0;
 
-    if (this.deslizando && this.estado === 'normal') {
+    if (this.girando && this.estado === 'normal') {
+      // gira em volta do meio do corpo (o desenho tem os pés na origem)
+      this.giroAngulo += dt * Math.PI * 2 * GIRO.voltasPorSegundo;
+      const rot = this.direcao * this.giroAngulo;
+      bracoF = -2.9;
+      bracoT = -2.9;
+      pernaF = 0.1;
+      pernaT = -0.1;
+      inclinacao = rot;
+      v.x = this.sprite.x - 45 * Math.sin(rot);
+      v.y = b.center.y + 45 * Math.cos(rot);
+    } else if (this.deslizando && this.estado === 'normal') {
       // deitado de barriga, cabeça para a frente, braços esticados (como o pinguim)
       bracoF = -3.1;
       bracoT = -3.1;
@@ -639,6 +673,7 @@ export class Player {
     this.mergulhando = false;
     this.mergulhoArmado = false;
     this.terminarDeslize();
+    this.girando = false;
     this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');
@@ -660,6 +695,10 @@ export class Player {
     b.reset(x, y);
     b.setAllowGravity(true);
     b.setGravityY(PLAYER.gravity);
+    b.setMaxVelocityY(PLAYER.maxFall);
+    // volta "fora d'água": se renascer dentro da água, o próximo quadro liga o nado com a gravidade certa
+    this.nadando = false;
+    this.girando = false;
     this.estado = 'normal';
     this.visual.setAlpha(1);
     this.visual.setPosition(x, b.bottom);
