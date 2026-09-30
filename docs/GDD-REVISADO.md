@@ -115,13 +115,14 @@ Correção de lógica: o Chico **não nada no mar do Ártico** (água gelada dem
 24. **Corrida das Renas** — velocidade no gelo, com a rena correndo na frente (como o emu).
 25. **Mar Congelado** — placas de gelo que se movem sobre o mar, a foca-anelada, um paredão para passar por baixo mergulhando na neve fofa, e o resgate da Mamãe July. Termina no **Selo do Ártico** (sol da meia-noite).
 
-### Mundo 6 — Antártica e Oceano Austral
-Animais: pinguim-de-adélia, foca-de-weddell, orca, baleia-jubarte, albatroz-errante. **Sem ursos-polares.**
-26. **Um Continente sem País** — chegada pelo mapa.
-27. **Deslize do Pinguim** ★ tobogã de barriga (reaproveita o "baixinho/deslizar" sobre gelo).
-28. **Debaixo do Gelo** — nado, com bolhas marcando o caminho.
-29. **O Canto das Baleias** — sons com ondas visuais.
-30. **Tempestade Branca** — vento forte do Viravolta.
+### Mundo 6 — Antártica e Oceano Austral — completo (fases 26 a 30 jogáveis)
+Animais: pinguim-de-adélia, foca-de-weddell, orca, baleia-jubarte, albatroz-errante. **Sem ursos-polares, iglus ou povos nativos** (não há população humana nativa na Antártida).
+Como no Ártico, o Chico **não nada no mar gelado**: cair na água é resgate da Mamãe July (volta ao checkpoint).
+26. **Um Continente sem País** — chegada numa estação de pesquisa ("aqui, países trabalham juntos para estudar um continente de gelo"; o Brasil tem a Estação Antártica Comandante Ferraz). A orca nada perto das bordas de gelo.
+27. **Deslize do Pinguim** ★ tobogã de barriga. Na Antártica o botão da pata vira tobogã: o Chico deita e desliza rápido, baixinho — passa por túneis de um bloco de altura e, embaixo de teto baixo, continua deitado até sair.
+28. **Debaixo do Gelo** — correção de lógica: em vez de nadar no mar gelado, o Chico vai no **submarino do Vovô Marcos** (o Construtor Viajante), que protege do frio e mergulha por baixo do gelo. Bolhas subindo marcam o caminho; a foca-de-weddell mergulha junto.
+29. **O Canto das Baleias** — o canto da jubarte (som grave e ondas azuis) marca por onde passam as placas de gelo. Sem dizer que a baleia canta "porque está apaixonada" (cuidado do dossiê).
+30. **Tempestade Branca** — ventania do Viravolta com neve soprando e a tela clareando nas rajadas; deitado no tobogã o vento quase não empurra. O albatroz-errante plana no vento. Termina no **Selo da Antártica**.
 
 ### Mundo 7 — Oceano e Praia (Brasil)
 Animais: tartaruga-de-pente, peixe-boi-marinho, golfinho-rotador, caranguejo-uçá, cavalo-marinho-de-focinho-longo.

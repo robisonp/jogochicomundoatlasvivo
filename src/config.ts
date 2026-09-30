@@ -77,6 +77,15 @@ export const MERGULHO = {
   velocidadeX: 160,
 };
 
+// Tobogã do pinguim-de-adélia: desliza de barriga, rápido e baixinho (passa em túneis de um bloco de altura).
+// Dossiê: o adélia desliza de barriga na neve e no gelo ("tobogganing").
+export const TOBOGA = {
+  duracaoMs: 1100,
+  fatorVelocidade: 1.6,
+  /** Altura do corpo deitado (em pé: PLAYER.bodyHeight). */
+  altura: 34,
+};
+
 // Vento Viravolta: velocidade que o vento soma ao Chico (px/s) nas rajadas.
 export const VENTO = {
   forca: 190,

@@ -7,6 +7,7 @@ import { gerarAmazonia } from './Amazonia';
 import { gerarSavana } from './Savana';
 import { gerarAustralia } from './Australia';
 import { gerarArtico } from './Artico';
+import { gerarAntartica } from './Antartica';
 import { gerarFamilia } from './Familia';
 import { gerarMapa } from './Mapa';
 
@@ -53,6 +54,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarSavana(scene);
   gerarAustralia(scene);
   gerarArtico(scene);
+  gerarAntartica(scene);
   gerarFamilia(scene);
   gerarMapa(scene);
 }

@@ -24,6 +24,11 @@ import { ARTICO_2 } from './artico2';
 import { ARTICO_3 } from './artico3';
 import { ARTICO_4 } from './artico4';
 import { ARTICO_5 } from './artico5';
+import { ANTARTICA_1 } from './antartica1';
+import { ANTARTICA_2 } from './antartica2';
+import { ANTARTICA_3 } from './antartica3';
+import { ANTARTICA_4 } from './antartica4';
+import { ANTARTICA_5 } from './antartica5';
 
 /** Ordem da campanha: cada fase leva à próxima. */
 export const CAMPANHA: LevelDef[] = [
@@ -52,6 +57,11 @@ export const CAMPANHA: LevelDef[] = [
   ARTICO_3,
   ARTICO_4,
   ARTICO_5,
+  ANTARTICA_1,
+  ANTARTICA_2,
+  ANTARTICA_3,
+  ANTARTICA_4,
+  ANTARTICA_5,
 ];
 
 export const FASES: Record<string, LevelDef> = Object.fromEntries(CAMPANHA.map((f) => [f.id, f]));

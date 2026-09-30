@@ -1,6 +1,6 @@
 // Chico: corpo físico simples (hitbox menor que o desenho) + visual recortado em partes animadas por código.
 import Phaser from 'phaser';
-import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO } from '../config';
+import { PLAYER, BOLA, VENTO, AGUA, ARRANCADA, SUPERPULO, GELO, MERGULHO, TOBOGA } from '../config';
 import type { Intent } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -30,7 +30,14 @@ export class Player {
   /** Chão de gelo sob os pés neste frame (definido pela cena). */
   noGelo = false;
   /** Qual poder o botão da pata usa na fase atual (vem do tema do mundo). */
-  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' = 'bola';
+  poderBotao: 'bola' | 'arrancada' | 'superpulo' | 'mergulho' | 'toboga' = 'bola';
+  /** Tobogã do pinguim (botão da pata na Antártica). */
+  temPoderToboga = false;
+  /** Deslizando de barriga: corpo baixinho. */
+  deslizando = false;
+  private deslizeTempo = 0;
+  /** Tem teto baixo em cima (definido pela cena): deitado, não dá para levantar. */
+  tetoBaixo = false;
   /** Caindo de cabeça (mergulho na neve). Quem encerra é a cena, que sabe se quebrou neve fofa embaixo. */
   mergulhando = false;
   /** Saltou para mergulhar: vira mergulho no alto do salto. */
@@ -115,7 +122,7 @@ export class Player {
   get cargaPoder() {
     if (this.poderBotao === 'arrancada') return 1 - this.recarga / ARRANCADA.recargaMs;
     // o super pulo só sai do chão: no ar o botão fica meio apagado
-    if (this.poderBotao === 'superpulo') return this.coyote > 0 || this.estado !== 'normal' ? 1 : 0.5;
+    if (this.poderBotao === 'superpulo' || this.poderBotao === 'toboga') return this.coyote > 0 || this.estado !== 'normal' ? 1 : 0.5;
     return 1;
   }
 
@@ -322,6 +329,37 @@ export class Player {
       }
     }
 
+    // --- Tobogã do pinguim: deita de barriga e desliza rápido; embaixo de teto baixo continua deitado
+    if (
+      i.powerPressed &&
+      this.poderBotao === 'toboga' &&
+      this.temPoderToboga &&
+      this.estado === 'normal' &&
+      !naAgua &&
+      this.noChao &&
+      !this.deslizando
+    ) {
+      this.comecarDeslize();
+    }
+    if (this.deslizando) {
+      this.deslizeTempo -= ms;
+      // dá para virar no meio do deslize
+      if (i.left && this.direcao > 0) this.direcao = -1;
+      else if (i.right && this.direcao < 0) this.direcao = 1;
+      // no comecinho, a "batida" é da parede na altura da cabeça (em pé); deitado, o Chico já cabe no túnel
+      const comecando = this.deslizeTempo > TOBOGA.duracaoMs - 150;
+      const bateu = !comecando && ((this.direcao > 0 && b.blocked.right) || (this.direcao < 0 && b.blocked.left));
+      const pulou = this.buffer > 0 && !this.tetoBaixo;
+      if (this.estado !== 'normal' || naAgua || ((this.deslizeTempo <= 0 || bateu || pulou) && !this.tetoBaixo)) {
+        this.terminarDeslize();
+      } else {
+        b.setVelocityX(this.direcao * PLAYER.maxRun * TOBOGA.fatorVelocidade * (bateu ? 0 : 1));
+        if (Math.floor(this.tempoAnim * 20) % 2 === 0) this.poeira.emitParticleAt(this.x - this.direcao * 30, this.pes - 4);
+        this.animar(dt);
+        return;
+      }
+    }
+
     // --- Corrida horizontal com aceleração suave
     const alvo = (i.right ? 1 : 0) - (i.left ? 1 : 0);
     if (alvo !== 0) this.direcao = alvo as 1 | -1;
@@ -430,6 +468,25 @@ export class Player {
     }
   }
 
+  private comecarDeslize() {
+    const b = this.sprite.body;
+    this.deslizando = true;
+    this.deslizeTempo = TOBOGA.duracaoMs;
+    // corpo baixinho, com os pés no mesmo lugar
+    b.setSize(PLAYER.bodyWidth, TOBOGA.altura);
+    this.sprite.y += (PLAYER.bodyHeight - TOBOGA.altura) / 2;
+    this.squash = 1.2;
+    AudioManager.tocar('toboga');
+  }
+
+  terminarDeslize() {
+    if (!this.deslizando) return;
+    this.deslizando = false;
+    const b = this.sprite.body;
+    b.setSize(PLAYER.bodyWidth, PLAYER.bodyHeight);
+    this.sprite.y -= (PLAYER.bodyHeight - TOBOGA.altura) / 2;
+  }
+
   private soltarEscada(vy: number) {
     const b = this.sprite.body;
     this.estado = 'normal';
@@ -488,7 +545,16 @@ export class Player {
     let quique = 0;
     let inclinacao = 0;
 
-    if (this.mergulhando && this.estado === 'normal') {
+    if (this.deslizando && this.estado === 'normal') {
+      // deitado de barriga, cabeça para a frente, braços esticados (como o pinguim)
+      bracoF = -3.1;
+      bracoT = -3.1;
+      pernaF = 0.15;
+      pernaT = -0.15;
+      inclinacao = this.direcao * 1.5;
+      v.y = b.bottom - 18;
+      v.x = this.sprite.x - this.direcao * 40;
+    } else if (this.mergulhando && this.estado === 'normal') {
       // de cabeça para baixo, braços esticados à frente (como a raposa)
       bracoF = -3.0;
       bracoT = -3.0;
@@ -572,6 +638,7 @@ export class Player {
     this.emSuperPulo = false;
     this.mergulhando = false;
     this.mergulhoArmado = false;
+    this.terminarDeslize();
     this.recarga = 0;
     this.estado = 'caido';
     AudioManager.tocar('ai');
@@ -602,6 +669,7 @@ export class Player {
   comemorar() {
     // Se tocou o objetivo no meio de uma arrancada, volta a gravidade para comemorar no chão.
     this.encerrarArrancada();
+    this.terminarDeslize();
     this.estado = 'festa';
     const b = this.sprite.body;
     b.setVelocityX(0);

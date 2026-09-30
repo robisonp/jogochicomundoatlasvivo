@@ -56,7 +56,101 @@ const ILHAS: Poly[] = [
   [[172.7, -34.5], [178.5, -37.7], [176, -41.5], [174.5, -41.3], [173, -40.5], [168, -46.5], [166.5, -45.5], [172, -41], [174, -38]],
 ];
 
+const ANTARTIDA: Poly = [
+  [-57, -63.5], [-60, -64], [-62, -65.5], [-64, -67], [-66, -68.5], [-68, -70.5], [-72, -71], [-76, -72.5], [-90, -73],
+  [-100, -74], [-110, -74.5], [-120, -74], [-130, -74.5], [-140, -76], [-150, -77], [-160, -78.5], [-170, -78.5],
+  [180, -78], [170, -76.5], [165, -72], [160, -70], [150, -68.5], [140, -66.5], [130, -66], [120, -66.5], [110, -66],
+  [100, -66], [90, -66.5], [80, -68], [70, -68.5], [70, -72.5], [65, -67.5], [55, -66.5], [45, -67.5], [35, -69.5],
+  [25, -70.5], [15, -70], [5, -70.5], [-5, -71], [-15, -72.5], [-25, -75], [-35, -77.5], [-45, -78], [-55, -75],
+  [-60, -72], [-62, -69], [-60, -66], [-58, -64.5],
+];
+
+/** Mapinhas das fichas do Atlas para os bichos do mar e da Antártica. */
+function mapinhas(scene: Phaser.Scene) {
+  const terras: Poly[] = [AMERICA_NORTE, AMERICA_DO_SUL, EURASIA, AFRICA, AUSTRALIA, TASMANIA, ARQUIPELAGO_CANADA, ISLANDIA, SVALBARD, GROENLANDIA, ...ILHAS];
+  // Mundo inteiro pequeno: oceanos em destaque (orca, jubarte) ou só os mares do sul (albatroz)
+  const mundo = (key: string, destaque: 'oceanos' | 'sul') =>
+    tex(scene, key, 220, 112, (c, w, h) => {
+      const sx = w / MAPA.largura;
+      const sy = h / MAPA.altura;
+      const poli = (pts: Poly) => {
+        c.beginPath();
+        pts.forEach(([lon, lat], i) => {
+          const [x, y] = lonLatParaMapa(lon, lat);
+          if (i === 0) c.moveTo(x * sx, y * sy);
+          else c.lineTo(x * sx, y * sy);
+        });
+        c.closePath();
+      };
+      c.fillStyle = destaque === 'oceanos' ? '#f2a93b' : '#cfe6f2';
+      rrect(c, 1, 1, w - 2, h - 2, 8);
+      c.fill();
+      if (destaque === 'sul') {
+        const [, y] = lonLatParaMapa(0, -32);
+        c.fillStyle = '#f2a93b';
+        c.fillRect(1, y * sy, w - 2, h - y * sy - 1);
+      }
+      c.lineJoin = 'round';
+      c.strokeStyle = '#6b5a3a';
+      c.lineWidth = 1.2;
+      c.fillStyle = '#e9dcb8';
+      for (const p of [...terras, ANTARTIDA]) {
+        poli(p);
+        c.fill();
+        c.stroke();
+      }
+      c.lineWidth = 2;
+      rrect(c, 1, 1, w - 2, h - 2, 8);
+      c.stroke();
+    });
+  mundo('mapa-oceanos', 'oceanos');
+  mundo('mapa-oceano-sul', 'sul');
+
+  // Antártida vista de baixo (polo sul no meio), recortada em 50° S: aparece a pontinha da América do Sul
+  tex(scene, 'mapa-antartica', 220, 220, (c) => {
+    const k = 2.6;
+    const proj = (lon: number, lat: number): [number, number] => {
+      const r = (90 + lat) * k;
+      const a = (lon * Math.PI) / 180;
+      return [110 + r * Math.sin(a), 110 - r * Math.cos(a)];
+    };
+    const poli = (pts: Poly) => {
+      c.beginPath();
+      pts.forEach(([lon, lat], i) => {
+        const [x, y] = proj(lon, lat);
+        if (i === 0) c.moveTo(x, y);
+        else c.lineTo(x, y);
+      });
+      c.closePath();
+    };
+    c.save();
+    c.beginPath();
+    c.arc(110, 110, 40 * k, 0, Math.PI * 2);
+    c.clip();
+    c.fillStyle = '#9fcbe6';
+    c.fillRect(0, 0, 220, 220);
+    c.lineJoin = 'round';
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 2;
+    c.fillStyle = '#e9dcb8';
+    poli(AMERICA_DO_SUL);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#f2a93b';
+    poli(ANTARTIDA);
+    c.fill();
+    c.stroke();
+    c.restore();
+    c.strokeStyle = '#6b5a3a';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(110, 110, 40 * k, 0, Math.PI * 2);
+    c.stroke();
+  });
+}
+
 export function gerarMapa(scene: Phaser.Scene) {
+  mapinhas(scene);
   tex(scene, 'mapa-mundi', MAPA.largura, MAPA.altura, (c, w, h) => {
     const mar = c.createLinearGradient(0, 0, 0, h);
     mar.addColorStop(0, '#9fd0ec');
@@ -95,7 +189,7 @@ export function gerarMapa(scene: Phaser.Scene) {
     };
     for (const p of [AMERICA_NORTE, AMERICA_DO_SUL, EURASIA, AFRICA, AUSTRALIA, TASMANIA, ARQUIPELAGO_CANADA, ISLANDIA, SVALBARD, ...ILHAS]) terra(p);
     terra(GROENLANDIA, '#f4f8fc');
-    // Antártica: faixa branca no pé do mapa
+    // Antártica: faixa branca no pé do mapa (o contorno da Antártida fica escondido por ela)
     const ant: Poly = [[-180, -70]];
     for (let lon = -170; lon <= 180; lon += 10) ant.push([lon, -68 - 3 * Math.sin(lon / 25)]);
     ant.push([180, -90], [-180, -90]);
