@@ -11,6 +11,8 @@ export class BootScene extends Phaser.Scene {
     // uma textura para todos evita misturar imagens ao desenhar muitas ao mesmo tempo.
     // O resto do jogo é desenhado por código.
     this.load.atlas('familia', 'familia/familia.png', 'familia/familia.json');
+    // O Chico, recortado da folha de personagem dele (cabeça, camisa, bermuda, braço e perna).
+    this.load.atlas('chico', 'chico/chico.png', 'chico/chico.json');
   }
 
   create() {

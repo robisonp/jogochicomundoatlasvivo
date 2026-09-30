@@ -50,12 +50,10 @@ export class MapaScene extends Phaser.Scene {
     this.desenharRota();
     for (const mk of this.marcadores) this.desenharMarcador(mk);
 
-    // Chico (cabeça com chapéu) no mundo atual
+    // Chico (a cabeça dele) no mundo atual
     const atual = this.marcadorAtual();
-    const cabeca = this.add.image(0, 0, 'chico-cabeca').setScale(0.9);
-    const olhos = this.add.image(7, -4, 'chico-olhos').setScale(0.9);
-    const chapeu = this.add.image(-2, -24, 'chico-chapeu').setScale(0.8);
-    this.chico = this.add.container(atual.x, atual.y - 58, [cabeca, olhos, chapeu]).setDepth(20);
+    const cabeca = this.add.image(0, 0, 'chico', 'cabeca').setScale(0.6);
+    this.chico = this.add.container(atual.x, atual.y - 58, [cabeca]).setDepth(20);
     this.tweens.add({ targets: this.chico, y: this.chico.y - 8, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });
 
     // Voltar, Atlas e o botão verde de continuar

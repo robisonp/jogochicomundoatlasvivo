@@ -1,0 +1,109 @@
+{
+ "frames": {
+  "cabeca": {
+   "frame": {
+    "x": 2,
+    "y": 2,
+    "w": 108,
+    "h": 110
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 108,
+    "h": 110
+   },
+   "sourceSize": {
+    "w": 108,
+    "h": 110
+   }
+  },
+  "camisa": {
+   "frame": {
+    "x": 114,
+    "y": 2,
+    "w": 98,
+    "h": 91
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 98,
+    "h": 91
+   },
+   "sourceSize": {
+    "w": 98,
+    "h": 91
+   }
+  },
+  "bermuda": {
+   "frame": {
+    "x": 216,
+    "y": 2,
+    "w": 91,
+    "h": 63
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 91,
+    "h": 63
+   },
+   "sourceSize": {
+    "w": 91,
+    "h": 63
+   }
+  },
+  "braco": {
+   "frame": {
+    "x": 311,
+    "y": 2,
+    "w": 49,
+    "h": 88
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 88
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 88
+   }
+  },
+  "perna": {
+   "frame": {
+    "x": 364,
+    "y": 2,
+    "w": 51,
+    "h": 111
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 51,
+    "h": 111
+   },
+   "sourceSize": {
+    "w": 51,
+    "h": 111
+   }
+  }
+ },
+ "meta": {
+  "image": "chico.png",
+  "scale": "1",
+  "app": "recortado da folha de personagem do Chico"
+ }
+}

@@ -1,17 +1,12 @@
-// Aparência do Chico. Ajuste as cores aqui para ficar parecido com ele — o desenho é gerado a partir disto.
-// Cores tiradas da arte da família (public/familia): camiseta vermelha, bermuda azul e tênis branco.
+// Cores do Chico, tiradas da folha de personagem dele (public/chico): pele, cabelo castanho, camiseta vermelha,
+// bermuda azul-marinho e tênis branco. O boneco em si vem da folha; estas cores servem para os detalhes
+// desenhados por código (pálpebra da piscada, faixa da bola).
 export const CHICO_VISUAL = {
-  pele: '#f2bd8c',
-  peleSombra: '#d99f6c',
+  pele: '#f7a76f',
   cabelo: '#5a3a22',
-  olhos: '#2b1a10',
-  camisa: '#d93a34',
-  camisaSombra: '#b02c28',
-  bermuda: '#2f4f86',
+  camisa: '#e0332e',
+  bermuda: '#2c3553',
   sapato: '#f4f4f0',
-  chapeu: '#e7c77f',
-  chapeuFaixa: '#a0522d',
-  mochila: '#d9553f',
 };
 
 // Paleta da Caatinga (Mundo 1).

@@ -34,7 +34,9 @@ Parâmetros de URL úteis:
 
 Mapa: o **botão verde da tela de título** abre o mapa-múndi com a rota dos 8 mundos. Toque num mundo aberto para escolher a fase, ou no botão verde do mapa para continuar de onde parou. Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro; quando um mundo novo abre, o Chico viaja pela rota e o narrador diz o continente e o país.
 
-Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **A aparência vem da arte feita pela família**, recortada numa folha só (`public/familia/familia.png`, com os quadros `corpo-<id>` e `rosto-<id>` descritos em `familia.json`). O papel de cada um no jogo fica em `src/data/familia.ts`; as cores do Chico (que é animado em partes) ficam em `src/data/visual.ts`.
+Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **A aparência vem da arte feita pela família**, recortada numa folha só (`public/familia/familia.png`, com os quadros `corpo-<id>` e `rosto-<id>` descritos em `familia.json`). O papel de cada um no jogo fica em `src/data/familia.ts`.
+
+Chico: vem da **folha de personagem feita pela família**, recortada em peças (`public/chico/chico.png` e `chico.json`: cabeça, camisa, bermuda, braço e perna). O jogo monta o boneco com elas e anima braços e pernas girando no ombro e no quadril (posições em `C`, no topo de `src/entities/Player.ts`); a piscada é uma pálpebra desenhada por cima dos olhos.
 
 Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é dinossauro; na 39, montar o esqueleto do Buriolestes. Os dois são falados e funcionam só arrastando ou tocando (`src/scenes/CestosScene.ts` e `EsqueletoScene.ts`). A fase 40 muda o poder do botão da pata a cada trecho (`poderPorTrecho`).
 
