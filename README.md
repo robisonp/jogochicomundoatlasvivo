@@ -38,6 +38,8 @@ Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly
 
 Chico: vem da **folha de personagem feita pela família**, recortada em peças (`public/chico/chico.png` e `chico.json`: cabeça, camisa, bermuda, braço e perna). O jogo monta o boneco com elas e anima braços e pernas girando no ombro e no quadril (posições em `C`, no topo de `src/entities/Player.ts`); a piscada é uma pálpebra desenhada por cima dos olhos.
 
+Fim de fase com bicho novo: a figurinha entra no Atlas e vem uma adivinha "Quem disse isso?" com 3 figuras (`src/scenes/RevelacaoScene.ts`).
+
 Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é dinossauro; na 39, montar o esqueleto do Buriolestes. Os dois são falados e funcionam só arrastando ou tocando (`src/scenes/CestosScene.ts` e `EsqueletoScene.ts`). A fase 40 muda o poder do botão da pata a cada trecho (`poderPorTrecho`).
 
 Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.

@@ -776,3 +776,26 @@ export const MUNDOS_ATLAS = [
     abertura: 'Um fóssil é uma parte ou marca de um ser vivo muito antigo guardada nas rochas.',
   },
 ];
+
+/** Nomes femininos (para falar "a arara", "o tatu-bola"). */
+const FEMININOS = new Set([
+  'asa-branca', 'onca', 'arara', 'preguica', 'perereca', 'girafa', 'zebra', 'coruja-das-neves', 'raposa-artica',
+  'rena', 'foca', 'orca', 'foca-de-weddell', 'jubarte', 'tartaruga',
+]);
+
+export function fichaDe(id: string): FichaAnimal | undefined {
+  return ANIMAIS.find((a) => a.id === id);
+}
+
+/** Nome para falar em voz alta, com artigo: "o tatu-bola", "a arara-vermelha", "o Irritator". */
+export function comArtigo(f: FichaAnimal): string {
+  if (f.id === 'pegadas-sousa') return 'as Pegadas de Sousa';
+  // nomes de dinossauros são nomes científicos: ficam com maiúscula
+  const nome = f.mundo === 'dinossauros' ? f.nome : f.nome.toLowerCase();
+  return `${FEMININOS.has(f.id) ? 'a' : 'o'} ${nome}`;
+}
+
+/** Bichos que entram na adivinha "Quem disse isso?" (as pegadas não falam). */
+export function falaNaAdivinha(f: FichaAnimal): boolean {
+  return f.id !== 'pegadas-sousa';
+}

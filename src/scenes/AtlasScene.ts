@@ -212,5 +212,15 @@ export class AtlasScene extends Phaser.Scene {
     this.ficha.push(this.add.text(x, topo + 510 * s, f.adulto.replace(' · IUCN', '\nIUCN'), estiloAdulto).setOrigin(0.5));
 
     VoiceManager.falar(f.falas.apresentacao, 'bicho');
+    // na primeira ficha aberta, explica os desenhos (quem ainda não lê não sabe que dá para tocar neles)
+    if (!AtlasScene.explicouIcones) {
+      AtlasScene.explicouIcones = true;
+      VoiceManager.falar('Toque nos desenhos coloridos: o mapa mostra onde eu vivo, a folha o que eu como, a régua o meu tamanho e a estrela uma curiosidade!', 'narrador', true);
+      const botoes = this.ficha.slice(-6, -1);
+      botoes.forEach((b, i) => this.tweens.add({ targets: b, scale: (b as Phaser.GameObjects.Image).scale * 1.2, yoyo: true, repeat: 3, delay: 2500 + i * 250, duration: 260 }));
+    }
   }
+
+  /** A explicação dos desenhos da ficha é falada uma vez por sessão. */
+  private static explicouIcones = false;
 }
