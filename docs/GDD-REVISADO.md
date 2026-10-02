@@ -68,6 +68,14 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 
 Legenda: ★ = poder novo · ◆ = variação de ambiente. Cada fase tem 2–3 min, com 1 checkpoint por minuto.
 
+### Redemoinhos do Vento Viravolta (pronto)
+Pedido da família depois de jogar: faltavam inimigos no estilo dos jogos de plataforma, que andam para lá e para cá e somem com um pulo em cima. O GDD v1.0 pede "nada de vilão cruel nem batalhas", e os bichos são amigos do Atlas. Por isso o inimigo é um **redemoinho do Vento Viravolta**, um pedaço de vento travesso com cara de arteiro. Ele anda devagar, até 3 blocos para cada lado de onde nasceu, e vira na parede, na beirada, na água e nos espinhos.
+- **Pular em cima** desmancha o redemoinho: as folhas (ou flocos) se espalham, a página que o Viravolta tinha levado sai voando, e o Chico quica.
+- **Encostar de lado** machuca, como os espinhos, e o Chico volta ao checkpoint. Depois de renascer, há um instante sem dano.
+- **Bola, arrancada, tobogã, salto girando e mergulho** também desmancham.
+- Na primeira vez, o narrador explica: "Um redemoinho do Vento Viravolta! Pule em cima dele para desmanchar!".
+- São 29 redemoinhos em 21 fases (`X` nas fases), sempre em chão plano do caminho principal, com espaço livre em cima e chão firme dos lados. Nenhum fica entre buracos, perto de placas, bichos, checkpoints ou do objetivo. A quantidade cresce aos poucos: 1 por fase no Mundo 1, até 3 nos últimos. Fases de água e maré ficam quase sem redemoinho.
+
 ### Revelação e adivinha no fim da fase (pronto)
 Pedido da família depois de jogar: as fichas do Atlas estavam escondidas. Agora, quando um bicho entra no Atlas pela **primeira vez**, o fim da fase mostra a figurinha grande voando para dentro do livro ("Nova figurinha no Atlas: o tatu-bola!"). Depois vem uma **adivinha "Quem sou eu?" só com figuras**: o bicho dá 3 pistas, da mais geral para a mais reveladora ("Eu sou um mamífero e como insetos. Eu tenho uma carapaça com três faixas. Quando há perigo, eu me fecho numa bola!"), e o Chico escolhe entre 3 bichos do mesmo mundo. As pistas estão em cada ficha (`pistas` em `src/data/animais.ts`), todas do dossiê e escritas para separar o bicho dos outros do mesmo mundo (cavar é pista do wombat e do caranguejo-uçá; o dossiê não diz que o tatu-bola cava). Errar explica ("Quase! Esse é o mocó. Escute as pistas de novo.") e deixa tentar; depois de 2 erros, a figura certa pisca. No máximo 2 adivinhas por fase; nas fases com minijogo (38 e 39) só a figurinha. Não é quiz de pontos: continua valendo "conteúdo ligado à ação" do GDD v1.0. No Atlas, a primeira ficha aberta explica em voz alta os desenhos (mapa, folha, régua, estrela).
 

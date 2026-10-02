@@ -85,7 +85,7 @@ export const CAATINGA_2: LevelDef = {
       '...............G....',
       '............RRRRRRRR',
       '.........RRRRRRRRRRR',
-      '......RRRRRRRRRRRRRR',
+      '.X....RRRRRRRRRRRRRR',
       '####################',
       '####################',
       '####################',

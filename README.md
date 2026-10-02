@@ -73,7 +73,7 @@ As fases são trechos desenhados em texto, colados lado a lado (`src/levels/caat
 '###########',     # = chão
 ```
 
-A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U`, água rasa `~` e funda `w`, cipó `J`, chamado de bicho `Z`, pedregulho `B`, rastros `:`, terra fofa `F`, tronco de eucalipto `E`, vaga-lume `*`, túnel `t`, gelo `I`, neve fofa `N`, estação de pesquisa `&`, água da maré `%`, lixo do mar `l` etc.; um animal `A` com `fossil` vira monte de escavação, aberto com o botão Ação) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
+A legenda completa (rocha `R`, animal `A`, pedrinhas caindo `Q`, vento `<` `>`, chuva `U`, água rasa `~` e funda `w`, cipó `J`, chamado de bicho `Z`, pedregulho `B`, rastros `:`, terra fofa `F`, tronco de eucalipto `E`, vaga-lume `*`, túnel `t`, gelo `I`, neve fofa `N`, estação de pesquisa `&`, água da maré `%`, lixo do mar `l`, redemoinho do Vento Viravolta `X` etc.; um animal `A` com `fossil` vira monte de escavação, aberto com o botão Ação) está em `src/levels/types.ts`. As falas das placas, dos bichos (tiradas do dossiê científico) e as dicas da Vovó Lili ficam na própria definição da fase, separadas do código. A ordem da campanha fica em `src/levels/index.ts`.
 
 ## Publicação
 

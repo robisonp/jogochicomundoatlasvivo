@@ -34,7 +34,8 @@ export type Sfx =
   | 'portal'
   | 'encaixe'
   | 'certo'
-  | 'quase';
+  | 'quase'
+  | 'desmanchar';
 
 class AudioManagerImpl {
   private ctx?: AudioContext;
@@ -210,6 +211,12 @@ class AudioManagerImpl {
         break;
       case 'certo':
         [659, 784, 1047].forEach((f, k) => this.tom(f, 0.14, { tipo: 'triangle', vol: 0.2, atraso: k * 0.09 }));
+        break;
+      case 'desmanchar':
+        // redemoinho desmanchando: sopro que some e um "plim" de página solta
+        this.ruido(0.25, 2400, 0.25);
+        this.tom(330, 0.18, { tipo: 'triangle', ate: 990, vol: 0.18 });
+        this.tom(1320, 0.12, { tipo: 'sine', vol: 0.14, atraso: 0.15 });
         break;
       case 'quase':
         // sem som de "erro" feio: duas notas suaves descendo

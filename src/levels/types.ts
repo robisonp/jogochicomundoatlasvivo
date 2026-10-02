@@ -25,6 +25,7 @@
 //   &  estação de pesquisa (decoração, 3 blocos de largura, apoiada no chão)
 //   %  água da maré: fica cheia na maré alta e seca na baixa (sobe e desce devagar)
 //   l  lixo trazido pelo mar (o Chico recolhe encostando)
+//   X  redemoinho do Vento Viravolta: anda para lá e para cá; pular em cima desmancha, encostar de lado machuca
 //   A com `fossil`: fóssil enterrado (monte de escavação); o Chico escava com o botão Ação
 
 import type { Personagem } from '../systems/VoiceManager';
