@@ -41,7 +41,6 @@ export class TitleScene extends Phaser.Scene {
       this.saudou = true;
       this.scene.start('Atlas');
     });
-
     // A família do Chico, em pé no chão. Tocar em alguém: a pessoa se apresenta.
     const apresentacao: Record<Familiar, string> = {
       lili: 'Oi, Chico! Eu sou a Vovó Lili. Quando precisar, eu dou uma dica.',
@@ -80,6 +79,16 @@ export class TitleScene extends Phaser.Scene {
         this.saudou = true;
         VoiceManager.falar(apresentacao[id], id);
       });
+    });
+
+    // A panela abre a Cozinha da Vovó Lili.
+    const cozinha = this.add.image(W * 0.86, H - 190, 'btn-cozinha').setInteractive({ useHandCursor: true });
+    this.tweens.add({ targets: cozinha, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 1000, ease: 'Sine.easeInOut' });
+    cozinha.on('pointerdown', () => {
+      AudioManager.desbloquear();
+      AudioManager.tocar('botao');
+      this.saudou = true;
+      this.scene.start('Cozinha');
     });
 
     const jogar = botaoGrande(this, W / 2, H / 2 + 10, 'btn-jogar', () => this.jogar(), 1);

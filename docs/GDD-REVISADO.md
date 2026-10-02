@@ -53,7 +53,7 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 | 8 | 6–10 h em 40 fases | Daria 9–15 min por fase | 2–3 min por fase |
 | 9 | Globo 3D girando antes de cada mundo | Caro e sem ganho de aprendizado | **Mapa 2D** com rota animada, nome do continente e do país falados |
 | 10 | Música adaptativa em camadas | Escopo alto | **1 tema por mundo** (gerado por código) + vinhetas de vitória e checkpoint |
-| 11 | Missões de rotina (dentes, quarto, cozinha, escola) no hub | Cada uma é um jogo à parte | **Depois do lançamento.** A Casa, no lançamento, tem mapa, Atlas e chamadas da família |
+| 11 | Missões de rotina (dentes, quarto, cozinha, escola) no hub | Cada uma é um jogo à parte | **Depois do lançamento**, menos a **cozinha**: a Cozinha da Vovó Lili entrou a pedido da família (seção 3) |
 | 12 | Cidade real de uma familiar no roteiro | Contradiz a seção de privacidade do próprio GDD | Nenhuma cidade de familiar no conteúdo |
 | 13 | Mundo 7 (praia, perto de casa) vem depois da Antártica | Parecia fora de ordem | Mantido: é a **volta para casa** pelo Oceano Atlântico. A saída "praia" da Casa se abre ao chegar no M7 |
 | 14 | Protótipo na Savana (M3), mas a campanha começa na Caatinga | O tutorial ficaria fora do lugar | O protótipo de movimento já é a **Caatinga** e vira a base da Fase 1 |
@@ -78,6 +78,15 @@ Pedido da família depois de jogar: faltavam inimigos no estilo dos jogos de pla
 
 ### Revelação e adivinha no fim da fase (pronto)
 Pedido da família depois de jogar: as fichas do Atlas estavam escondidas. Agora, quando um bicho entra no Atlas pela **primeira vez**, o fim da fase mostra a figurinha grande voando para dentro do livro ("Nova figurinha no Atlas: o tatu-bola!"). Depois vem uma **adivinha "Quem sou eu?" só com figuras**: o bicho dá 3 pistas, da mais geral para a mais reveladora ("Eu sou um mamífero e como insetos. Eu tenho uma carapaça com três faixas. Quando há perigo, eu me fecho numa bola!"), e o Chico escolhe entre 3 bichos do mesmo mundo. As pistas estão em cada ficha (`pistas` em `src/data/animais.ts`), todas do dossiê e escritas para separar o bicho dos outros do mesmo mundo (cavar é pista do wombat e do caranguejo-uçá; o dossiê não diz que o tatu-bola cava). Errar explica ("Quase! Esse é o mocó. Escute as pistas de novo.") e deixa tentar; depois de 2 erros, a figura certa pisca. No máximo 2 adivinhas por fase; nas fases com minijogo (38 e 39) só a figurinha. Não é quiz de pontos: continua valendo "conteúdo ligado à ação" do GDD v1.0. No Atlas, a primeira ficha aberta explica em voz alta os desenhos (mapa, folha, régua, estrela).
+
+### Cozinha da Vovó Lili (pronto)
+Pedido da família depois de jogar: faltava a parte em que o Chico ajuda a vovó. Na tela de título, a **panela laranja** abre a cozinha da Vovó Lili. É um cantinho calmo, fora das fases, sem tempo e sem pontos, e cada receita treina uma ideia simples:
+- **Salada de frutas** (sempre aberta): cada fruta vai na tigela da **mesma cor** (vermelho: morango e maçã; amarelo: banana e abacaxi; verde: uva e kiwi).
+- **Sopa de legumes** (1 selo): **forma**. Os redondinhos (tomate, batata, cebola) numa panela, os compridos (cenoura, vagem, milho) na outra. Cada panela tem o desenho da forma na frente.
+- **Feira** (3 selos): **tamanho**. Melancia, abóbora e abacaxi na cesta grande; uva, morango e jabuticaba na cesta pequena.
+- **Bolo de cenoura** (5 selos): **contar**. A tigela mostra a sombra de 3 ovos e 2 cenouras, e a vovó conta junto ("Um ovo! Dois ovos!"). Tomate e banana ficam de fora. Quem leva ao forno é a vovó; o Chico não mexe no fogão.
+
+Tocar num ingrediente diz o nome dele. Dá para arrastar ou tocar no ingrediente e depois no recipiente. Se não combina, a vovó diz "Hmm, essa não combina aqui. Tente outra!" e o ingrediente volta para a prateleira. Receita fechada mostra um cadeado e bolinhas com os selos que faltam. No fim, o prato pronto aparece com confete e a vovó agradece. As falas novas da vovó (`lili-161` a `lili-179`) entraram no documento de gravação.
 
 ### Mapa-múndi e família (prontos)
 - **Mapa 2D** (correção 9): o botão verde do título abre o mapa com a rota dos 8 mundos. Mundos abertos têm o selo colorido; os seguintes, cadeado; os que ainda não existem no jogo, ampulheta ("em breve"). Tocar num mundo fala o nome, o continente e o país ou região e abre a escolha das 5 fases. Quando um mundo abre, o Chico viaja pela rota até ele.
@@ -166,7 +175,7 @@ Ajuda da Vovó Lili: depois de **4 falhas** no mesmo trecho, ela fala uma dica c
 | Personagem | Quando aparece |
 |---|---|
 | Narrador | Instruções gerais, países, animais |
-| Vovó Lili | Dicas depois de falhas; placas de cuidado |
+| Vovó Lili | Dicas depois de falhas; placas de cuidado; a Cozinha da Vovó (tela de título) |
 | Vovô Marcos | Construções: escadas de corda, pontes, jangadas |
 | Tia Marcela | Abertura de mundos; páginas voando; Mundo 8. Canta/conta a tradição da asa-branca (cultura, não ciência) |
 | Tio Robi | Desafios de corrida e de pulo |
