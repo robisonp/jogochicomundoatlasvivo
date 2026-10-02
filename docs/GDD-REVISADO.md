@@ -11,7 +11,7 @@ Este documento **complementa** o GDD v1.0: tudo o que não está aqui continua v
 | Novidade por mundo | **1 poder novo + 1 variação de ambiente**, no máximo |
 | Plataforma | Navegador em **tablet Android** (Chrome), paisagem. Teclado e controle também funcionam |
 | Controles de toque | Direcional à **direita**; botões **Pular**, **Ação** e **Poder** à **esquerda** (lado trocável na área adulta). O botão Poder só aparece quando há poder |
-| Vozes | **Sintéticas**. Cada personagem tem um perfil de tom e velocidade sobre a voz pt-BR do aparelho |
+| Vozes | **Gravadas pela família** quando o áudio existe (`public/vozes/<pessoa>/<código>`); nas outras falas, **sintéticas**, com um perfil de tom e velocidade por personagem sobre a voz pt-BR do aparelho |
 | Arte | Vetorial, desenhada por código. Animais como figuras simples e reconhecíveis |
 | Conteúdo científico | Vem do [dossiê científico](DOSSIE-CIENTIFICO.md) da família. O jogo só fala o que estiver nele |
 

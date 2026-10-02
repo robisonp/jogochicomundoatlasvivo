@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { SaveManager } from '../core/SaveManager';
 import { AudioManager } from '../systems/AudioManager';
 import { estiloTexto } from '../ui/widgets';
+import { VoiceManager } from '../systems/VoiceManager';
+import { GRAVACOES } from '../data/vozes';
 
 export class AdultScene extends Phaser.Scene {
   private voltarPara = 'Titulo';
@@ -17,6 +19,8 @@ export class AdultScene extends Phaser.Scene {
     this.voltarPara = data.voltarPara;
     this.confirmarApagar = false;
   }
+
+  private ouvindo = false;
 
   create() {
     const { width: W, height: H } = this.scale;
@@ -69,6 +73,22 @@ export class AdultScene extends Phaser.Scene {
     botao(x0 + 420, 'Direcional à esquerda', () => (s.controles = 'dpad-esquerda'), s.controles === 'dpad-esquerda');
     y += 76;
     volume('Volume da voz', 'volumeVoz');
+    // Vozes gravadas pela família: quantas o jogo encontrou, e um botão para ouvir todas em sequência
+    y -= 70;
+    const gravadas = VoiceManager.listarGravadas();
+    this.linhas.push(
+      this.add.text(x0 + 730, y - 26, `Gravadas: ${gravadas.length} de ${Object.keys(GRAVACOES).length}`, estiloTexto(20)).setOrigin(0, 0.5),
+    );
+    if (gravadas.length) {
+      y += 14;
+      botao(x0 + 730, this.ouvindo ? 'Parar' : 'Ouvir gravações', () => {
+        this.ouvindo = !this.ouvindo;
+        if (!this.ouvindo) VoiceManager.calar();
+        else gravadas.forEach((g, i) => VoiceManager.falar(g.texto, g.quem, i > 0));
+      }, this.ouvindo);
+      y -= 14;
+    }
+    y += 70;
     volume('Volume da música', 'volumeMusica');
     volume('Volume dos efeitos', 'volumeEfeitos');
     rotulo('Reduzir movimento');
@@ -97,6 +117,8 @@ export class AdultScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     fechar.on('pointerdown', () => {
       AudioManager.tocar('botao');
+      if (this.ouvindo) VoiceManager.calar();
+      this.ouvindo = false;
       this.scene.stop();
       if (this.voltarPara === 'Titulo') this.scene.resume('Titulo');
       // Reposiciona controles de toque com o lado novo, se a fase estiver aberta.
