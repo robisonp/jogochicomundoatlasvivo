@@ -42,6 +42,8 @@ Fim de fase com bicho novo: a figurinha entra no Atlas e vem uma adivinha "Quem 
 
 Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é dinossauro; na 39, montar o esqueleto do Buriolestes. Os dois são falados e funcionam só arrastando ou tocando (`src/scenes/CestosScene.ts` e `EsqueletoScene.ts`). A fase 40 muda o poder do botão da pata a cada trecho (`poderPorTrecho`).
 
+Vozes gravadas pela família: coloque os áudios em `public/vozes/<pessoa>/` (ex.: `public/vozes/lili/lili-001.m4a`), com o código de cada fala no nome (os códigos estão no documento "Falas da família para gravar" e em `src/data/vozes.ts`). O jogo toca a gravação quando ela existe e usa a voz sintética nas outras falas. Funcionam .m4a, .mp3, .ogg, .opus, .wav, .webm e .aac; o nome aceita variações como `Lili_1` ou `lili 001`. Na área dos adultos aparece quantas falas já têm gravação, com um botão para ouvir todas.
+
 Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
 Área dos adultos: **segure a engrenagem por 2 segundos** (no título ou na pausa). Lá ficam o lado do direcional, os volumes, "reduzir movimento" e os códigos de save.

@@ -1,6 +1,9 @@
-// Vozes sintéticas. Cada personagem tem um "perfil" (tom/velocidade) aplicado à voz pt-BR do aparelho.
-// Futuro: se existir um arquivo pré-gerado em audio/voz/<id>.mp3, ele terá prioridade sobre a síntese.
+// Vozes. Quando a família gravou a fala (public/vozes/<pessoa>/<código>.<ext>, códigos em data/vozes.ts),
+// toca a gravação; senão, usa a voz sintética do aparelho com o "perfil" (tom/velocidade) do personagem.
+// Gravações e voz sintética passam pela mesma fila, então "fala e depois curiosidade" continua em ordem.
+import arquivos from 'virtual:vozes';
 import { SaveManager } from '../core/SaveManager';
+import { GRAVACOES } from '../data/vozes';
 
 export type Personagem = 'narrador' | 'lili' | 'marcos' | 'marcela' | 'july' | 'robi' | 'kelly' | 'laura' | 'bicho';
 
@@ -28,11 +31,42 @@ const PERFIS: Record<Personagem, Perfil> = {
 const FEM = /(female|feminin|mulher|francisca|thalita|luciana|maria|vitoria|leila|brenda|giovanna|yara|manuela|elza|raquel|ana|pt-br-x-afs|pt-br-x-pte)/i;
 const MASC = /(\bmale|masculin|homem|antonio|daniel|felipe|donato|fabio|julio|humberto|nicolau|valerio|ricardo|pt-br-x-ptd|pt-br-x-ptl)/i;
 
+/** Texto comparável: sem diferença de espaços, aspas curvas ou maiúsculas. */
+const normalizar = (t: string) => t.toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+
+/** Código a partir do nome do arquivo, tolerante: "lili-001", "Lili_1", "lili 001" → "lili-001". */
+function codigoDoArquivo(caminho: string): string | null {
+  const nome = caminho.split('/').pop()!.replace(/\.[a-z0-9]+$/i, '').toLowerCase();
+  const m = nome.replace(/[^a-z0-9]/g, '').match(/^([a-z]+?)0*(\d+)$/);
+  return m ? `${m[1]}-${m[2].padStart(3, '0')}` : null;
+}
+
+/** "lili|texto normalizado" → caminho do arquivo gravado. */
+const ARQUIVO_DA_FALA = new Map<string, string>();
+for (const caminho of arquivos) {
+  const codigo = codigoDoArquivo(caminho);
+  const texto = codigo ? GRAVACOES[codigo] : undefined;
+  if (codigo && texto) ARQUIVO_DA_FALA.set(`${codigo.split('-')[0]}|${normalizar(texto)}`, caminho);
+}
+
+interface Item {
+  texto: string;
+  quem: Personagem;
+  arquivo?: string;
+}
+
 class VoiceManagerImpl {
   private vozes: SpeechSynthesisVoice[] = [];
   private ultima?: { texto: string; quem: Personagem };
   /** Quem quer saber quando alguém fala (o HUD mostra o rosto de quem da família está falando). */
   private ouvintes = new Set<(quem: Personagem) => void>();
+  private fila: Item[] = [];
+  private tocando = false;
+  private audio?: HTMLAudioElement;
+  /** Segurança: se o aparelho não avisar que a fala acabou, a fila anda mesmo assim. */
+  private relogio?: number;
+  /** Cada fala tocada ganha um número; avisos atrasados de falas antigas são ignorados. */
+  private vez = 0;
 
   aoFalar(fn: (quem: Personagem) => void): () => void {
     this.ouvintes.add(fn);
@@ -53,6 +87,13 @@ class VoiceManagerImpl {
     return !!window.speechSynthesis;
   }
 
+  /** Falas da família que já têm gravação, em ordem de código (área dos adultos: contar e ouvir). */
+  listarGravadas(): { quem: Personagem; texto: string; arquivo: string }[] {
+    return Object.entries(GRAVACOES)
+      .map(([codigo, texto]) => ({ quem: codigo.split('-')[0] as Personagem, texto, arquivo: ARQUIVO_DA_FALA.get(`${codigo.split('-')[0]}|${normalizar(texto)}`) }))
+      .filter((g): g is { quem: Personagem; texto: string; arquivo: string } => !!g.arquivo);
+  }
+
   private escolherVoz(p: Perfil): SpeechSynthesisVoice | undefined {
     const br = this.vozes.filter((v) => /br/i.test(v.lang));
     const lista = br.length ? br : this.vozes;
@@ -67,20 +108,80 @@ class VoiceManagerImpl {
    */
   falar(texto: string, quem: Personagem = 'narrador', enfileirar = false): void {
     this.ultima = { texto, quem };
-    for (const fn of this.ouvintes) fn(quem);
-    const synth = window.speechSynthesis;
-    if (!synth) return;
+    const item: Item = { texto, quem, arquivo: ARQUIVO_DA_FALA.get(`${quem}|${normalizar(texto)}`) };
+    if (!enfileirar) {
+      this.calar();
+      this.fila = [item];
+    } else {
+      this.fila.push(item);
+    }
+    if (!this.tocando) this.proxima();
+  }
+
+  private proxima(): void {
+    window.clearTimeout(this.relogio);
+    if (this.audio) {
+      this.audio.onended = null;
+      this.audio.pause();
+      this.audio = undefined;
+    }
+    const item = this.fila.shift();
+    if (!item) {
+      this.tocando = false;
+      return;
+    }
+    this.tocando = true;
+    const vez = ++this.vez;
+    const acabou = () => {
+      if (vez === this.vez) this.proxima();
+    };
+    for (const fn of this.ouvintes) fn(item.quem);
     const vol = SaveManager.data.settings.volumeVoz;
-    if (vol <= 0) return;
-    if (!enfileirar) synth.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
-    const p = PERFIS[quem];
+    if (vol <= 0) {
+      acabou();
+      return;
+    }
+    // segurança: anda depois de um tempo proporcional ao texto, mesmo sem o aviso de "terminou"
+    this.relogio = window.setTimeout(acabou, 2500 + item.texto.length * 90);
+    if (item.arquivo) {
+      const a = new Audio(item.arquivo);
+      a.volume = Math.min(1, vol);
+      a.onended = acabou;
+      // gravação: a segurança usa a duração real do arquivo (a vovó pode falar devagar)
+      a.onloadedmetadata = () => {
+        if (vez !== this.vez || !isFinite(a.duration)) return;
+        window.clearTimeout(this.relogio);
+        this.relogio = window.setTimeout(acabou, a.duration * 1000 + 1500);
+      };
+      // arquivo com problema: fala com a voz sintética
+      a.onerror = () => {
+        if (vez === this.vez) this.sintetizar(item, vol, acabou);
+      };
+      this.audio = a;
+      a.play().catch(() => {
+        if (vez === this.vez) this.sintetizar(item, vol, acabou);
+      });
+      return;
+    }
+    this.sintetizar(item, vol, acabou);
+  }
+
+  private sintetizar(item: Item, vol: number, acabou: () => void): void {
+    const synth = window.speechSynthesis;
+    if (!synth) {
+      acabou();
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(item.texto);
+    const p = PERFIS[item.quem];
     u.lang = 'pt-BR';
     const voz = this.escolherVoz(p);
     if (voz) u.voice = voz;
     u.pitch = p.pitch;
     u.rate = p.rate;
     u.volume = vol;
+    u.onend = acabou;
+    u.onerror = acabou;
     synth.speak(u);
   }
 
@@ -89,6 +190,15 @@ class VoiceManagerImpl {
   }
 
   calar(): void {
+    this.vez++;
+    window.clearTimeout(this.relogio);
+    this.fila = [];
+    this.tocando = false;
+    if (this.audio) {
+      this.audio.onended = null;
+      this.audio.pause();
+      this.audio = undefined;
+    }
     window.speechSynthesis?.cancel();
   }
 }

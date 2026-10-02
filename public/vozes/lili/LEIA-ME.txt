@@ -1,0 +1,5 @@
+Coloque aqui os áudios gravados por lili, um arquivo por fala, com o código da fala no nome:
+lili-001.m4a, lili-002.m4a, ...
+Os códigos estão no documento "Falas da família para gravar".
+Formatos que funcionam: .m4a, .mp3, .ogg, .opus, .wav, .webm, .aac
+Fala sem arquivo continua com a voz sintética.
