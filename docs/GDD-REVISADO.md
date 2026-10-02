@@ -68,6 +68,9 @@ As fases variam **combinando** estas peças. Nenhum mundo cria uma física nova 
 
 Legenda: ★ = poder novo · ◆ = variação de ambiente. Cada fase tem 2–3 min, com 1 checkpoint por minuto.
 
+### Revelação e adivinha no fim da fase (pronto)
+Pedido da família depois de jogar: as fichas do Atlas estavam escondidas. Agora, quando um bicho entra no Atlas pela **primeira vez**, o fim da fase mostra a figurinha grande voando para dentro do livro ("Nova figurinha no Atlas: o tatu-bola!"). Depois vem uma **adivinha "Quem sou eu?" só com figuras**: o bicho dá 3 pistas, da mais geral para a mais reveladora ("Eu sou um mamífero e como insetos. Eu tenho uma carapaça com três faixas. Quando há perigo, eu me fecho numa bola!"), e o Chico escolhe entre 3 bichos do mesmo mundo. As pistas estão em cada ficha (`pistas` em `src/data/animais.ts`), todas do dossiê e escritas para separar o bicho dos outros do mesmo mundo (cavar é pista do wombat e do caranguejo-uçá; o dossiê não diz que o tatu-bola cava). Errar explica ("Quase! Esse é o mocó. Escute as pistas de novo.") e deixa tentar; depois de 2 erros, a figura certa pisca. No máximo 2 adivinhas por fase; nas fases com minijogo (38 e 39) só a figurinha. Não é quiz de pontos: continua valendo "conteúdo ligado à ação" do GDD v1.0. No Atlas, a primeira ficha aberta explica em voz alta os desenhos (mapa, folha, régua, estrela).
+
 ### Mapa-múndi e família (prontos)
 - **Mapa 2D** (correção 9): o botão verde do título abre o mapa com a rota dos 8 mundos. Mundos abertos têm o selo colorido; os seguintes, cadeado; os que ainda não existem no jogo, ampulheta ("em breve"). Tocar num mundo fala o nome, o continente e o país ou região e abre a escolha das 5 fases. Quando um mundo abre, o Chico viaja pela rota até ele.
 - **História do Atlas** (correção 1): na primeira vez no mapa, a Tia Marcela liga pelo Chamador do Atlas e conta que mandou o livro pelo correio e que o Vento Viravolta bagunçou as páginas.

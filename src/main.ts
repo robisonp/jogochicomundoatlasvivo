@@ -7,6 +7,7 @@ import { HudScene } from './scenes/HudScene';
 import { PauseScene } from './scenes/PauseScene';
 import { CestosScene } from './scenes/CestosScene';
 import { EsqueletoScene } from './scenes/EsqueletoScene';
+import { RevelacaoScene } from './scenes/RevelacaoScene';
 import { EndScene } from './scenes/EndScene';
 import { AdultScene } from './scenes/AdultScene';
 import { AtlasScene } from './scenes/AtlasScene';
@@ -32,7 +33,7 @@ const game = new Phaser.Game({
   // (visto no navegador de teste). Custa algumas chamadas de desenho a mais, sem diferença perceptível.
   render: { antialias: true, maxTextures: 4 },
   // A ordem define quem é desenhado por cima.
-  scene: [BootScene, TitleScene, MapaScene, AtlasScene, LevelScene, HudScene, PauseScene, EndScene, CestosScene, EsqueletoScene, AdultScene],
+  scene: [BootScene, TitleScene, MapaScene, AtlasScene, LevelScene, HudScene, PauseScene, EndScene, CestosScene, EsqueletoScene, RevelacaoScene, AdultScene],
 });
 
 // Exposto apenas para testes automatizados.

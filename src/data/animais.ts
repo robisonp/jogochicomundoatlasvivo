@@ -38,6 +38,8 @@ export interface FichaAnimal {
     curiosidade: string;
   };
   adulto: string;
+  /** Pistas da adivinha "Quem sou eu?" no fim da fase: 3 frases do dossiê, da mais geral para a mais reveladora. */
+  pistas?: [string, string, string];
 }
 
 export const ANIMAIS: FichaAnimal[] = [
@@ -55,6 +57,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou um tatu que só vive no Brasil!',
     },
     adulto: 'Tolypeutes tricinctus · IUCN: Vulnerável · Brasil: Em Perigo',
+    pistas: [
+      'Eu sou um mamífero e como insetos.',
+      'Eu tenho uma carapaça com três faixas.',
+      'Quando há perigo, eu me fecho numa bola!',
+    ],
   },
   {
     id: 'moco',
@@ -70,6 +77,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minhas patas me ajudam a subir nos lajedos!',
     },
     adulto: 'Kerodon rupestris · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou parecido com um coelho pequeno.',
+      'Eu como folhas, brotos e cascas.',
+      'Eu moro nas fendas e ando ligeiro de pedra em pedra!',
+    ],
   },
   {
     id: 'asa-branca',
@@ -85,6 +97,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Nem toda asa-branca faz a mesma viagem todo ano!',
     },
     adulto: 'Patagioenas picazuro · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou uma ave.',
+      'Eu como sementes e frutos.',
+      'Eu vivo em muitos tipos de lugar, até perto das cidades!',
+    ],
   },
   {
     id: 'carcara',
@@ -100,6 +117,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu também caminho muito bem pelo chão!',
     },
     adulto: 'Caracara plancus · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou uma ave e saio de dia.',
+      'Eu passo bastante tempo andando no chão.',
+      'Eu como de tudo um pouco: bichinhos e insetos!',
+    ],
   },
   {
     id: 'prea',
@@ -115,6 +137,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minha cauda é tão pequena que quase não aparece!',
     },
     adulto: 'Galea spixii · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu pareço um porquinho-da-índia pequeno.',
+      'Eu quase não tenho rabo.',
+      'Meus dentes da frente são amarelados!',
+    ],
   },
   // ---------------------------------------------------------------- Amazônia
   {
@@ -131,6 +158,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou o maior felino das Américas!',
     },
     adulto: 'Panthera onca · IUCN: Quase Ameaçada · Brasil: Vulnerável',
+    pistas: [
+      'Eu como carne e gosto de andar sozinha.',
+      'Eu nado muito bem.',
+      'Eu sou o maior felino das Américas!',
+    ],
   },
   {
     id: 'arara',
@@ -146,6 +178,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Machos e fêmeas da minha espécie são muito parecidos!',
     },
     adulto: 'Ara chloropterus (arara-vermelha-grande) · IUCN: Menos Preocupante · Brasil: Quase Ameaçada',
+    pistas: [
+      'Eu sou uma ave muito barulhenta.',
+      'Eu como frutos, sementes e castanhas.',
+      'Com a cauda, sou quase do tamanho de uma criança pequena!',
+    ],
   },
   {
     id: 'preguica',
@@ -161,6 +198,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Algas podem crescer no meu pelo!',
     },
     adulto: 'Bradypus variegatus (preguiça-de-garganta-marrom) · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu passo quase a vida toda nas árvores.',
+      'Eu como principalmente folhas.',
+      'Às vezes crescem algas no meu pelo!',
+    ],
   },
   {
     id: 'boto',
@@ -176,6 +218,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu consigo nadar para trás!',
     },
     adulto: 'Inia geoffrensis · IUCN: Em Perigo · Brasil: Em Perigo',
+    pistas: [
+      'Eu vivo nos rios e lagos.',
+      'Eu como principalmente peixes.',
+      'Eu consigo nadar para trás!',
+    ],
   },
   {
     id: 'perereca',
@@ -191,6 +238,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu quase nunca desço até o chão!',
     },
     adulto: 'Trachycephalus resinifictrix · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu caibo na palma de uma mão.',
+      'Eu passeio pelas árvores, quase sempre à noite.',
+      'Os discos dos meus dedos grudam nos troncos!',
+    ],
   },
   // ---------------------------------------------------------------- Savana (Quênia e Tanzânia)
   {
@@ -207,6 +259,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou o mamífero terrestre mais rápido em corridas curtas!',
     },
     adulto: 'Acinonyx jubatus · IUCN: Vulnerável',
+    pistas: [
+      'Eu como carne.',
+      'Minha cauda me ajuda a virar sem cair.',
+      'Eu sou o mamífero mais rápido em corridas curtas!',
+    ],
   },
   {
     id: 'elefante',
@@ -222,6 +279,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou o maior animal terrestre que vive hoje!',
     },
     adulto: 'Loxodonta africana (elefante-africano-da-savana) · IUCN: Em Perigo',
+    pistas: [
+      'Eu como capim, folhas, cascas e frutos.',
+      'Eu sou o maior animal terrestre de hoje.',
+      'Com a tromba, eu respiro, cheiro e pego coisas!',
+    ],
   },
   {
     id: 'girafa',
@@ -237,6 +299,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minhas manchas ajudam a reconhecer cada girafa!',
     },
     adulto: 'Giraffa tippelskirchi · taxonomia das girafas em revisão',
+    pistas: [
+      'Eu como folhas do alto das árvores.',
+      'Minhas manchas ajudam a me reconhecer.',
+      'Eu consigo olhar por cima de uma casa!',
+    ],
   },
   {
     id: 'zebra',
@@ -252,6 +319,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu gosto de viver junto de outras zebras!',
     },
     adulto: 'Equus quagga (zebra-da-planície) · IUCN: Quase Ameaçada',
+    pistas: [
+      'Eu como capim.',
+      'Eu vivo em grupo com a minha família.',
+      'Cada uma de nós tem listras diferentes!',
+    ],
   },
   {
     id: 'avestruz',
@@ -267,6 +339,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou a maior ave que vive hoje!',
     },
     adulto: 'Struthio camelus · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou uma ave, mas não voo.',
+      'Minhas pernas compridas correm muito rápido.',
+      'Eu sou a maior ave do mundo!',
+    ],
   },
   // ---------------------------------------------------------------- Austrália
   {
@@ -283,6 +360,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou o maior marsupial vivo!',
     },
     adulto: 'Osphranter rufus (antes Macropus rufus) · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu como plantas.',
+      'Minha cauda me dá apoio e equilíbrio.',
+      'Eu ando dando saltos bem longos!',
+    ],
   },
   {
     id: 'wombat',
@@ -298,6 +380,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minha casa pode ficar escondida no chão!',
     },
     adulto: 'Vombatus ursinus (wombat-comum) · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu como plantas e saio mais à noite.',
+      'Minhas patas são muito fortes.',
+      'Eu cavo tocas e túneis debaixo da terra!',
+    ],
   },
   {
     id: 'emu',
@@ -313,6 +400,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou uma ave enorme que não precisa voar!',
     },
     adulto: 'Dromaius novaehollandiae · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou uma ave, mas não voo.',
+      'Posso ficar tão alto quanto um adulto.',
+      'Eu sou um ótimo corredor!',
+    ],
   },
   {
     id: 'ornitorrinco',
@@ -328,6 +420,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Sou um mamífero que põe ovos!',
     },
     adulto: 'Ornithorhynchus anatinus · IUCN: Quase Ameaçado',
+    pistas: [
+      'Eu vivo nos rios.',
+      'Minhas patas da frente são boas para nadar.',
+      'Eu sou mamífero, mas boto ovos!',
+    ],
   },
   {
     id: 'coala',
@@ -343,6 +440,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu sou um marsupial, não um urso!',
     },
     adulto: 'Phascolarctos cinereus · IUCN: Vulnerável (algumas populações: Em Perigo na lei australiana)',
+    pistas: [
+      'Eu passo muito tempo nas árvores, dormindo ou comendo.',
+      'Eu como folhas de eucalipto.',
+      'Eu não sou urso: sou marsupial!',
+    ],
   },
   // ---------------------------------------------------------------- Ártico
   {
@@ -359,6 +461,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Nem toda coruja precisa esperar a noite!',
     },
     adulto: 'Bubo scandiacus · IUCN: Vulnerável',
+    pistas: [
+      'Eu sou uma ave.',
+      'Eu faço meu ninho no chão.',
+      'No verão, eu posso caçar de dia!',
+    ],
   },
   {
     id: 'urso-polar',
@@ -374,6 +481,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Preciso do gelo do mar para viver no Ártico!',
     },
     adulto: 'Ursus maritimus · IUCN: Vulnerável',
+    pistas: [
+      'Eu como principalmente focas.',
+      'Minhas patas largas ajudam na neve e na água.',
+      'Em pé, eu fico muito mais alto que uma pessoa!',
+    ],
   },
   {
     id: 'raposa-artica',
@@ -389,6 +501,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minha pelagem ajuda a enfrentar o frio do Ártico!',
     },
     adulto: 'Vulpes lagopus · IUCN: Menos Preocupante (algumas populações muito ameaçadas)',
+    pistas: [
+      'Eu pareço um cachorro pequeno.',
+      'Minha pelagem muda com as estações.',
+      'Eu pulo e mergulho de cabeça na neve!',
+    ],
   },
   {
     id: 'rena',
@@ -404,6 +521,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Rena e caribu são nomes usados para animais da mesma espécie!',
     },
     adulto: 'Rangifer tarandus (rena/caribu) · IUCN: Vulnerável',
+    pistas: [
+      'Eu como líquens e outras plantas.',
+      'Eu ando em grupo e faço grandes viagens.',
+      'Eu tenho galhadas na cabeça, e as fêmeas também podem ter!',
+    ],
   },
   {
     id: 'foca',
@@ -419,6 +541,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'O gelo também é parte da minha casa!',
     },
     adulto: 'Pusa hispida · IUCN: Menos Preocupante (global)',
+    pistas: [
+      'Eu como peixes.',
+      'Eu nado e uso buracos no gelo.',
+      'Eu descanso em cima do gelo do Ártico!',
+    ],
   },
   // ---------------------------------------------------------------- Antártica e Oceano Austral
   {
@@ -435,6 +562,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Apesar do tamanho, eu sou um tipo de golfinho!',
     },
     adulto: 'Orcinus orca · IUCN: Dados Insuficientes',
+    pistas: [
+      'Eu vivo em todos os oceanos.',
+      'Eu nado em equipe com a minha família.',
+      'Eu sou o maior da família dos golfinhos!',
+    ],
   },
   {
     id: 'pinguim',
@@ -450,6 +582,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minhas asas funcionam como nadadeiras debaixo d’água!',
     },
     adulto: 'Pygoscelis adeliae · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu sou uma ave, mas não voo.',
+      'Eu nado usando as asas como nadadeiras.',
+      'Na neve, eu deslizo de barriga!',
+    ],
   },
   {
     id: 'foca-de-weddell',
@@ -465,6 +602,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Faço sons incríveis debaixo d’água!',
     },
     adulto: 'Leptonychotes weddellii · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu mergulho por baixo do gelo.',
+      'Eu fico muito tempo debaixo d’água.',
+      'Eu faço muitos sons debaixo d’água!',
+    ],
   },
   {
     id: 'jubarte',
@@ -480,6 +622,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Viajo milhares de quilômetros entre diferentes mares!',
     },
     adulto: 'Megaptera novaeangliae · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu filtro peixinhos e krill da água.',
+      'Minhas nadadeiras do peito são bem compridas.',
+      'Sou maior que um ônibus, e os machos cantam no mar!',
+    ],
   },
   {
     id: 'albatroz',
@@ -495,6 +642,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minhas asas abertas podem passar de três metros!',
     },
     adulto: 'Diomedea exulans · IUCN: Vulnerável',
+    pistas: [
+      'Eu sou uma ave do mar aberto.',
+      'Eu faço ninho em ilhas no meio do oceano.',
+      'Minhas asas abertas são maiores que uma cama de casal!',
+    ],
   },
   // ---------------------------------------------------------------- Praia e oceano do Brasil
   {
@@ -511,6 +663,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Existem várias espécies de tartarugas marinhas no Brasil!',
     },
     adulto: 'Eretmochelys imbricata · IUCN: Criticamente Em Perigo · Brasil: Em Perigo',
+    pistas: [
+      'Eu sou um réptil e vivo no mar.',
+      'Eu tenho um casco com placas.',
+      'As mamães saem do mar para pôr ovos na areia!',
+    ],
   },
   {
     id: 'peixe-boi',
@@ -526,6 +683,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Minha cauda larga me empurra devagar pela água!',
     },
     adulto: 'Trichechus manatus · Brasil: Em Perigo',
+    pistas: [
+      'Eu como plantas da água e folhas de mangue.',
+      'Eu não tenho nadadeira nas costas.',
+      'Minha cauda é larga e redonda, como uma pá!',
+    ],
   },
   {
     id: 'golfinho',
@@ -541,6 +703,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Meu giro no salto deu origem ao nome golfinho-rotador!',
     },
     adulto: 'Stenella longirostris · IUCN: Menos Preocupante',
+    pistas: [
+      'Eu como peixes e lulas.',
+      'Eu vivo em grupo e nado rápido.',
+      'Eu salto e giro no ar!',
+    ],
   },
   {
     id: 'caranguejo',
@@ -556,6 +723,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Ajudo a transformar folhas velhas do mangue!',
     },
     adulto: 'Ucides cordatus · Brasil: Quase Ameaçado',
+    pistas: [
+      'Eu vivo no manguezal.',
+      'Eu como folhas do mangue.',
+      'Eu cavo minha toca no chão de lama!',
+    ],
   },
   {
     id: 'cavalo-marinho',
@@ -571,6 +743,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Nos cavalos-marinhos, o papai carrega os filhotes!',
     },
     adulto: 'Hippocampus reidi (cavalo-marinho-de-focinho-longo) · Brasil: Vulnerável',
+    pistas: [
+      'Eu sou um peixe do tamanho de um lápis.',
+      'Eu nado em pé.',
+      'Minha cauda se segura nas plantas e nas raízes!',
+    ],
   },
   // ---------------------------------------------------------------- Dinossauros (fósseis: "encontrados onde hoje fica...")
   {
@@ -602,6 +779,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu sou um espinossaurídeo, e meu crânio ajuda a entender todo o grupo!',
     },
     adulto: 'Irritator challengeri · Formação Romualdo, Cretáceo Inferior (fim do Aptiano) · crânio amplamente preservado',
+    pistas: [
+      'Meu fóssil foi encontrado no Ceará.',
+      'Eu provavelmente comia peixes.',
+      'Os cientistas estudam principalmente o meu crânio!',
+    ],
   },
   {
     id: 'pterossauro',
@@ -617,6 +799,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'No Araripe, meus ossos ficaram guardados na rocha com muitos detalhes!',
     },
     adulto: 'Pterossauros do Araripe (ex.: Tupandactylus imperator, Anhanguera) · Cretáceo Inferior · répteis voadores, não dinossauros',
+    pistas: [
+      'Eu vivi na época dos dinossauros.',
+      'Eu voava!',
+      'Mas eu não sou um dinossauro!',
+    ],
   },
   {
     id: 'staurikosaurus',
@@ -632,6 +819,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu sou um dos dinossauros mais antigos conhecidos!',
     },
     adulto: 'Staurikosaurus pricei · Triássico Superior, cerca de 227 a 221 milhões de anos · esqueleto incompleto',
+    pistas: [
+      'Eu comia carne.',
+      'Meu fóssil foi encontrado no Rio Grande do Sul.',
+      'Eu sou um dos dinossauros mais antigos conhecidos!',
+    ],
   },
   {
     id: 'buriolestes',
@@ -647,6 +839,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu vivi muito, muito tempo atrás: há cerca de duzentos e trinta e três milhões de anos!',
     },
     adulto: 'Buriolestes schultzi · Triássico Superior, cerca de 233 milhões de anos · esqueleto quase completo e articulado',
+    pistas: [
+      'Meu fóssil foi encontrado no Rio Grande do Sul.',
+      'Eu vivi há muito, muito tempo.',
+      'Meu esqueleto foi encontrado quase inteiro!',
+    ],
   },
   {
     id: 'carnotaurus',
@@ -662,6 +859,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu tinha dois chifres acima dos olhos e braços bem pequenos!',
     },
     adulto: 'Carnotaurus sastrei · Cretáceo Superior, cerca de 71 a 69 milhões de anos',
+    pistas: [
+      'Eu comia carne.',
+      'Meus braços eram bem pequenininhos.',
+      'Eu tinha dois chifres em cima dos olhos!',
+    ],
   },
   {
     id: 'argentinosaurus',
@@ -677,6 +879,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Não existe um esqueleto meu inteiro para simplesmente medir!',
     },
     adulto: 'Argentinosaurus huinculensis · Cretáceo Superior, cerca de 90 a 95 milhões de anos · cerca de 30 a 35 m (estimativa)',
+    pistas: [
+      'Eu comia plantas.',
+      'Meu fóssil foi encontrado na Argentina.',
+      'Eu estou entre os maiores dinossauros conhecidos!',
+    ],
   },
   {
     id: 'velociraptor',
@@ -692,6 +899,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Meus braços tinham penas longas!',
     },
     adulto: 'Velociraptor mongoliensis · Cretáceo Superior, cerca de 74 a 70 milhões de anos · evidência de penas nos braços',
+    pistas: [
+      'Eu comia carne.',
+      'Eu era menor que nos filmes.',
+      'Eu tinha penas nos braços!',
+    ],
   },
   {
     id: 'trex',
@@ -707,6 +919,11 @@ export const ANIMAIS: FichaAnimal[] = [
       curiosidade: 'Eu vivi mais perto do fim dos dinossauros do que muitos dinossauros famosos!',
     },
     adulto: 'Tyrannosaurus rex · final do Cretáceo, cerca de 68 a 66 milhões de anos',
+    pistas: [
+      'Eu comia carne.',
+      'Meus dentes eram enormes e fortes.',
+      'Eu vivi bem no final da era dos grandes dinossauros!',
+    ],
   },
 ];
 
@@ -776,3 +993,26 @@ export const MUNDOS_ATLAS = [
     abertura: 'Um fóssil é uma parte ou marca de um ser vivo muito antigo guardada nas rochas.',
   },
 ];
+
+/** Nomes femininos (para falar "a arara", "o tatu-bola"). */
+const FEMININOS = new Set([
+  'asa-branca', 'onca', 'arara', 'preguica', 'perereca', 'girafa', 'zebra', 'coruja-das-neves', 'raposa-artica',
+  'rena', 'foca', 'orca', 'foca-de-weddell', 'jubarte', 'tartaruga',
+]);
+
+export function fichaDe(id: string): FichaAnimal | undefined {
+  return ANIMAIS.find((a) => a.id === id);
+}
+
+/** Nome para falar em voz alta, com artigo: "o tatu-bola", "a arara-vermelha", "o Irritator". */
+export function comArtigo(f: FichaAnimal): string {
+  if (f.id === 'pegadas-sousa') return 'as Pegadas de Sousa';
+  // nomes de dinossauros são nomes científicos: ficam com maiúscula
+  const nome = f.mundo === 'dinossauros' ? f.nome : f.nome.toLowerCase();
+  return `${FEMININOS.has(f.id) ? 'a' : 'o'} ${nome}`;
+}
+
+/** Bichos que entram na adivinha "Quem sou eu?" (os que têm pistas; as pegadas de Sousa não). */
+export function entraNaAdivinha(f: FichaAnimal): boolean {
+  return !!f.pistas;
+}

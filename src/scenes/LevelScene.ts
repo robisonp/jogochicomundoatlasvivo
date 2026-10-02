@@ -202,6 +202,8 @@ export class LevelScene extends Phaser.Scene {
   private lixoPego = 0;
   /** Coluna onde começa cada trecho (para o poder por trecho da fase final). */
   private inicioTrechos: number[] = [];
+  /** Fichas que entraram no Atlas pela primeira vez nesta fase (revelação e adivinha no fim). */
+  private novosBichos: string[] = [];
   private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -220,6 +222,7 @@ export class LevelScene extends Phaser.Scene {
     this.submarino = undefined;
     this.brancura = undefined;
     this.mare = new Map();
+    this.novosBichos = [];
     this.nivelMare = 0;
     this.relogioMare = 0;
     this.totalLixo = 0;
@@ -1182,7 +1185,7 @@ export class LevelScene extends Phaser.Scene {
     b.ativado = true;
     const { def, img } = b;
     // Página do Atlas: o animal fica registrado para a coleção.
-    if (!def.semFicha) SaveManager.conquistar('animais', def.id);
+    if (!def.semFicha && SaveManager.conquistar('animais', def.id)) this.novosBichos.push(def.id);
     VoiceManager.falar(def.fala, def.quem ?? 'bicho');
     if (def.curiosidade) VoiceManager.falar(def.curiosidade, def.quem ?? 'bicho', true);
     this.add.particles(img.x, img.y - 30, 'brilho', {
@@ -1846,9 +1849,14 @@ export class LevelScene extends Phaser.Scene {
         tempoMs: this.tempo,
       };
       // minijogo da fase (cestos do Araripe, esqueleto do Buriolestes) antes da tela de fim
-      if (this.def.minijogo) {
+      const depois = this.def.minijogo === 'cestos' ? 'Cestos' : this.def.minijogo === 'esqueleto' ? 'Esqueleto' : 'Fim';
+      if (this.novosBichos.length) {
+        // bicho novo: a figurinha entra no Atlas e vem a adivinha (nas fases com minijogo, só a figurinha)
         this.scene.stop('Hud');
-        this.scene.launch(this.def.minijogo === 'cestos' ? 'Cestos' : 'Esqueleto', { fim });
+        this.scene.launch('Revelacao', { novos: this.novosBichos, adivinhas: this.def.minijogo ? 0 : 2, depois, fim });
+      } else if (depois !== 'Fim') {
+        this.scene.stop('Hud');
+        this.scene.launch(depois, { fim });
       } else this.scene.launch('Fim', fim);
       this.scene.pause();
     });
