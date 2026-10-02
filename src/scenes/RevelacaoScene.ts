@@ -1,8 +1,9 @@
 // Fim de fase com bicho novo: a figurinha voa para dentro do Atlas e, depois, uma adivinha só com figuras:
-// "Quem disse isso?" — toca a fala do bicho (do dossiê) e o Chico escolhe entre 3 bichos do mesmo mundo.
+// "Quem sou eu?" — o bicho dá 3 pistas (do dossiê: o que come, como é, o que sabe fazer) e o Chico escolhe
+// entre 3 bichos do mesmo mundo.
 // Errar só explica e deixa tentar de novo; depois de 2 erros, a figura certa pisca. Nada de pontos ou "errado".
 import Phaser from 'phaser';
-import { ANIMAIS, comArtigo, falaNaAdivinha, fichaDe, type FichaAnimal } from '../data/animais';
+import { ANIMAIS, comArtigo, entraNaAdivinha, fichaDe, type FichaAnimal } from '../data/animais';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 
@@ -43,7 +44,7 @@ export class RevelacaoScene extends Phaser.Scene {
 
     const fichas = this.dados.novos.map(fichaDe).filter((f): f is FichaAnimal => !!f);
     this.revelar(fichas, 0, () => {
-      const perguntas = fichas.filter(falaNaAdivinha).slice(0, this.dados.adivinhas);
+      const perguntas = fichas.filter(entraNaAdivinha).slice(0, this.dados.adivinhas);
       this.adivinha(perguntas, 0);
     });
   }
@@ -82,7 +83,7 @@ export class RevelacaoScene extends Phaser.Scene {
     });
   }
 
-  /** "Quem disse isso?": a fala do bicho e 3 figuras do mesmo mundo. */
+  /** "Quem sou eu?": as 3 pistas do bicho e 3 figuras do mesmo mundo. */
   private adivinha(perguntas: FichaAnimal[], i: number) {
     this.itens.forEach((o) => o.destroy());
     this.itens = [];
@@ -93,16 +94,18 @@ export class RevelacaoScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale;
     const alvo = perguntas[i];
     const outros = Phaser.Utils.Array.Shuffle(
-      ANIMAIS.filter((a) => a.mundo === alvo.mundo && a.id !== alvo.id && falaNaAdivinha(a)),
+      ANIMAIS.filter((a) => a.mundo === alvo.mundo && a.id !== alvo.id && entraNaAdivinha(a)),
     ).slice(0, 2);
     const opcoes = Phaser.Utils.Array.Shuffle([alvo, ...outros]);
     this.tweens.add({ targets: this.livro, alpha: 0.35, duration: 300 });
 
-    // alto-falante grande: tocar repete a fala
-    const falar = () => {
-      VoiceManager.falar('Adivinha! Quem disse isso?', 'narrador');
-      VoiceManager.falar(alvo.falas.apresentacao, 'bicho', true);
+    // alto-falante grande: tocar repete as pistas
+    const pistas = (inicio: string, enfileirar: boolean) => {
+      VoiceManager.falar(inicio, 'narrador', enfileirar);
+      for (const p of alvo.pistas ?? []) VoiceManager.falar(p, 'bicho', true);
+      VoiceManager.falar('Quem sou eu?', 'narrador', true);
     };
+    const falar = () => pistas('Adivinha! Escute as pistas.', false);
     const som = this.add.image(W / 2, H * 0.17, 'btn-som').setScale(1.5).setInteractive({ useHandCursor: true });
     this.tweens.add({ targets: som, scale: 1.65, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
     som.on('pointerdown', () => {
@@ -124,7 +127,8 @@ export class RevelacaoScene extends Phaser.Scene {
         if (f.id === alvo.id) {
           respondeu = true;
           AudioManager.tocar('certo');
-          VoiceManager.falar(`Isso! Foi ${comArtigo(alvo)}!`, 'narrador');
+          VoiceManager.falar('Isso!', 'narrador');
+          VoiceManager.falar(`Eu sou ${comArtigo(alvo)}!`, 'bicho', true);
           this.tweens.killTweensOf(carta);
           this.tweens.add({ targets: carta, scale: 1.25, x: W / 2, duration: 400, ease: 'Back.easeOut' });
           cartas.forEach((c) => c !== carta && this.tweens.add({ targets: c, alpha: 0, scale: 0.6, duration: 300 }));
@@ -134,8 +138,8 @@ export class RevelacaoScene extends Phaser.Scene {
           erros++;
           carta.setData('ativa', false);
           AudioManager.tocar('quase');
-          VoiceManager.falar(`Quase! Esse é ${comArtigo(f)}. Escute de novo!`, 'narrador');
-          VoiceManager.falar(alvo.falas.apresentacao, 'bicho', true);
+          VoiceManager.falar(`Quase! Esse é ${comArtigo(f)}.`, 'narrador');
+          pistas('Escute as pistas de novo.', true);
           this.tweens.add({ targets: carta, angle: { from: -8, to: 8 }, yoyo: true, repeat: 2, duration: 80, onComplete: () => carta.setAngle(0) });
           this.tweens.add({ targets: carta, alpha: 0.4, duration: 300 });
           // depois de 2 erros, a figura certa pisca para ninguém ficar travado
