@@ -10,6 +10,7 @@ import { gerarArtico } from './Artico';
 import { gerarAntartica } from './Antartica';
 import { gerarPraia } from './Praia';
 import { gerarDinossauros } from './Dinossauros';
+import { gerarInimigos } from './Inimigos';
 import { gerarFamilia } from './Familia';
 import { gerarMapa } from './Mapa';
 
@@ -59,6 +60,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarAntartica(scene);
   gerarPraia(scene);
   gerarDinossauros(scene);
+  gerarInimigos(scene);
   gerarFamilia(scene);
   gerarMapa(scene);
 }

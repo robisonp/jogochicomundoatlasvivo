@@ -71,6 +71,16 @@ interface ColunaMare {
   corpo: Phaser.GameObjects.TileSprite;
 }
 
+/** Redemoinho do Vento Viravolta (X): anda para lá e para cá; pular em cima desmancha. */
+interface Redemoinho {
+  img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  dir: number;
+  vivo: boolean;
+  folhas: Phaser.GameObjects.Particles.ParticleEmitter;
+  /** Onde nasceu: anda no máximo 3 blocos para cada lado (não chega nos checkpoints). */
+  x0: number;
+}
+
 interface Pedregulho {
   img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   x0: number;
@@ -204,6 +214,10 @@ export class LevelScene extends Phaser.Scene {
   private inicioTrechos: number[] = [];
   /** Fichas que entraram no Atlas pela primeira vez nesta fase (revelação e adivinha no fim). */
   private novosBichos: string[] = [];
+  private redemoinhos: Redemoinho[] = [];
+  private grupoRedemoinhos!: Phaser.Physics.Arcade.Group;
+  /** Depois de renascer, um instante sem levar dano dos redemoinhos. */
+  private semDanoAte = 0;
   private escuridao?: Phaser.GameObjects.Image;
 
   constructor() {
@@ -223,6 +237,8 @@ export class LevelScene extends Phaser.Scene {
     this.brancura = undefined;
     this.mare = new Map();
     this.novosBichos = [];
+    this.redemoinhos = [];
+    this.semDanoAte = 0;
     this.nivelMare = 0;
     this.relogioMare = 0;
     this.totalLixo = 0;
@@ -325,6 +341,11 @@ export class LevelScene extends Phaser.Scene {
     );
     this.physics.add.overlap(this.player.sprite, this.objetivo, () => this.concluir());
     this.physics.add.overlap(this.player.sprite, this.lixos, (_p, l) => this.recolherLixo(l as Phaser.Types.Physics.Arcade.ImageWithStaticBody));
+    this.physics.add.collider(this.grupoRedemoinhos, this.solidos);
+    this.physics.add.collider(this.grupoRedemoinhos, this.grupoFofas);
+    this.physics.add.collider(this.grupoRedemoinhos, this.grupoNeves);
+    this.physics.add.collider(this.grupoRedemoinhos, this.lajes);
+    this.physics.add.overlap(this.player.sprite, this.grupoRedemoinhos, (_p, r) => this.tocarRedemoinho(r as Phaser.Types.Physics.Arcade.ImageWithDynamicBody));
 
     // Câmera: segue com suavidade e antecipa a direção do movimento
     const cam = this.cameras.main;
@@ -504,6 +525,7 @@ export class LevelScene extends Phaser.Scene {
     this.grupoFofas = this.physics.add.staticGroup();
     this.grupoNeves = this.physics.add.staticGroup();
     this.lixos = this.physics.add.staticGroup();
+    this.grupoRedemoinhos = this.physics.add.group({ allowGravity: true });
     this.respingos = this.add.particles(0, 0, 'bolha', {
       lifespan: 600,
       speedX: { min: -140, max: 140 },
@@ -759,6 +781,29 @@ export class LevelScene extends Phaser.Scene {
             this.neves.set(`${c},${r}`, n);
             break;
           }
+          case 'X': {
+            // redemoinho do Vento Viravolta, apoiado no chão do bloco
+            const img = this.grupoRedemoinhos.create(cx, y + TILE - 38, 'redemoinho') as Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+            img.setDepth(9).setScale(1.15);
+            img.body.setSize(44, 48).setOffset(16, 26);
+            // nos mundos de gelo, um tom mais escuro para não sumir no branco
+            if (this.tema.ceu === 'ceu-artico' || this.tema.ceu === 'ceu-antartica') img.setTint(0x8ea3bf);
+            img.body.setGravityY(PLAYER.gravity);
+            img.body.setMaxVelocityY(PLAYER.maxFall);
+            const folhas = this.add.particles(0, 0, this.tema.particulaVento ?? 'folha', {
+              lifespan: 700,
+              speed: { min: 30, max: 70 },
+              angle: { min: 180, max: 360 },
+              rotate: { min: 0, max: 360 },
+              scale: { start: 1.2, end: 0.4 },
+              alpha: { start: 1, end: 0 },
+              frequency: 110,
+              follow: img,
+              followOffset: { x: 0, y: 10 },
+            }).setDepth(8.9);
+            this.redemoinhos.push({ img, dir: -1, vivo: true, folhas, x0: cx });
+            break;
+          }
           case 'l': {
             const tipos = ['lixo-garrafa', 'lixo-lata', 'lixo-rede'];
             const l = this.lixos.create(cx, y + TILE - 18, tipos[(c + r) % 3]).setDepth(4) as Phaser.Types.Physics.Arcade.ImageWithStaticBody;
@@ -937,6 +982,7 @@ export class LevelScene extends Phaser.Scene {
     this.atualizarPoderPorTrecho();
     // o emu é só visual: usa o tempo real do quadro (não o limitado da física) para nunca ficar para trás
     this.guiarBichos(deltaMs / 1000);
+    this.moverRedemoinhos();
     this.atualizarSons(dt);
     for (const p of this.pedregulhos) {
       // Pedregulho que caiu num buraco sem fundo volta para o lugar (a fase nunca fica impossível).
@@ -1594,6 +1640,76 @@ export class LevelScene extends Phaser.Scene {
   }
 
   /** Topo do chão na coluna do ponto x, procurando a partir de um pouco acima de y. */
+  // ------------------------------------------------------------------ redemoinhos do Vento Viravolta
+
+  /** Andam para lá e para cá; viram na parede, na beirada, na água e nos espinhos. */
+  private moverRedemoinhos() {
+    const t = this.time.now;
+    for (const r of this.redemoinhos) {
+      if (!r.vivo) continue;
+      const b = r.img.body;
+      if (b.blocked.down) {
+        const frente = r.img.x + r.dir * 26;
+        const linhaPes = Math.floor((b.bottom + 4) / TILE);
+        const linhaCorpo = Math.floor((b.bottom - 8) / TILE);
+        const col = Math.floor(frente / TILE);
+        const chao = this.grade[linhaPes]?.[col] ?? '.';
+        const naFrente = this.grade[linhaCorpo]?.[col] ?? '.';
+        const temChao = chao in this.tema.solidos || 'FN='.includes(chao);
+        const longe = (r.img.x - r.x0) * r.dir > TILE * 3;
+        if (!temChao || longe || naFrente === '^' || (b.blocked.left && r.dir < 0) || (b.blocked.right && r.dir > 0)) r.dir = -r.dir;
+        b.setVelocityX(r.dir * 70);
+      }
+      // balanço do vento: troca de quadro e gira de leve
+      r.img.setTexture(Math.floor(t / 180) % 2 ? 'redemoinho' : 'redemoinho-2');
+      r.img.setFlipX(r.dir > 0);
+    }
+    // na primeira vez que um redemoinho aparece, o narrador explica
+    if (!SaveManager.data.anunciados.includes('redemoinho')) {
+      const perto = this.redemoinhos.find((r) => r.vivo && Math.abs(r.img.x - this.player.x) < 520);
+      if (perto) {
+        SaveManager.conquistar('anunciados', 'redemoinho');
+        VoiceManager.falar('Um redemoinho do Vento Viravolta! Pule em cima dele para desmanchar!', 'narrador');
+      }
+    }
+  }
+
+  /** Pisou em cima (ou passou em bola, arrancada, tobogã, giro ou mergulho): desmancha. De lado: machuca. */
+  private tocarRedemoinho(img: Phaser.Types.Physics.Arcade.ImageWithDynamicBody) {
+    const r = this.redemoinhos.find((x) => x.img === img);
+    const p = this.player;
+    if (!r || !r.vivo || p.estado === 'caido' || this.terminou) return;
+    const pb = p.sprite.body;
+    const pisou = pb.velocity.y > 0 && pb.bottom <= img.body.top + 20;
+    const forte = p.protegido || p.arrancando || p.deslizando || p.girando || p.mergulhando;
+    if (pisou || forte) {
+      this.desmancharRedemoinho(r);
+      // quique no pisão, como nos jogos de plataforma
+      if (pisou && !forte) pb.setVelocityY(-PLAYER.jumpVelocity * 0.8);
+    } else if (this.time.now > this.semDanoAte) {
+      this.morrer();
+    }
+  }
+
+  private desmancharRedemoinho(r: Redemoinho) {
+    r.vivo = false;
+    r.img.body.enable = false;
+    r.folhas.stop();
+    AudioManager.tocar('desmanchar');
+    this.add.particles(r.img.x, r.img.y, this.tema.particulaVento ?? 'folha', {
+      lifespan: 800,
+      speed: { min: 80, max: 220 },
+      rotate: { min: 0, max: 360 },
+      scale: { start: 1.1, end: 0.2 },
+      alpha: { start: 1, end: 0 },
+      emitting: false,
+    }).setDepth(9).explode(18);
+    this.tweens.add({ targets: r.img, scaleX: 1.6, scaleY: 0.2, alpha: 0, duration: 260, ease: 'Quad.easeOut', onComplete: () => r.img.setVisible(false) });
+    // a página que o Viravolta tinha levado sai voando de volta
+    const pagina = this.add.image(r.img.x, r.img.y, 'pagina').setScale(0.35).setDepth(9);
+    this.tweens.add({ targets: pagina, y: pagina.y - 140, angle: 200, alpha: 0, duration: 1100, ease: 'Sine.easeOut', onComplete: () => pagina.destroy() });
+  }
+
   private chaoEm(x: number, y: number): number | null {
     const c = Math.floor(x / TILE);
     for (let r = Math.max(0, Math.floor(y / TILE) - 3); r < LINHAS; r++) {
@@ -1790,6 +1906,7 @@ export class LevelScene extends Phaser.Scene {
     const tentativas = SaveManager.registrarTentativa(trecho);
     this.player.cair(() => {
       this.player.renascer(this.respawn.x, this.respawn.y);
+      this.semDanoAte = this.time.now + 1200;
       this.cameras.main.flash(150, 255, 255, 255);
       if (motivo === 'gelada' && this.resgates++ < 2) {
         const falas = ['Opa! Essa água é gelada demais! A mamãe tirou você.', 'Achei você! Vamos tentar de novo, pelo gelo.'];
