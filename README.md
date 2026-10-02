@@ -44,6 +44,8 @@ Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é 
 
 Vozes gravadas pela família: coloque os áudios em `public/vozes/<pessoa>/` (ex.: `public/vozes/lili/lili-001.m4a`), com o código de cada fala no nome (os códigos estão no documento "Falas da família para gravar" e em `src/data/vozes.ts`). O jogo toca a gravação quando ela existe e usa a voz sintética nas outras falas. Funcionam .m4a, .mp3, .ogg, .opus, .wav, .webm e .aac; o nome aceita variações como `Lili_1` ou `lili 001`. Na área dos adultos aparece quantas falas já têm gravação, com um botão para ouvir todas.
 
+Cozinha da Vovó Lili: **toque na panela laranja da tela de título**. O Chico ajuda a avó em 4 receitas, só com figuras e voz: salada de frutas (separar por cor), sopa de legumes (redondos e compridos), feira (grande e pequeno) e bolo de cenoura (contar 3 ovos e 2 cenouras). Dá para arrastar o ingrediente ou tocar nele e depois na tigela. As receitas abrem com 0, 1, 3 e 5 selos das aventuras (`src/scenes/CozinhaScene.ts`, arte em `src/art/Cozinha.ts`). As falas da vovó são `lili-161` a `lili-179`.
+
 Atlas: **toque no livro roxo da tela de título** (ou no livro do mapa). Cada bicho encontrado vira uma figurinha; na ficha, os símbolos falam onde ele vive (🗺️), o que come (🍃), o tamanho (📏) e uma curiosidade (⭐). Os textos vêm de `src/data/animais.ts`, tirados do dossiê científico.
 
 Área dos adultos: **segure a engrenagem por 2 segundos** (no título ou na pausa). Lá ficam o lado do direcional, os volumes, "reduzir movimento" e os códigos de save.
