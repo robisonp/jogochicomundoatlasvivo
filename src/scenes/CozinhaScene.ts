@@ -3,6 +3,7 @@
 // As receitas abrem com os selos das aventuras (0, 1, 3 e 5 selos). Errar não tira nada: a vovó explica
 // e o ingrediente volta para o lugar. Dá para arrastar o ingrediente OU tocar nele e depois na tigela.
 import Phaser from 'phaser';
+import { ajustarTela } from '../core/Tela';
 import { SaveManager } from '../core/SaveManager';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
@@ -138,6 +139,7 @@ export class CozinhaScene extends Phaser.Scene {
   }
 
   create() {
+    ajustarTela();
     const { width: W, height: H } = this.scale;
     this.input.dragDistanceThreshold = 10;
     this.cenario(W, H);

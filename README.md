@@ -32,7 +32,11 @@ Parâmetros de URL úteis:
 | Poder do Bicho | Botão 🐾 (só quando houver) | C ou Shift | Y / RB / LB |
 | Pausa | ⏸ no canto | Esc ou P | Start |
 
-Mapa: o **botão verde da tela de título** abre o mapa-múndi com a rota dos 8 mundos. Toque num mundo aberto para escolher a fase, ou no botão verde do mapa para continuar de onde parou. Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro; quando um mundo novo abre, o Chico viaja pela rota e o narrador diz o continente e o país.
+Menu de entrada: o letreiro "CHICO e o Atlas Vivo" cai do céu, a família chega pulando e o botão verde **COMEÇAR** leva ao mapa. Embaixo ficam o livro do Atlas e a panela da Cozinha, com o nome numa plaquinha. No celular e no tablet, COMEÇAR liga a tela cheia e trava a tela deitada, quando o navegador permite. A arte do menu fica em `src/art/Menu.ts`.
+
+Tamanho da tela: o jogo ocupa a tela toda, com pelo menos 1280x720 visíveis, e acompanha a proporção do aparelho. Se a tela muda depois de abrir (o celular abriu em pé e foi girado, a barra do navegador sumiu, entrou em tela cheia), as telas de menu (título, mapa, Atlas e cozinha) se remontam sozinhas. No meio de uma fase nada reinicia: o jogo só encolhe para caber até voltar ao mapa (`src/core/Tela.ts`).
+
+Mapa: o **botão COMEÇAR** abre o mapa-múndi com a rota dos 8 mundos. Toque num mundo aberto para escolher a fase, ou no botão verde do mapa para continuar de onde parou. Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro; quando um mundo novo abre, o Chico viaja pela rota e o narrador diz o continente e o país.
 
 Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly e Laura aparecem por chamada de vídeo, no Chamador do Atlas), e o rosto de quem está falando surge no alto da tela. Na tela de título, toque em alguém para ele se apresentar. **A aparência vem da arte feita pela família**, recortada numa folha só (`public/familia/familia.png`, com os quadros `corpo-<id>` e `rosto-<id>` descritos em `familia.json`). O papel de cada um no jogo fica em `src/data/familia.ts`.
 
