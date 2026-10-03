@@ -42,6 +42,12 @@ Família: cada pessoa aparece em pé ao lado da placa em que fala (as Tias Kelly
 
 Chico: vem da **folha de personagem feita pela família**, recortada em peças (`public/chico/chico.png` e `chico.json`: cabeça, camisa, bermuda, braço e perna). O jogo monta o boneco com elas e anima braços e pernas girando no ombro e no quadril (posições em `C`, no topo de `src/entities/Player.ts`); a piscada é uma pálpebra desenhada por cima dos olhos.
 
+Encontro com um bicho: o jogo para, a tela escurece e a figura do bicho cresce no meio dela enquanto ele fala (com o botão de ouvir de novo). Quando a fala acaba, a figura volta para o lugar e o Chico pode seguir (no mínimo 2,2 s de figura na tela). O HUD desenha a figura (`HudScene.focarBicho`) e a fase espera (`LevelScene.focarBicho` / `soltarFoco`).
+
+Falas sem atraso: as gravações da família são baixadas em segundo plano depois do primeiro toque e tocam da memória. A voz sintética é "acordada" nesse primeiro toque, prefere as vozes do próprio aparelho (as de internet demoram para começar) e confere sozinha quando a fala acabou, sem depender do aviso do navegador, que às vezes falha.
+
+Placas, pessoas da família e bandeiras sempre ficam em chão firme: se o desenho da fase as deixou na beira de um buraco ou um pouco acima do chão, o jogo as coloca no bloco com chão mais perto.
+
 Fim de fase com bicho novo: a figurinha entra no Atlas e vem uma adivinha "Quem sou eu?": o bicho dá 3 pistas (em `pistas`, nas fichas de `src/data/animais.ts`) e o Chico escolhe entre 3 figuras (`src/scenes/RevelacaoScene.ts`).
 
 Minijogos do Mundo 8: na fase 38, separar em dois cestos quem é e quem não é dinossauro; na 39, montar o esqueleto do Buriolestes. Os dois são falados e funcionam só arrastando ou tocando (`src/scenes/CestosScene.ts` e `EsqueletoScene.ts`). A fase 40 muda o poder do botão da pata a cada trecho (`poderPorTrecho`).

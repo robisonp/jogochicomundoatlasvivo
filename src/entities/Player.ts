@@ -120,7 +120,11 @@ export class Player {
     const peca = (x: number, y: number, quadro: string, escala: number, ox = 0.5, oy = 0.5) =>
       scene.add.image(x, y, 'chico', quadro).setOrigin(ox, oy).setScale(escala);
     const pernaTras = peca(-C.pernaX, C.pernaY, 'perna', C.pernaEscala, 0.45, 0.06).setTint(0xd8d8d8);
-    const bracoTras = peca(-C.bracoX, C.bracoY, 'braco', C.bracoEscala, 0.3, 0.06).setFlipX(true).setTint(0xd0d0d0);
+    // O braço de trás é o mesmo desenho espelhado. Espelhar vira a figura pelo meio, então o ombro (a 30% da
+    // largura no desenho original) passa a ficar a 70%: o eixo de giro vai junto, senão o braço "solta" do ombro
+    // quando gira muito (na comemoração do fim da fase). A posição compensa a diferença (mesma pose parada).
+    const larguraBraco = scene.textures.getFrame('chico', 'braco').realWidth * C.bracoEscala;
+    const bracoTras = peca(-C.bracoX + 0.4 * larguraBraco, C.bracoY, 'braco', C.bracoEscala, 0.7, 0.06).setFlipX(true).setTint(0xd0d0d0);
     const pernaFrente = peca(C.pernaX, C.pernaY, 'perna', C.pernaEscala, 0.45, 0.06);
     const bermuda = peca(0, C.bermudaY, 'bermuda', C.bermudaEscala, 0.5, 1);
     const camisa = peca(0, C.camisaY, 'camisa', C.camisaEscala, 0.5, 0);
@@ -631,9 +635,11 @@ export class Player {
       // girado de cabeça para baixo em volta do alto do corpo: a cabeça fica embaixo, dentro da caixa de colisão
       v.y = b.top + 8;
     } else if (this.estado === 'festa') {
-      bracoF = -2.6 + Math.sin(t * 14) * 0.3;
-      bracoT = -2.4 - Math.sin(t * 14) * 0.3;
-      quique = -Math.abs(Math.sin(t * 7)) * 18;
+      // "Êêê!": os dois braços abertos para cima, balançando (o da frente não passa na frente do rosto)
+      bracoF = -1.85 + Math.sin(t * 14) * 0.25;
+      bracoT = 1.85 - Math.sin(t * 14) * 0.25;
+      // pulinhos de alegria: o corpo inteiro sobe junto (sem separar a cabeça da camisa)
+      v.y = b.bottom - Math.abs(Math.sin(t * 7)) * 18;
     } else if (this.estado === 'caido') {
       bracoF = -2.2;
       bracoT = -2.2;
