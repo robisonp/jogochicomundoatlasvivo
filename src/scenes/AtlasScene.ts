@@ -1,6 +1,7 @@
 // Atlas Vivo: coleção dos bichos encontrados. Funciona por símbolos e voz (a criança não precisa ler).
 // Página esquerda: figurinhas do mundo e o selo. Página direita: ficha do bicho escolhido.
 import Phaser from 'phaser';
+import { ajustarTela } from '../core/Tela';
 import { SaveManager } from '../core/SaveManager';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
@@ -37,6 +38,7 @@ export class AtlasScene extends Phaser.Scene {
   }
 
   create() {
+    ajustarTela();
     const { width: W, height: H } = this.scale;
     this.cartas = [];
     this.ficha = [];

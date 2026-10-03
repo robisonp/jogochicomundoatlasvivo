@@ -2,6 +2,7 @@
 // Toque num mundo aberto para escolher a fase; o botão verde continua de onde parou.
 // Na primeira vez, a Tia Marcela liga pelo Chamador do Atlas e conta a história do livro.
 import Phaser from 'phaser';
+import { ajustarTela } from '../core/Tela';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
 import { SaveManager } from '../core/SaveManager';
@@ -31,6 +32,7 @@ export class MapaScene extends Phaser.Scene {
   }
 
   create() {
+    ajustarTela();
     const { width: W, height: H } = this.scale;
     this.marcadores = [];
     this.painel = undefined;
