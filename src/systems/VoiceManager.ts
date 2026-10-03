@@ -67,6 +67,17 @@ class VoiceManagerImpl {
   private relogio?: number;
   /** Cada fala tocada ganha um número; avisos atrasados de falas antigas são ignorados. */
   private vez = 0;
+  /**
+   * A fala sintética em andamento. Guardar a referência é importante: no Chrome, se ela for recolhida da
+   * memória antes de terminar, o aviso de "terminou" nunca chega e a fala seguinte espera o tempo de segurança.
+   */
+  private falando?: SpeechSynthesisUtterance;
+  /** Quando a voz sintética foi interrompida pela última vez (falar logo depois pode travar no Android). */
+  private caladoEm = 0;
+  /** Gravações já baixadas (endereço local na memória): tocam na hora, sem esperar a internet. */
+  private baixadas = new Map<string, string>();
+  /** Quem espera a fila de falas acabar (ex.: o momento do bicho na fase). */
+  private aoAcabar: (() => void)[] = [];
 
   aoFalar(fn: (quem: Personagem) => void): () => void {
     this.ouvintes.add(fn);
@@ -74,6 +85,15 @@ class VoiceManagerImpl {
   }
 
   constructor() {
+    // No primeiro toque na tela: acorda a voz sintética (a primeira fala do aparelho costuma demorar)
+    // e começa a baixar as gravações da família em segundo plano.
+    const primeiroToque = () => {
+      window.removeEventListener('pointerdown', primeiroToque, true);
+      window.removeEventListener('keydown', primeiroToque, true);
+      this.aquecer();
+    };
+    window.addEventListener('pointerdown', primeiroToque, true);
+    window.addEventListener('keydown', primeiroToque, true);
     const synth = window.speechSynthesis;
     if (!synth) return;
     const carregar = () => {
@@ -81,6 +101,49 @@ class VoiceManagerImpl {
     };
     carregar();
     synth.addEventListener?.('voiceschanged', carregar);
+  }
+
+  /** Prepara a voz sintética (fala vazia, sem som) e baixa as gravações, uma de cada vez. */
+  private aquecer(): void {
+    const synth = window.speechSynthesis;
+    if (synth && !synth.speaking) {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      synth.speak(u);
+    }
+    const lista = [...new Set(ARQUIVO_DA_FALA.values())];
+    const baixar = async () => {
+      for (const arq of lista) {
+        if (this.baixadas.has(arq)) continue;
+        try {
+          const r = await fetch(arq);
+          if (r.ok) this.baixadas.set(arq, URL.createObjectURL(await r.blob()));
+        } catch {
+          /* sem internet: toca direto do arquivo na hora da fala */
+        }
+      }
+    };
+    void baixar();
+  }
+
+  /** Alguma fala tocando ou na fila. */
+  get estaFalando(): boolean {
+    return this.tocando || this.fila.length > 0;
+  }
+
+  /** Chama `fn` quando a fila de falas acabar (na hora, se não houver nada falando). */
+  quandoAcabar(fn: () => void): void {
+    if (!this.tocando && this.fila.length === 0) {
+      fn();
+      return;
+    }
+    this.aoAcabar.push(fn);
+  }
+
+  private avisarFim(): void {
+    const lista = this.aoAcabar;
+    this.aoAcabar = [];
+    for (const fn of lista) fn();
   }
 
   get disponivel(): boolean {
@@ -96,7 +159,9 @@ class VoiceManagerImpl {
 
   private escolherVoz(p: Perfil): SpeechSynthesisVoice | undefined {
     const br = this.vozes.filter((v) => /br/i.test(v.lang));
-    const lista = br.length ? br : this.vozes;
+    // vozes do próprio aparelho primeiro: as vozes "de internet" demoram para começar a falar
+    const locais = br.filter((v) => v.localService);
+    const lista = locais.length ? locais : br.length ? br : this.vozes;
     if (p.prefere === 'feminina') return lista.find((v) => FEM.test(v.name + v.voiceURI)) ?? lista[0];
     if (p.prefere === 'masculina') return lista.find((v) => MASC.test(v.name + v.voiceURI)) ?? lista[0];
     return lista[0];
@@ -128,6 +193,7 @@ class VoiceManagerImpl {
     const item = this.fila.shift();
     if (!item) {
       this.tocando = false;
+      this.avisarFim();
       return;
     }
     this.tocando = true;
@@ -144,7 +210,7 @@ class VoiceManagerImpl {
     // segurança: anda depois de um tempo proporcional ao texto, mesmo sem o aviso de "terminou"
     this.relogio = window.setTimeout(acabou, 2500 + item.texto.length * 90);
     if (item.arquivo) {
-      const a = new Audio(item.arquivo);
+      const a = new Audio(this.baixadas.get(item.arquivo) ?? item.arquivo);
       a.volume = Math.min(1, vol);
       a.onended = acabou;
       // gravação: a segurança usa a duração real do arquivo (a vovó pode falar devagar)
@@ -180,9 +246,38 @@ class VoiceManagerImpl {
     u.pitch = p.pitch;
     u.rate = p.rate;
     u.volume = vol;
-    u.onend = acabou;
-    u.onerror = acabou;
-    synth.speak(u);
+    let comecou = false;
+    const inicio = performance.now();
+    const fim = () => {
+      window.clearInterval(vigia);
+      if (this.falando === u) this.falando = undefined;
+      acabou();
+    };
+    u.onstart = () => {
+      comecou = true;
+      // segurança mais justa, contada do começo real da fala (~13 letras por segundo)
+      window.clearTimeout(this.relogio);
+      this.relogio = window.setTimeout(fim, 1500 + (item.texto.length / (13 * p.rate)) * 1000);
+    };
+    u.onend = fim;
+    u.onerror = fim;
+    // alguns aparelhos não avisam que a fala acabou: confere de tempos em tempos
+    const vigia = window.setInterval(() => {
+      if (this.falando !== u) {
+        window.clearInterval(vigia);
+        return;
+      }
+      if ((comecou || performance.now() - inicio > 2000) && !synth.speaking && !synth.pending) fim();
+    }, 250);
+    this.falando = u;
+    const dizer = () => {
+      if (this.falando !== u) return;
+      if (synth.paused) synth.resume();
+      synth.speak(u);
+    };
+    // logo depois de interromper outra fala, o Android às vezes engole a nova: espera um instante
+    if (performance.now() - this.caladoEm < 120) window.setTimeout(dizer, 80);
+    else dizer();
   }
 
   repetir(): void {
@@ -199,7 +294,16 @@ class VoiceManagerImpl {
       this.audio.pause();
       this.audio = undefined;
     }
-    window.speechSynthesis?.cancel();
+    this.falando = undefined;
+    const synth = window.speechSynthesis;
+    if (synth && (synth.speaking || synth.pending)) {
+      synth.cancel();
+      this.caladoEm = performance.now();
+    }
+    // ninguém mais vai falar logo em seguida? avisa quem esperava a fila acabar
+    window.setTimeout(() => {
+      if (!this.tocando && this.fila.length === 0) this.avisarFim();
+    }, 0);
   }
 }
 

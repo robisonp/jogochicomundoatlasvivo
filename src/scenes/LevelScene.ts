@@ -165,6 +165,8 @@ export class LevelScene extends Phaser.Scene {
   private tempo = 0;
   private terminou = false;
   private pausado = false;
+  /** Momento do bicho: o jogo para enquanto o bicho fala, com a figura dele grande na tela. */
+  emFoco = false;
   private fundo: { img: Phaser.GameObjects.TileSprite; fator: number; afundar: number }[] = [];
   private olharFrente = 0;
   private dicaMostrada = new Set<number>();
@@ -263,6 +265,7 @@ export class LevelScene extends Phaser.Scene {
     this.tempo = 0;
     this.terminou = false;
     this.pausado = false;
+    this.emFoco = false;
     this.dicaMostrada = new Set();
     this.olharFrente = 0;
     this.relogioPlataformas = 0;
@@ -457,6 +460,14 @@ export class LevelScene extends Phaser.Scene {
     const at = (r: number, c: number) => (r >= 0 && r < linhas && c >= 0 && c < cols ? grade[r][c] : '.');
     const SOLIDOS = this.tema.solidos;
     const solido = (r: number, c: number) => at(r, c) in SOLIDOS;
+    /** Linha onde algo colocado em (r, c) fica em pé: a própria ou até 3 abaixo, se houver chão (ou galho) embaixo. */
+    const pouso = (r: number, c: number): number | null => {
+      for (let rr = r; rr <= r + 3; rr++) {
+        if (solido(rr, c)) return null;
+        if (solido(rr + 1, c) || at(rr + 1, c) === '=') return rr;
+      }
+      return null;
+    };
     // Bicho ou pegada no meio do rio (água dos dois lados) também conta como água.
     const aguaEm = (r: number, c: number): string | null => {
       const ch = at(r, c);
@@ -666,31 +677,42 @@ export class LevelScene extends Phaser.Scene {
             break;
           }
           case 'C': {
-            const img = this.add.image(cx, y + TILE, 'checkpoint').setOrigin(0.5, 1).setDepth(2);
-            this.checkpoints.push({ img, x: cx, y: y + TILE - PLAYER.bodyHeight / 2, indice: cpIdx++, ativo: false });
+            // bandeira no chão: se o desenho da fase a deixou um pouco acima do chão, ela desce até ele
+            const yc = (pouso(r, c) ?? r) * TILE + TILE;
+            const img = this.add.image(cx, yc, 'checkpoint').setOrigin(0.5, 1).setDepth(2);
+            this.checkpoints.push({ img, x: cx, y: yc - PLAYER.bodyHeight / 2, indice: cpIdx++, ativo: false });
             break;
           }
           case 'S': {
-            const img = this.add.image(cx, y + TILE, 'placa').setOrigin(0.5, 1).setDepth(2);
+            // Placa e pessoa sempre em chão firme: se o desenho da fase deixou a placa na beira de um buraco,
+            // ela vai para o bloco com chão mais perto (até 2 blocos para o lado).
+            let cp = c;
+            if (pouso(r, c) === null) cp = c + ([-1, 1, -2, 2].find((d) => pouso(r, c + d) !== null) ?? 0);
+            const rp = pouso(r, cp) ?? r;
+            const temChao = (cc: number) => pouso(rp, cc) === rp;
+            const px = cp * TILE + TILE / 2;
+            const yp = rp * TILE + TILE;
+            const img = this.add.image(px, yp, 'placa').setOrigin(0.5, 1).setDepth(2);
             const quem = this.def.placas[placaIdx]?.quem;
             let pessoa: Placa['pessoa'];
             if (quem && ehFamiliar(quem)) {
               if (FAMILIA[quem].presencial) {
-                // em pé ao lado da placa, olhando para o Chico (que vem da esquerda); do outro lado se houver parede
-                const lado = solido(r, c + 1) ? -1 : 1;
+                // em pé ao lado da placa, olhando para o Chico (que vem da esquerda), no lado que tem chão;
+                // sem chão dos dois lados, fica na frente da placa
+                const lado = temChao(cp + 1) ? 1 : temChao(cp - 1) ? -1 : 0;
                 pessoa = this.add
-                  .image(cx + lado * 46, y + TILE, 'familia', `corpo-${quem}`)
+                  .image(px + (lado ? lado * 46 : 18), yp, 'familia', `corpo-${quem}`)
                   .setOrigin(0.5, 1)
                   .setScale(0.5)
                   .setFlipX(true)
                   .setDepth(2.5)
-                  .setData('y0', y + TILE);
+                  .setData('y0', yp);
               } else {
                 // chamada de vídeo: o tabletzinho flutua em cima da placa
                 const tela = this.add.image(0, 0, 'chamador');
                 const rosto = this.add.image(0, -8, 'familia', `rosto-${quem}`).setScale(0.62);
-                pessoa = this.add.container(cx, y - 30, [tela, rosto]).setDepth(2.5).setScale(0.8);
-                this.tweens.add({ targets: pessoa, y: y - 40, yoyo: true, repeat: -1, duration: 1000, ease: 'Sine.easeInOut' });
+                pessoa = this.add.container(px, yp - TILE - 30, [tela, rosto]).setDepth(2.5).setScale(0.8);
+                this.tweens.add({ targets: pessoa, y: yp - TILE - 40, yoyo: true, repeat: -1, duration: 1000, ease: 'Sine.easeInOut' });
               }
             }
             this.placas.push({ img, indice: placaIdx++, ouvida: false, pessoa });
@@ -910,8 +932,8 @@ export class LevelScene extends Phaser.Scene {
     const dt = Math.min(deltaMs, 50) / 1000;
     const i = this.entrada.update();
 
-    if (i.pausePressed && !this.terminou) this.pausar();
-    if (this.pausado) return;
+    if (i.pausePressed && !this.terminou && !this.emFoco) this.pausar();
+    if (this.pausado || this.emFoco) return;
     if (!this.terminou) this.tempo += deltaMs;
 
     this.moverPlataformas(dt);
@@ -1204,6 +1226,33 @@ export class LevelScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Momento do bicho: tudo para (física e relógio da fase, então a demonstração do bicho espera) e o HUD mostra
+   * a figura dele grande no meio da tela enquanto ele fala. O HUD chama soltarFoco() quando a fala acaba.
+   */
+  private focarBicho(b: Bicho) {
+    // sem o HUD para mostrar a figura e soltar depois, o jogo não para
+    if (this.terminou || this.emFoco || this.events.listenerCount('foco-bicho') === 0) return;
+    this.emFoco = true;
+    this.physics.pause();
+    this.time.paused = true;
+    const cam = this.cameras.main;
+    const chave = b.img.texture.key;
+    this.events.emit('foco-bicho', {
+      textura: this.textures.exists(`${chave}-hd`) ? `${chave}-hd` : chave,
+      x: b.img.x - cam.scrollX,
+      y: b.img.y - b.img.displayHeight / 2 - cam.scrollY,
+    });
+  }
+
+  /** Fim do momento do bicho: o Chico pode seguir. */
+  soltarFoco() {
+    if (!this.emFoco) return;
+    this.emFoco = false;
+    this.time.paused = false;
+    if (!this.pausado) this.physics.resume();
+  }
+
   /** Fase final: cada trecho usa o poder de um mundo no botão da pata. */
   private atualizarPoderPorTrecho() {
     const lista = this.def.poderPorTrecho;
@@ -1234,6 +1283,7 @@ export class LevelScene extends Phaser.Scene {
     if (!def.semFicha && SaveManager.conquistar('animais', def.id)) this.novosBichos.push(def.id);
     VoiceManager.falar(def.fala, def.quem ?? 'bicho');
     if (def.curiosidade) VoiceManager.falar(def.curiosidade, def.quem ?? 'bicho', true);
+    this.focarBicho(b);
     this.add.particles(img.x, img.y - 30, 'brilho', {
       lifespan: 700,
       speed: { min: 60, max: 160 },

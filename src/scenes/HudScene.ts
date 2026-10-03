@@ -97,6 +97,11 @@ export class HudScene extends Phaser.Scene {
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, pararDeOuvir);
 
+    // Momento do bicho: a figura dele cresce no meio da tela e o jogo espera a fala acabar.
+    const aoFocar = (d: { textura: string; x: number; y: number }) => this.focarBicho(d);
+    this.level.events.on('foco-bicho', aoFocar);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('foco-bicho', aoFocar));
+
     this.posicionar();
     this.scale.on('resize', this.posicionar, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', this.posicionar, this));
@@ -111,6 +116,66 @@ export class HudScene extends Phaser.Scene {
 
   update() {
     this.controles.setCarga(this.level.cargaPoder);
+  }
+
+  private focarBicho(d: { textura: string; x: number; y: number }) {
+    const { width: W, height: H } = this.scale;
+    this.controles.limpar();
+    // fundo escuro que também segura os toques (ninguém aperta pular ou pausa sem querer)
+    const fundo = this.add.rectangle(0, 0, W, H, 0x10202e, 0.6).setOrigin(0).setDepth(40).setAlpha(0).setInteractive();
+    this.tweens.add({ targets: fundo, alpha: 1, duration: 250 });
+    const carta = this.add.image(0, 0, 'carta').setScale(2.2);
+    const img = this.add.image(0, -6, d.textura);
+    img.setScale(Math.min((carta.displayWidth - 44) / img.width, (carta.displayHeight - 44) / img.height));
+    const cx = W / 2;
+    const cy = H * 0.47;
+    const cartao = this.add.container(d.x, d.y, [carta, img]).setDepth(41).setScale(0.2);
+    this.tweens.add({ targets: cartao, x: cx, y: cy, scale: 1, duration: 500, ease: 'Back.easeOut' });
+    // o bicho "fala": a figura balança de leve
+    this.tweens.add({ targets: img, angle: { from: -3, to: 3 }, yoyo: true, repeat: -1, duration: 420, delay: 500, ease: 'Sine.easeInOut' });
+    this.add
+      .particles(cx, cy, 'brilho', {
+        lifespan: 800,
+        speed: { min: 80, max: 240 },
+        scale: { start: 1.2, end: 0 },
+        tint: [0xfff1a8, 0xffd766, 0x5cc26a],
+        emitting: false,
+      })
+      .setDepth(42)
+      .explode(24);
+    // ouvir de novo
+    const repetir = this.add.image(cx + carta.displayWidth / 2 + 70, cy, 'btn-som').setDepth(42).setAlpha(0).setInteractive({ useHandCursor: true });
+    this.tweens.add({ targets: repetir, alpha: 1, delay: 500, duration: 250 });
+    repetir.on('pointerdown', () => {
+      AudioManager.tocar('botao');
+      VoiceManager.repetir();
+    });
+
+    // libera quando a fala acabar (no mínimo 2,2 s de figura na tela; no máximo 30 s, por segurança)
+    const inicio = this.time.now;
+    let soltou = false;
+    const soltar = () => {
+      if (soltou) return;
+      soltou = true;
+      this.time.delayedCall(Math.max(400, 2200 - (this.time.now - inicio)), () => {
+        repetir.destroy();
+        this.tweens.killTweensOf(img);
+        this.tweens.add({ targets: cartao, x: d.x, y: d.y, scale: 0.15, alpha: 0, duration: 380, ease: 'Quad.easeIn', onComplete: () => cartao.destroy() });
+        this.tweens.add({
+          targets: fundo,
+          alpha: 0,
+          duration: 380,
+          onComplete: () => {
+            fundo.destroy();
+            this.level.soltarFoco();
+          },
+        });
+      });
+    };
+    // repetir a fala também espera ela acabar de novo
+    const esperar = () => VoiceManager.quandoAcabar(() => (VoiceManager.estaFalando ? esperar() : soltar()));
+    this.time.delayedCall(300, esperar);
+    this.time.delayedCall(30000, soltar);
   }
 
   private posicionar() {
