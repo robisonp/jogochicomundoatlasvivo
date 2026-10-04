@@ -460,10 +460,15 @@ export class LevelScene extends Phaser.Scene {
     const at = (r: number, c: number) => (r >= 0 && r < linhas && c >= 0 && c < cols ? grade[r][c] : '.');
     const SOLIDOS = this.tema.solidos;
     const solido = (r: number, c: number) => at(r, c) in SOLIDOS;
-    /** Linha onde algo colocado em (r, c) fica em pé: a própria ou até 3 abaixo, se houver chão (ou galho) embaixo. */
+    /**
+     * Linha onde algo colocado em (r, c) fica em pé: a própria ou até 3 abaixo, se houver chão (ou galho) embaixo.
+     * Água não é chão e ninguém desce para dentro dela (senão a placa ia parar no fundo do rio).
+     */
+    const molhado = (r: number, c: number) => AGUA.has(at(r, c)) || at(r, c) === '%';
     const pouso = (r: number, c: number): number | null => {
       for (let rr = r; rr <= r + 3; rr++) {
-        if (solido(rr, c)) return null;
+        if (solido(rr, c) || molhado(rr, c)) return null;
+        if (molhado(rr + 1, c)) return null;
         if (solido(rr + 1, c) || at(rr + 1, c) === '=') return rr;
       }
       return null;
@@ -692,16 +697,18 @@ export class LevelScene extends Phaser.Scene {
             const temChao = (cc: number) => pouso(rp, cc) === rp;
             const px = cp * TILE + TILE / 2;
             const yp = rp * TILE + TILE;
-            const img = this.add.image(px, yp, 'placa').setOrigin(0.5, 1).setDepth(2);
+            const img = this.add.image(px, yp, 'placa').setOrigin(0.5, 1).setDepth(2).setData('movida', cp !== c || rp !== r);
             const quem = this.def.placas[placaIdx]?.quem;
             let pessoa: Placa['pessoa'];
             if (quem && ehFamiliar(quem)) {
               if (FAMILIA[quem].presencial) {
                 // em pé ao lado da placa, olhando para o Chico (que vem da esquerda), no lado que tem chão;
                 // sem chão dos dois lados, fica na frente da placa
-                const lado = temChao(cp + 1) ? 1 : temChao(cp - 1) ? -1 : 0;
+                // (do lado da bandeira, fica um bloco mais longe para não ficar em cima dela)
+                const livre = (cc: number) => temChao(cc) && at(rp, cc) !== 'C';
+                const dx = livre(cp + 1) ? 46 : livre(cp - 1) ? -46 : temChao(cp - 2) && livre(cp - 2) ? -46 - TILE : 18;
                 pessoa = this.add
-                  .image(px + (lado ? lado * 46 : 18), yp, 'familia', `corpo-${quem}`)
+                  .image(px + dx, yp, 'familia', `corpo-${quem}`)
                   .setOrigin(0.5, 1)
                   .setScale(0.5)
                   .setFlipX(true)
