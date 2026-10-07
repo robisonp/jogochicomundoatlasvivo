@@ -114,6 +114,15 @@ class AudioManagerImpl {
     src.stop(t0 + dur + 0.02);
   }
 
+  /** Nota musical da escalada: cada passo do caminho sobe um degrau na escala (pentatônica, sempre bonita). */
+  nota(passo: number): void {
+    if (!this.ctx) return;
+    const notas = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568];
+    const f = notas[Math.min(passo, notas.length - 1)];
+    this.tom(f, 0.45, { tipo: 'triangle', vol: 0.32 });
+    this.tom(f * 2, 0.25, { tipo: 'sine', vol: 0.08 });
+  }
+
   tocar(sfx: Sfx): void {
     if (!this.ctx) return;
     switch (sfx) {

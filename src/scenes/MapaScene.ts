@@ -9,6 +9,7 @@ import { SaveManager } from '../core/SaveManager';
 import { CAMPANHA } from '../levels';
 import type { LevelDef } from '../levels/types';
 import { MAPA_MUNDOS, type MundoNoMapa } from '../data/mapa';
+import { escaladaDe } from '../data/escaladas';
 import { MAPA, lonLatParaMapa } from '../art/Mapa';
 import { botaoGrande, estiloTexto } from '../ui/widgets';
 
@@ -51,6 +52,7 @@ export class MapaScene extends Phaser.Scene {
     }
     this.desenharRota();
     for (const mk of this.marcadores) this.desenharMarcador(mk);
+    this.desenharPedras();
 
     // Chico (a cabeça dele) no mundo atual
     const atual = this.marcadorAtual();
@@ -211,9 +213,45 @@ export class MapaScene extends Phaser.Scene {
     this.painel = undefined;
   }
 
-  private continuar() {
+  /** Mundo que já tem o selo, mas cuja pedra das tias ainda não foi escalada (a escalada é obrigatória). */
+  private pedraPendente() {
+    return MAPA_MUNDOS.find((m) => m.seloId && SaveManager.data.selos.includes(m.seloId) && !SaveManager.data.escaladas.includes(m.id));
+  }
+
+  /** Pedras das Tias Kelly e Laura: no meio da rota entre um mundo e o próximo (a do Mundo 8, ao lado dele). */
+  private desenharPedras() {
+    this.marcadores.forEach((mk, i) => {
+      const m = mk.mundo;
+      if (!m.seloId || !SaveManager.data.selos.includes(m.seloId)) return;
+      const prox = this.marcadores[i + 1];
+      const x = prox ? (mk.x + prox.x) / 2 : mk.x + 58;
+      const y = prox ? (mk.y + prox.y) / 2 - 40 : mk.y - 40;
+      const feita = SaveManager.data.escaladas.includes(m.id);
+      const img = this.add.image(x, y, 'icone-pedra').setScale(0.62).setDepth(12).setInteractive({ useHandCursor: true });
+      if (feita) {
+        this.add.image(x + 20, y + 8, 'mosquetao').setScale(0.2).setTint(escaladaDe(m.id)?.cor ?? 0xffffff).setDepth(13);
+      } else {
+        this.tweens.add({ targets: img, scale: 0.72, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut' });
+      }
+      img.on('pointerdown', () => {
+        if (this.ocupado) return;
+        AudioManager.desbloquear();
+        AudioManager.tocar('botao');
+        this.scene.start('Escalada', { mundo: m.id, depois: 'Mapa' });
+      });
+    });
+  }
+
+  /** Botão verde: escalada pendente primeiro, depois a próxima fase (público para os testes automatizados). */
+  continuar() {
     if (this.ocupado) return;
     AudioManager.desbloquear();
+    // escalada que ficou para trás vem antes do próximo mundo
+    const pendente = this.pedraPendente();
+    if (pendente) {
+      this.scene.start('Escalada', { mundo: pendente.id, depois: 'Mapa' });
+      return;
+    }
     const fase = CAMPANHA.find((f) => !this.concluida(f)) ?? CAMPANHA[0];
     this.scene.start('Level', { faseId: fase.id });
   }
