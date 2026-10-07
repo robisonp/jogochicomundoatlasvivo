@@ -18,9 +18,12 @@ export class BootScene extends Phaser.Scene {
   create() {
     gerarTexturas(this);
     const params = new URLSearchParams(location.search);
-    // ?fase=<id> abre direto uma fase; ?mapa e ?atlas abrem essas telas (útil para testes).
+    // ?fase=<id> abre direto uma fase; ?mapa e ?atlas abrem essas telas; ?escalada=<mundo> abre a pedra
+    // das tias daquele mundo (útil para testes).
     const fase = params.get('fase');
-    if (params.has('atlas')) this.scene.start('Atlas');
+    const escalada = params.get('escalada');
+    if (escalada) this.scene.start('Escalada', { mundo: escalada, depois: 'Mapa' });
+    else if (params.has('atlas')) this.scene.start('Atlas');
     else if (params.has('mapa')) this.scene.start('Mapa');
     else if (fase) this.scene.start('Level', { faseId: fase });
     else this.scene.start('Titulo');

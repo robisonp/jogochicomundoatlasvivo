@@ -79,6 +79,15 @@ Pedido da família depois de jogar: faltavam inimigos no estilo dos jogos de pla
 ### Revelação e adivinha no fim da fase (pronto)
 Pedido da família depois de jogar: as fichas do Atlas estavam escondidas. Agora, quando um bicho entra no Atlas pela **primeira vez**, o fim da fase mostra a figurinha grande voando para dentro do livro ("Nova figurinha no Atlas: o tatu-bola!"). Depois vem uma **adivinha "Quem sou eu?" só com figuras**: o bicho dá 3 pistas, da mais geral para a mais reveladora ("Eu sou um mamífero e como insetos. Eu tenho uma carapaça com três faixas. Quando há perigo, eu me fecho numa bola!"), e o Chico escolhe entre 3 bichos do mesmo mundo. As pistas estão em cada ficha (`pistas` em `src/data/animais.ts`), todas do dossiê e escritas para separar o bicho dos outros do mesmo mundo (cavar é pista do wombat e do caranguejo-uçá; o dossiê não diz que o tatu-bola cava). Errar explica ("Quase! Esse é o mocó. Escute as pistas de novo.") e deixa tentar; depois de 2 erros, a figura certa pisca. No máximo 2 adivinhas por fase; nas fases com minijogo (38 e 39) só a figurinha. Não é quiz de pontos: continua valendo "conteúdo ligado à ação" do GDD v1.0. No Atlas, a primeira ficha aberta explica em voz alta os desenhos (mapa, folha, régua, estrela).
 
+### Escalada com as Tias Kelly e Laura, entre os mundos (pronto)
+Pedido da família: depois de cada mundo, uma fase com as tias, que são escaladoras. Elas viajam pelo mundo escalando; o Atlas leva o Chico até a pedra delas, perto do mundo que ele acabou de terminar. É a única vez em que aparecem em pessoa (nas fases, continuam por chamada de vídeo).
+- **Jogo de memória:** a pedra tem várias agarras coloridas; algumas piscam numa ordem, cada uma com uma nota musical que sobe (uma escada de sons). O Chico toca nelas na mesma ordem e sobe. As agarras certas formam um caminho em zigue-zague até o topo; as outras ficam espalhadas pela pedra.
+- **Errar é seguro:** o Chico escorrega, a corda segura, ele balança e as tias o descem com calma ("Tudo bem! A corda segurou você."). Depois de 2 erros, a próxima agarra certa brilha de leve; depois de 4, pisca uma de cada vez. Um botão de olho mostra a sequência de novo.
+- **Dificuldade:** 3 de 8 agarras (Caatinga), 3 de 10, 4 de 11, 4 de 12, 5 de 14, 5 de 15, 6 de 16 e 6 de 17 (Mundo 8), piscando cada vez um pouco mais rápido.
+- **Cenários:** lajedo de granito do sertão, paredão com raízes e musgo na floresta, pedras redondas no capim da savana, pedra vermelha em camadas (genérica: as pedras sagradas dos povos de lá não são escaladas, e a Tia Laura explica isso), pedra com neve no Ártico, pedra escura na Antártica, domo de granito à beira-mar e camadas de rocha com conchas fósseis no Mundo 8. O fundo é o do próprio mundo.
+- **Falas das tias:** escalada e segurança (capacete, corda, "mão, pé, mão", calma) e cuidado com a natureza (lixo volta na mochila, nada de fogueira, bicho se olha de longe, ficar na trilha, não riscar pedras, ninho não se mexe, fóssil fica onde está). São valores, não fatos científicos; nenhuma pedra famosa ou lugar real é citado.
+- **No topo:** um mosquetão colorido para a coleção; no mapa, a pedra fica no meio da rota com o mosquetão dela e pode ser escalada de novo (com um caminho novo). A escalada é obrigatória na primeira vez; a do Mundo 8 vem antes da festa final.
+
 ### Cozinha da Vovó Lili (pronto)
 Pedido da família depois de jogar: faltava a parte em que o Chico ajuda a vovó. Na tela de título, a **panela laranja** abre a cozinha da Vovó Lili. É um cantinho calmo, fora das fases, sem tempo e sem pontos, e cada receita treina uma ideia simples:
 - **Salada de frutas** (sempre aberta): cada fruta vai na tigela da **mesma cor** (vermelho: morango e maçã; amarelo: banana e abacaxi; verde: uva e kiwi).
@@ -180,7 +189,7 @@ Ajuda da Vovó Lili: depois de **4 falhas** no mesmo trecho, ela fala uma dica c
 | Tia Marcela | Abertura de mundos; páginas voando; Mundo 8. Canta/conta a tradição da asa-branca (cultura, não ciência) |
 | Tio Robi | Desafios de corrida e de pulo |
 | Mamãe July | Resgates (M5, M7, fase 40) |
-| Tias Kelly e Laura | Chamadas nas fases verticais (M2, M3, M5) |
+| Tias Kelly e Laura | Chamadas nas fases verticais (M2, M3, M5); em pessoa na escalada entre os mundos, segurando as cordas |
 
 ## 6. Fora do lançamento (depois)
 

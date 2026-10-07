@@ -30,6 +30,8 @@ export interface SaveData {
   selos: string[];
   /** Mundos cuja chegada já foi mostrada no mapa (rota animada + nome falado). */
   anunciados: string[];
+  /** Pedras escaladas com as Tias Kelly e Laura (uma por mundo; cada uma dá um mosquetão). */
+  escaladas: string[];
   /** A chamada da Tia Marcela contando a história do Atlas já foi vista. */
   introVista: boolean;
   settings: Settings;
@@ -55,6 +57,7 @@ function novoSave(): SaveData {
     poderes: [],
     selos: [],
     anunciados: [],
+    escaladas: [],
     introVista: false,
     settings: { ...DEFAULT_SETTINGS },
   };
@@ -125,7 +128,7 @@ class SaveManagerImpl {
   }
 
   /** Registra um item numa lista do save (animal do Atlas, poder) sem repetir. */
-  conquistar(lista: 'animais' | 'poderes' | 'selos' | 'anunciados', id: string): boolean {
+  conquistar(lista: 'animais' | 'poderes' | 'selos' | 'anunciados' | 'escaladas', id: string): boolean {
     if (this.data[lista].includes(id)) return false;
     this.data[lista].push(id);
     this.salvar();

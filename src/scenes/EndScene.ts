@@ -3,6 +3,8 @@ import { botaoGrande, estiloTexto } from '../ui/widgets';
 import type { Familiar } from '../data/familia';
 import { AudioManager } from '../systems/AudioManager';
 import { VoiceManager } from '../systems/VoiceManager';
+import { SaveManager } from '../core/SaveManager';
+import { MAPA_MUNDOS } from '../data/mapa';
 
 export class EndScene extends Phaser.Scene {
   private dados!: { faseId: string; proximaId?: string; selo?: string; final?: boolean; pegas: number; total: number; tempoMs: number };
@@ -18,6 +20,12 @@ export class EndScene extends Phaser.Scene {
   create() {
     const { width: W, height: H } = this.scale;
     this.scene.stop('Hud');
+    // Mundo 8: antes da festa final, a última pedra com as Tias Kelly e Laura
+    if (this.dados.final && !SaveManager.data.escaladas.includes('dinossauros')) {
+      this.scene.stop('Level');
+      this.scene.start('Escalada', { mundo: 'dinossauros', depois: 'Fim', fim: this.dados });
+      return;
+    }
     this.add.rectangle(0, 0, W, H, 0x1d2b3a, 0.6).setOrigin(0).setInteractive().setDepth(-2);
 
     // Selo do mundo conquistado: aparece girando no alto da tela.
@@ -59,7 +67,10 @@ export class EndScene extends Phaser.Scene {
       // Fim de um mundo (selo): vai para o mapa ver a viagem até o próximo mundo.
       const seguir = () => {
         this.scene.stop('Level');
-        if (this.dados.selo) this.scene.start('Mapa');
+        // fim de mundo: primeiro a pedra das tias (na primeira vez), depois o mapa
+        const mundo = MAPA_MUNDOS.find((m) => m.selo === this.dados.selo)?.id;
+        if (mundo && !SaveManager.data.escaladas.includes(mundo)) this.scene.start('Escalada', { mundo, depois: 'Mapa' });
+        else if (this.dados.selo) this.scene.start('Mapa');
         else this.scene.start('Level', { faseId: proxima });
       };
       const b = botaoGrande(this, W / 2, H / 2 + 150, 'btn-jogar', seguir, 0.9);

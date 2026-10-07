@@ -34,11 +34,12 @@ export const FAMILIA: Record<Familiar, PessoaDaFamilia> = {
     presencial: true,
   },
   kelly: {
-    papel: 'Tia Kelly, Exploradora à Distância: chamadas de vídeo com dicas de escalada e trilha',
+    // nas fases aparece por chamada de vídeo; entre um mundo e outro, escala com o Chico em pessoa (EscaladaScene)
+    papel: 'Tia Kelly, Exploradora à Distância: chamadas de vídeo com dicas de escalada e trilha; segura uma das cordas na escalada entre os mundos',
     presencial: false,
   },
   laura: {
-    papel: 'Tia Laura, Exploradora à Distância: chamadas de vídeo sobre natureza e montanha',
+    papel: 'Tia Laura, Exploradora à Distância: chamadas de vídeo sobre natureza e montanha; segura a outra corda na escalada entre os mundos',
     presencial: false,
   },
 };

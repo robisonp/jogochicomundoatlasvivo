@@ -744,6 +744,29 @@ export class Player {
     this.scene.tweens.add({ targets: this.visual, scaleY: { from: 0.6, to: 1 }, duration: 220, ease: 'Back.easeOut' });
   }
 
+  /**
+   * Fora das fases (escalada com as tias): o boneco é posicionado pela cena, sem física, e só a pose é animada.
+   * `movendo` liga o balanço de braços e pernas da escalada.
+   */
+  poseManual(x: number, pes: number, estado: 'normal' | 'escalando' | 'caido' | 'festa', movendo: boolean, dt: number) {
+    const b = this.sprite.body;
+    b.enable = false;
+    this.sprite.setPosition(x, pes - PLAYER.bodyHeight / 2);
+    b.reset(x, pes - PLAYER.bodyHeight / 2);
+    b.velocity.set(0, movendo ? -80 : 0);
+    this.estado = estado;
+    this.noChao = estado === 'normal' || estado === 'festa';
+    this.animar(dt);
+    // a pose usa a base do corpo físico; aqui quem manda é a cena: os pés ficam exatamente em `pes`
+    this.visual.y += pes - b.bottom;
+  }
+
+  /** Capacete de escalada por cima dos cachos (fica na cabeça, acompanhando a pose). */
+  colocarCapacete() {
+    const capacete = this.scene.add.image(2, -46, 'capacete').setScale(0.72);
+    this.partes.cabeca.add(capacete);
+  }
+
   comemorar() {
     // Se tocou o objetivo no meio de uma arrancada, volta a gravidade para comemorar no chão.
     this.encerrarArrancada();

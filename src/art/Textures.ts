@@ -13,6 +13,7 @@ import { gerarDinossauros } from './Dinossauros';
 import { gerarInimigos } from './Inimigos';
 import { gerarCozinha } from './Cozinha';
 import { gerarMenu } from './Menu';
+import { gerarEscalada } from './Escalada';
 import { gerarFamilia } from './Familia';
 import { gerarMapa } from './Mapa';
 
@@ -65,6 +66,7 @@ export function gerarTexturas(scene: Phaser.Scene): void {
   gerarInimigos(scene);
   gerarCozinha(scene);
   gerarMenu(scene);
+  gerarEscalada(scene);
   gerarFamilia(scene);
   gerarMapa(scene);
 }
