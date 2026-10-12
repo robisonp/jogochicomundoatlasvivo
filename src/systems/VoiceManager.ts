@@ -53,6 +53,8 @@ interface Item {
   texto: string;
   quem: Personagem;
   arquivo?: string;
+  /** Fala automática (placa, dica, aviso): espera a vez e pode ser trocada por outra automática mais nova. */
+  auto?: boolean;
 }
 
 class VoiceManagerImpl {
@@ -181,6 +183,20 @@ class VoiceManagerImpl {
       this.fila.push(item);
     }
     if (!this.tocando) this.proxima();
+  }
+
+  /**
+   * Fala automática (placa ao passar, dica, aviso): nunca corta a fala que está tocando. Se alguém está falando,
+   * espera a vez; e só a mais recente espera (placas que ficaram para trás saem da fila).
+   */
+  falarAuto(texto: string, quem: Personagem = 'narrador'): void {
+    if (!this.estaFalando) {
+      this.falar(texto, quem);
+      return;
+    }
+    this.ultima = { texto, quem };
+    this.fila = this.fila.filter((i) => !i.auto);
+    this.fila.push({ texto, quem, arquivo: ARQUIVO_DA_FALA.get(`${quem}|${normalizar(texto)}`), auto: true });
   }
 
   private proxima(): void {

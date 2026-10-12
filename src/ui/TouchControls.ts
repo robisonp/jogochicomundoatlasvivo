@@ -150,6 +150,12 @@ export class TouchControls {
     }
   }
 
+  /** Onde fica o botão do Poder do Bicho (a cerimônia do poder novo voa até ele). */
+  get posicaoPoder() {
+    const b = this.botoes.find((x) => x.papel === 'power')!;
+    return { x: b.img.x, y: b.img.y, visivel: this.ativo };
+  }
+
   /** Recarga do poder (0 a 1): o botão fica apagadinho até estar pronto de novo. */
   setCarga(carga: number) {
     const b = this.botoes.find((x) => x.papel === 'power');

@@ -62,8 +62,21 @@ export class RevelacaoScene extends Phaser.Scene {
     this.tweens.add({ targets: carta, scale: 1, duration: 450, ease: 'Back.easeOut' });
     this.brilho(W / 2, H * 0.38, 30);
     AudioManager.tocar('pegada');
-    VoiceManager.falar(`Nova figurinha no Atlas: ${comArtigo(f)}!`, 'narrador');
-    this.time.delayedCall(2600, () => {
+    // espera a fala do fim da fase (selo, vitória) terminar, sem cortar
+    VoiceManager.falar(`Nova figurinha no Atlas: ${comArtigo(f)}!`, 'narrador', true);
+    const inicio = this.time.now;
+    let voou = false;
+    const voar = (fn: () => void) => {
+      if (voou) return;
+      voou = true;
+      this.time.delayedCall(Math.max(300, 2600 - (this.time.now - inicio)), fn);
+    };
+    const esperar = (fn: () => void) => VoiceManager.quandoAcabar(() => (VoiceManager.estaFalando ? esperar(fn) : voar(fn)));
+    const depois = (fn: () => void) => {
+      esperar(fn);
+      this.time.delayedCall(15000, () => voar(fn));
+    };
+    depois(() => {
       this.tweens.add({
         targets: carta,
         x: this.livro.x,
