@@ -3,7 +3,8 @@ import { TILE, PLAYER, VENTO, CAVAR, MARE } from '../config';
 import { Player } from '../entities/Player';
 import { InputManager } from '../systems/InputManager';
 import { AudioManager } from '../systems/AudioManager';
-import { VoiceManager } from '../systems/VoiceManager';
+import { VoiceManager, type Personagem } from '../systems/VoiceManager';
+import { comArtigo, fichaDe } from '../data/animais';
 import { SaveManager } from '../core/SaveManager';
 import { LINHAS, type LevelDef, type AnimalNaFase, type Poder } from '../levels/types';
 import { FASES, CAMPANHA, proximaFase } from '../levels';
@@ -140,6 +141,19 @@ interface Placa {
   pessoa?: Phaser.GameObjects.GameObject & { x: number; y: number; angle: number };
 }
 
+/** Como usar cada poder (dito pelo narrador logo depois de "Você agora tem o poder do..."). */
+const INSTRUCAO_PODER: Record<Poder, string> = {
+  bola: 'Agora você também pode virar bola! Aperte o botão da pata.',
+  arrancada: 'Agora você corre como o guepardo! Aperte o botão da pata para dar uma arrancada.',
+  superpulo: 'Agora você pula como o canguru! Aperte o botão da pata para dar um super pulo.',
+  giro: 'Agora você salta girando como o golfinho! Na água, aperte o botão da pata.',
+  toboga: 'Agora você desliza de barriga como o pinguim! Aperte o botão da pata.',
+  mergulho: 'Agora você mergulha na neve como a raposa! Aperte o botão da pata para pular e cair de cabeça.',
+  cavar: 'Agora você cava como o wombat! Ande contra a terra fofa para cavar.',
+  forca: 'Agora você tem a força do elefante! Ande contra as pedras grandes para empurrar.',
+  onca: 'Agora você nada como a onça! Pode entrar na água funda e mergulhar.',
+};
+
 export class LevelScene extends Phaser.Scene {
   private def!: LevelDef;
   private player!: Player;
@@ -167,6 +181,10 @@ export class LevelScene extends Phaser.Scene {
   private pausado = false;
   /** Momento do bicho: o jogo para enquanto o bicho fala, com a figura dele grande na tela. */
   emFoco = false;
+  /** Depois da fala, o Chico fica parado assistindo o bicho mostrar o que sabe até ganhar o poder. */
+  private assistindo = false;
+  /** O bicho em foco ainda vai passar um poder (a fase só libera o Chico depois da cerimônia). */
+  private poderPendente = false;
   private fundo: { img: Phaser.GameObjects.TileSprite; fator: number; afundar: number }[] = [];
   private olharFrente = 0;
   private dicaMostrada = new Set<number>();
@@ -266,6 +284,8 @@ export class LevelScene extends Phaser.Scene {
     this.terminou = false;
     this.pausado = false;
     this.emFoco = false;
+    this.assistindo = false;
+    this.poderPendente = false;
     this.dicaMostrada = new Set();
     this.olharFrente = 0;
     this.relogioPlataformas = 0;
@@ -394,7 +414,11 @@ export class LevelScene extends Phaser.Scene {
     AudioManager.tocarMusica(this.tema.musica);
     if (this.def.abertura) {
       const a = this.def.abertura;
-      this.time.delayedCall(500, () => VoiceManager.falar(a.texto, a.quem));
+      // fala importante do começo da fase: o Chico fica parado ouvindo, com quem fala em destaque
+      this.time.delayedCall(500, () => {
+        VoiceManager.falar(a.texto, a.quem);
+        this.focarFala(a.quem);
+      });
     }
   }
 
@@ -939,8 +963,13 @@ export class LevelScene extends Phaser.Scene {
     const dt = Math.min(deltaMs, 50) / 1000;
     const i = this.entrada.update();
 
-    if (i.pausePressed && !this.terminou && !this.emFoco) this.pausar();
+    if (i.pausePressed && !this.terminou && !this.emFoco && !this.assistindo) this.pausar();
     if (this.pausado || this.emFoco) return;
+    if (this.assistindo) {
+      // parado, olhando o bicho: só a pose (respirando) se mexe
+      this.player.update(this.semEntrada(), dt);
+      return;
+    }
     if (!this.terminou) this.tempo += deltaMs;
 
     this.moverPlataformas(dt);
@@ -1061,7 +1090,10 @@ export class LevelScene extends Phaser.Scene {
     gotas.setScrollFactor(0).setDepth(40);
     AudioManager.chuva(true);
     const f = this.def.chuva?.comeca;
-    if (f) VoiceManager.falar(f.texto, f.quem);
+    if (f) {
+      VoiceManager.falar(f.texto, f.quem);
+      this.focarFala(f.quem);
+    }
 
     // A chuva passa e a Caatinga fica verde depressa (dossiê: a mudança da paisagem pode ser muito rápida).
     this.time.delayedCall(6500, () => {
@@ -1076,7 +1108,7 @@ export class LevelScene extends Phaser.Scene {
   private verdejar() {
     if (this.def.mundo !== 'caatinga') {
       const f = this.def.chuva?.verde;
-      if (f) this.time.delayedCall(800, () => VoiceManager.falar(f.texto, f.quem));
+      if (f) this.time.delayedCall(800, () => this.falarImportante(f.texto, f.quem));
       return;
     }
     for (const t of this.toposTerra) {
@@ -1103,7 +1135,7 @@ export class LevelScene extends Phaser.Scene {
       });
     }
     const f = this.def.chuva?.verde;
-    if (f) this.time.delayedCall(800, () => VoiceManager.falar(f.texto, f.quem));
+    if (f) this.time.delayedCall(800, () => this.falarImportante(f.texto, f.quem));
   }
 
   private semEntrada() {
@@ -1156,9 +1188,26 @@ export class LevelScene extends Phaser.Scene {
     if (perto) {
       this.iconeAcao.setVisible(true).setPosition(perto.img.x, perto.img.y - 140 + Math.sin(this.time.now / 180) * 6);
       if (!perto.ouvida || acao) {
+        const primeiraVez = !perto.ouvida;
         perto.ouvida = true;
         const f = this.def.placas[perto.indice];
-        if (f) VoiceManager.falar(f.texto, f.quem);
+        const comFoco = primeiraVez && !!f?.quem && ehFamiliar(f.quem) && !!perto.pessoa;
+        // ao passar, a placa espera a fala que estiver tocando; tocar na placa (ação) ou a família em foco falam na hora
+        if (f) {
+          if (acao || comFoco) VoiceManager.falar(f.texto, f.quem);
+          else VoiceManager.falarAuto(f.texto, f.quem);
+        }
+        // primeira vez com alguém da família: o jogo para e a pessoa aparece grande enquanto fala
+        if (comFoco && f?.quem && ehFamiliar(f.quem) && perto.pessoa) {
+          const cam = this.cameras.main;
+          const presencial = FAMILIA[f.quem].presencial;
+          this.focar({
+            textura: 'familia',
+            quadro: `${presencial ? 'corpo' : 'rosto'}-${f.quem}`,
+            x: perto.pessoa.x - cam.scrollX,
+            y: perto.pessoa.y - (presencial ? 60 : 0) - cam.scrollY,
+          });
+        }
         this.tweens.add({ targets: perto.img, scaleX: { from: 1.15, to: 1 }, scaleY: { from: 1.15, to: 1 }, duration: 250 });
         // quem fala se mexe: um pulinho e um balanço
         if (perto.pessoa) {
@@ -1206,7 +1255,7 @@ export class LevelScene extends Phaser.Scene {
       if (!b.avisado) {
         // primeira vez perto: explica sem precisar ler
         b.avisado = true;
-        VoiceManager.falar('Um fóssil está escondido aqui! Aperte o botão da mão para escavar.', 'narrador');
+        VoiceManager.falarAuto('Um fóssil está escondido aqui! Aperte o botão da mão para escavar.', 'narrador');
       }
       if (acao) this.escavar(b);
       return;
@@ -1237,27 +1286,64 @@ export class LevelScene extends Phaser.Scene {
    * Momento do bicho: tudo para (física e relógio da fase, então a demonstração do bicho espera) e o HUD mostra
    * a figura dele grande no meio da tela enquanto ele fala. O HUD chama soltarFoco() quando a fala acaba.
    */
-  private focarBicho(b: Bicho) {
-    // sem o HUD para mostrar a figura e soltar depois, o jogo não para
-    if (this.terminou || this.emFoco || this.events.listenerCount('foco-bicho') === 0) return;
-    this.emFoco = true;
-    this.physics.pause();
-    this.time.paused = true;
+  private focarBicho(b: Bicho): boolean {
     const cam = this.cameras.main;
     const chave = b.img.texture.key;
-    this.events.emit('foco-bicho', {
+    return this.focar({
       textura: this.textures.exists(`${chave}-hd`) ? `${chave}-hd` : chave,
       x: b.img.x - cam.scrollX,
       y: b.img.y - b.img.displayHeight / 2 - cam.scrollY,
     });
   }
 
-  /** Fim do momento do bicho: o Chico pode seguir. */
+  /** Fala importante no meio da fase (chuva...): o Chico para e quem fala aparece em destaque. */
+  private falarImportante(texto: string, quem: Personagem) {
+    VoiceManager.falar(texto, quem);
+    this.focarFala(quem);
+  }
+
+  /** Destaque de quem está falando algo importante: a pessoa da família, ou o livro do Atlas (narrador). */
+  private focarFala(quem: Personagem) {
+    const { width: W, height: H } = this.scale;
+    if (ehFamiliar(quem)) {
+      const presencial = FAMILIA[quem].presencial;
+      this.focar({ textura: 'familia', quadro: `${presencial ? 'corpo' : 'rosto'}-${quem}`, x: W / 2, y: H * 0.25 });
+    } else {
+      this.focar({ textura: 'atlas', x: W / 2, y: H * 0.25 });
+    }
+  }
+
+  /** Para o jogo e pede ao HUD a figura grande (bicho ou pessoa da família). Devolve se parou. */
+  private focar(d: { textura: string; quadro?: string; x: number; y: number }): boolean {
+    // sem o HUD para mostrar a figura e soltar depois, o jogo não para
+    if (this.terminou || this.emFoco || this.assistindo || this.events.listenerCount('foco-bicho') === 0) return false;
+    this.emFoco = true;
+    this.physics.pause();
+    this.time.paused = true;
+    this.events.emit('foco-bicho', d);
+    return true;
+  }
+
+  /** Fim da fala em foco. Se o bicho ainda vai passar um poder, o Chico continua parado assistindo. */
   soltarFoco() {
     if (!this.emFoco) return;
     this.emFoco = false;
     this.time.paused = false;
+    if (this.poderPendente) {
+      this.assistindo = true;
+      // segurança: se algo der errado na demonstração, o Chico não fica preso
+      this.time.delayedCall(15000, () => this.liberarDepoisDoPoder());
+      return;
+    }
     if (!this.pausado) this.physics.resume();
+  }
+
+  /** Fim da cerimônia do poder (ou da demonstração, se o poder já era dele): o Chico pode seguir. */
+  liberarDepoisDoPoder() {
+    if (!this.assistindo) return;
+    this.assistindo = false;
+    this.poderPendente = false;
+    if (!this.pausado && !this.emFoco) this.physics.resume();
   }
 
   /** Fase final: cada trecho usa o poder de um mundo no botão da pata. */
@@ -1288,9 +1374,11 @@ export class LevelScene extends Phaser.Scene {
     const { def, img } = b;
     // Página do Atlas: o animal fica registrado para a coleção.
     if (!def.semFicha && SaveManager.conquistar('animais', def.id)) this.novosBichos.push(def.id);
-    VoiceManager.falar(def.fala, def.quem ?? 'bicho');
+    // não corta quem estiver falando (ex.: "Achamos um fóssil!"): o bicho fala logo depois, já em destaque
+    VoiceManager.falar(def.fala, def.quem ?? 'bicho', VoiceManager.estaFalando);
     if (def.curiosidade) VoiceManager.falar(def.curiosidade, def.quem ?? 'bicho', true);
-    this.focarBicho(b);
+    // bicho que passa poder: o Chico só segue depois de ver a demonstração e receber o poder
+    this.poderPendente = this.focarBicho(b) && !!def.daPoder;
     this.add.particles(img.x, img.y - 30, 'brilho', {
       lifespan: 700,
       speed: { min: 60, max: 160 },
@@ -1340,7 +1428,7 @@ export class LevelScene extends Phaser.Scene {
           delay: duracao * 0.75,
           duration: duracao * 0.35,
           onComplete: () => {
-            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
           },
         });
       });
@@ -1354,7 +1442,7 @@ export class LevelScene extends Phaser.Scene {
         this.tweens.add({ targets: tronco, angle: 60, duration: 1800 });
         AudioManager.tocar('empurrar');
         this.time.delayedCall(1900, () => {
-          if (def.daPoder) this.ganharPoder(def.daPoder, img);
+          if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
         });
       });
     } else if (def.demo.tipo === 'nadar') {
@@ -1378,7 +1466,7 @@ export class LevelScene extends Phaser.Scene {
             img.setPosition(x0 + dx * TILE * t, y0 + afunda + Math.sin(t * Math.PI * 6) * 6);
           },
           onComplete: () => {
-            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
           },
         });
       });
@@ -1420,7 +1508,7 @@ export class LevelScene extends Phaser.Scene {
           },
           onComplete: () => {
             // o canguru ensina o super pulo depois de mostrar o salto
-            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
           },
         }),
       );
@@ -1444,7 +1532,7 @@ export class LevelScene extends Phaser.Scene {
           this.removerFofa(c, r - 1);
           this.tweens.add({ targets: img, x: img.x + TILE * 1.4, alpha: 0, duration: 900, ease: 'Sine.easeIn' });
           this.time.delayedCall(950, () => {
-            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
           });
         });
       });
@@ -1471,7 +1559,7 @@ export class LevelScene extends Phaser.Scene {
             img.setAngle(0);
             AudioManager.tocar('splash');
             this.respingos.explode(14, img.x, y0 - 20);
-            if (def.daPoder) this.ganharPoder(def.daPoder, img);
+            if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
           },
         });
       });
@@ -1496,7 +1584,7 @@ export class LevelScene extends Phaser.Scene {
           onComplete: () => {
             this.tweens.add({ targets: img, angle: 0, duration: 250 });
             this.time.delayedCall(400, () => {
-              if (def.daPoder) this.ganharPoder(def.daPoder, img);
+              if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
             });
           },
         });
@@ -1526,7 +1614,7 @@ export class LevelScene extends Phaser.Scene {
               // volta no lugar de onde saltou (chão firme): a neve fofa da frente pode ser quebrada pelo Chico
               img.setAngle(0).setPosition(x0, y0).setVisible(true).setAlpha(0);
               this.tweens.add({ targets: img, alpha: 1, duration: 300 });
-              if (def.daPoder) this.ganharPoder(def.daPoder, img);
+              if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
             });
           },
         });
@@ -1560,7 +1648,7 @@ export class LevelScene extends Phaser.Scene {
             this.time.delayedCall(1500, () => {
               img.setTexture('tatu');
               AudioManager.tocar('desbola');
-              if (def.daPoder) this.ganharPoder(def.daPoder, img);
+              if (def.daPoder) this.ganharPoder(def.daPoder, img, def);
             });
           },
         });
@@ -1568,7 +1656,11 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  private ganharPoder(poder: Poder, origem: Phaser.GameObjects.Image) {
+  /**
+   * O bicho passa o poder: uma faísca vai dele até o Chico. Na primeira vez, o HUD faz a cerimônia
+   * ("Você agora tem o poder do tatu-bola!") e só depois o Chico volta a andar.
+   */
+  private ganharPoder(poder: Poder, origem: Phaser.GameObjects.Image, def?: AnimalNaFase) {
     const faisca = this.add.image(origem.x, origem.y - 30, 'brilho').setScale(3).setDepth(20).setTint(0xffd766);
     this.tweens.add({
       targets: faisca,
@@ -1581,43 +1673,36 @@ export class LevelScene extends Phaser.Scene {
         const novo = SaveManager.conquistar('poderes', poder);
         AudioManager.tocar('poder');
         this.cameras.main.flash(200, 255, 240, 170);
-        if (poder === 'bola') {
-          this.player.temPoderBola = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você também pode virar bola! Aperte o botão da pata.', 'narrador', true);
-        } else if (poder === 'arrancada') {
-          this.player.temPoderArrancada = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você corre como o guepardo! Aperte o botão da pata para dar uma arrancada.', 'narrador', true);
-        } else if (poder === 'superpulo') {
-          this.player.temPoderSuperPulo = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você pula como o canguru! Aperte o botão da pata para dar um super pulo.', 'narrador', true);
-        } else if (poder === 'giro') {
-          this.player.temPoderGiro = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você salta girando como o golfinho! Na água, aperte o botão da pata.', 'narrador', true);
-        } else if (poder === 'toboga') {
-          this.player.temPoderToboga = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você desliza de barriga como o pinguim! Aperte o botão da pata.', 'narrador', true);
-        } else if (poder === 'mergulho') {
-          this.player.temPoderMergulho = true;
-          this.events.emit('poder', this.temPoder);
-          if (novo) VoiceManager.falar('Agora você mergulha na neve como a raposa! Aperte o botão da pata para pular e cair de cabeça.', 'narrador', true);
-        } else if (poder === 'cavar') {
-          // Poder passivo: andar contra a terra fofa (ou apertar para baixo em cima dela) cava.
-          this.player.temPoderCavar = true;
-          if (novo) VoiceManager.falar('Agora você cava como o wombat! Ande contra a terra fofa para cavar.', 'narrador', true);
-        } else if (poder === 'forca') {
-          // Poder passivo: empurrar pedregulhos andando contra eles.
-          this.player.temPoderForca = true;
+        const p = this.player;
+        if (poder === 'bola') p.temPoderBola = true;
+        else if (poder === 'arrancada') p.temPoderArrancada = true;
+        else if (poder === 'superpulo') p.temPoderSuperPulo = true;
+        else if (poder === 'giro') p.temPoderGiro = true;
+        else if (poder === 'toboga') p.temPoderToboga = true;
+        else if (poder === 'mergulho') p.temPoderMergulho = true;
+        // passivos: não precisam de botão
+        else if (poder === 'cavar') p.temPoderCavar = true;
+        else if (poder === 'forca') {
+          p.temPoderForca = true;
           this.atualizarPedregulhos();
-          if (novo) VoiceManager.falar('Agora você tem a força do elefante! Ande contra as pedras grandes para empurrar.', 'narrador', true);
+        } else p.temPoderOnca = true;
+        if (!['cavar', 'forca', 'onca'].includes(poder)) this.events.emit('poder', this.temPoder);
+
+        const instrucao = INSTRUCAO_PODER[poder];
+        const ficha = def ? fichaDe(def.id) : undefined;
+        if (novo && ficha && this.assistindo && this.events.listenerCount('poder-novo')) {
+          const artigo = comArtigo(ficha);
+          const titulo = `Você agora tem o poder ${artigo.startsWith('a ') ? 'da' : 'do'} ${artigo.slice(2)}!`;
+          const chave = origem.texture.key;
+          this.events.emit('poder-novo', {
+            textura: this.textures.exists(`${chave}-hd`) ? `${chave}-hd` : chave,
+            titulo,
+            instrucao,
+            botao: !['cavar', 'forca', 'onca'].includes(poder),
+          });
         } else {
-          // Poder passivo: não precisa de botão.
-          this.player.temPoderOnca = true;
-          if (novo) VoiceManager.falar('Agora você nada como a onça! Pode entrar na água funda e mergulhar.', 'narrador', true);
+          if (novo) VoiceManager.falar(instrucao, 'narrador', true);
+          this.liberarDepoisDoPoder();
         }
       },
     });
@@ -1726,7 +1811,7 @@ export class LevelScene extends Phaser.Scene {
       const perto = this.redemoinhos.find((r) => r.vivo && Math.abs(r.img.x - this.player.x) < 520);
       if (perto) {
         SaveManager.conquistar('anunciados', 'redemoinho');
-        VoiceManager.falar('Um redemoinho do Vento Viravolta! Pule em cima dele para desmanchar!', 'narrador');
+        VoiceManager.falarAuto('Um redemoinho do Vento Viravolta! Pule em cima dele para desmanchar!', 'narrador');
       }
     }
   }
@@ -1845,7 +1930,7 @@ export class LevelScene extends Phaser.Scene {
     AudioManager.tocar('lixo');
     this.tweens.add({ targets: l, x: this.player.x, y: this.player.y - 40, scale: 0.3, alpha: 0, duration: 400, onComplete: () => l.destroy() });
     this.events.emit('lixo', { pegos: this.lixoPego, total: this.totalLixo });
-    if (this.lixoPego === this.totalLixo) VoiceManager.falar('Você recolheu todo o lixo! Obrigada por cuidar da praia, filho!', 'july');
+    if (this.lixoPego === this.totalLixo) VoiceManager.falarAuto('Você recolheu todo o lixo! Obrigada por cuidar da praia, filho!', 'july');
   }
 
   contarLixo() {
@@ -1973,7 +2058,8 @@ export class LevelScene extends Phaser.Scene {
       const dica = this.def.dicas[this.checkpointAtual];
       if (dica && tentativas >= 4 && !this.dicaMostrada.has(this.checkpointAtual)) {
         this.dicaMostrada.add(this.checkpointAtual);
-        VoiceManager.falar(dica, 'lili');
+        // depois da fala do resgate, se houver
+        VoiceManager.falarAuto(dica, 'lili');
       }
     });
   }
@@ -2037,7 +2123,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   pausar() {
-    if (this.pausado || this.terminou) return;
+    if (this.pausado || this.terminou || this.emFoco || this.assistindo) return;
     this.pausado = true;
     this.physics.pause();
     if (this.chuvaCaindo) AudioManager.chuva(false);

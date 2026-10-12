@@ -275,21 +275,28 @@ export class MapaScene extends Phaser.Scene {
       'Viaje pelo mapa, encontre os bichos e aprenda o que eles sabem fazer. A família toda vai ajudar!',
     ];
     let k = 0;
+    let fim = false;
     const proxima = () => {
+      if (fim) return;
       if (k < falas.length) {
         VoiceManager.falar(falas[k++], 'marcela');
+        // a próxima fala vem sozinha quando esta acabar
+        const atual = k;
+        VoiceManager.quandoAcabar(() => this.time.delayedCall(400, () => k === atual && proxima()));
         return;
       }
+      fim = true;
       [fundo, tela, rosto, livro].forEach((o) => o.destroy());
       SaveManager.data.introVista = true;
       SaveManager.salvar();
       this.ocupado = false;
       this.anunciarNovoMundo();
     };
-    // cada toque passa para a próxima fala (o áudio precisa de um toque para começar)
+    // um toque libera o áudio (se ainda estiver preso) e, com ninguém falando, passa para a próxima fala;
+    // tocar no meio de uma fala não corta a Tia Marcela
     fundo.on('pointerdown', () => {
       AudioManager.desbloquear();
-      proxima();
+      if (!VoiceManager.estaFalando) proxima();
     });
     this.time.delayedCall(400, proxima);
   }

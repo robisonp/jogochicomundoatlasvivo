@@ -98,9 +98,15 @@ export class HudScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, pararDeOuvir);
 
     // Momento do bicho: a figura dele cresce no meio da tela e o jogo espera a fala acabar.
-    const aoFocar = (d: { textura: string; x: number; y: number }) => this.focarBicho(d);
+    const aoFocar = (d: { textura: string; quadro?: string; x: number; y: number }) => this.focarBicho(d);
     this.level.events.on('foco-bicho', aoFocar);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.level.events.off('foco-bicho', aoFocar));
+    // Poder novo: cerimônia com o bicho passando o poder para o Chico
+    const aoPoder = (d: { textura: string; titulo: string; instrucao: string; botao: boolean }) => this.cerimoniaPoder(d);
+    this.level.events.on('poder-novo', aoPoder);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.level.events.off('foco-bicho', aoFocar);
+      this.level.events.off('poder-novo', aoPoder);
+    });
 
     this.posicionar();
     this.scale.on('resize', this.posicionar, this);
@@ -118,14 +124,14 @@ export class HudScene extends Phaser.Scene {
     this.controles.setCarga(this.level.cargaPoder);
   }
 
-  private focarBicho(d: { textura: string; x: number; y: number }) {
+  private focarBicho(d: { textura: string; quadro?: string; x: number; y: number }) {
     const { width: W, height: H } = this.scale;
     this.controles.limpar();
     // fundo escuro que também segura os toques (ninguém aperta pular ou pausa sem querer)
     const fundo = this.add.rectangle(0, 0, W, H, 0x10202e, 0.6).setOrigin(0).setDepth(40).setAlpha(0).setInteractive();
     this.tweens.add({ targets: fundo, alpha: 1, duration: 250 });
     const carta = this.add.image(0, 0, 'carta').setScale(2.2);
-    const img = this.add.image(0, -6, d.textura);
+    const img = this.add.image(0, -6, d.textura, d.quadro);
     img.setScale(Math.min((carta.displayWidth - 44) / img.width, (carta.displayHeight - 44) / img.height));
     const cx = W / 2;
     const cy = H * 0.47;
@@ -176,6 +182,116 @@ export class HudScene extends Phaser.Scene {
     const esperar = () => VoiceManager.quandoAcabar(() => (VoiceManager.estaFalando ? esperar() : soltar()));
     this.time.delayedCall(300, esperar);
     this.time.delayedCall(30000, soltar);
+  }
+
+  /**
+   * Poder novo: o bicho (à esquerda) passa um rio de brilhos para o Chico (à direita), o Chico brilha,
+   * aparece o nome do poder e o narrador explica. No fim, o símbolo do poder voa até o botão da pata.
+   */
+  private cerimoniaPoder(d: { textura: string; titulo: string; instrucao: string; botao: boolean }) {
+    const { width: W, height: H } = this.scale;
+    this.controles.limpar();
+    const itens: Phaser.GameObjects.GameObject[] = [];
+    const fundo = this.add.rectangle(0, 0, W, H, 0x10202e, 0.75).setOrigin(0).setDepth(40).setAlpha(0).setInteractive();
+    this.tweens.add({ targets: fundo, alpha: 1, duration: 300 });
+    itens.push(fundo);
+
+    // o bicho, num cartão
+    const bx = W * 0.27;
+    const by = H * 0.5;
+    const carta = this.add.image(0, 0, 'carta').setScale(1.7);
+    const bicho = this.add.image(0, -6, d.textura);
+    bicho.setScale(Math.min((carta.displayWidth - 40) / bicho.width, (carta.displayHeight - 40) / bicho.height));
+    const cartao = this.add.container(bx, by, [carta, bicho]).setDepth(41).setScale(0);
+    this.tweens.add({ targets: cartao, scale: 1, duration: 450, ease: 'Back.easeOut' });
+    itens.push(cartao);
+
+    // o Chico, com uma auréola dourada que acende quando o poder chega
+    const cx = W * 0.73;
+    const cy = H * 0.56;
+    const aura = this.add.image(cx, cy - 20, 'aura').setScale(3.2).setTint(0xffd766).setAlpha(0).setDepth(41);
+    const chico = this.add.image(cx, cy + 120, 'familia', 'corpo-chico').setOrigin(0.5, 1).setScale(0.62).setDepth(42).setAlpha(0);
+    this.tweens.add({ targets: chico, alpha: 1, duration: 400 });
+    itens.push(aura, chico);
+
+    // nome do poder lá em cima (para os adultos; o Chico ouve o narrador)
+    const titulo = this.add
+      .text(W / 2, H * 0.14, d.titulo, { fontFamily: 'system-ui, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#fff4d6', stroke: '#1d2b3a', strokeThickness: 8, align: 'center', wordWrap: { width: W - 160 } })
+      .setOrigin(0.5)
+      .setDepth(43)
+      .setScale(0);
+    itens.push(titulo);
+
+    AudioManager.tocar('poder');
+    // o rio de brilhos: do bicho até o Chico
+    const rio = this.add
+      .particles(bx, by, 'brilho', {
+        lifespan: 900,
+        speed: { min: 20, max: 60 },
+        scale: { start: 1.6, end: 0.4 },
+        alpha: { start: 1, end: 0.6 },
+        tint: [0xfff1a8, 0xffd766, 0xffffff],
+        moveToX: cx,
+        moveToY: cy - 40,
+        frequency: 25,
+        quantity: 2,
+      })
+      .setDepth(42);
+    itens.push(rio);
+    this.time.delayedCall(1700, () => {
+      rio.stop();
+      AudioManager.tocar('vitoria');
+      this.cameras.main.flash(250, 255, 240, 170);
+      this.tweens.add({ targets: aura, alpha: 0.9, duration: 250 });
+      this.tweens.add({ targets: aura, scale: 3.6, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: chico, y: chico.y - 26, yoyo: true, repeat: 3, duration: 260, ease: 'Sine.easeOut' });
+      this.tweens.add({ targets: titulo, scale: 1, duration: 450, ease: 'Back.easeOut' });
+      const estouro = this.add
+        .particles(cx, cy - 40, 'brilho', {
+          lifespan: 1100,
+          speed: { min: 120, max: 360 },
+          scale: { start: 1.6, end: 0 },
+          tint: [0xfff1a8, 0xffd766, 0x5cc26a, 0x5bb0e8, 0xc77dff],
+          emitting: false,
+        })
+        .setDepth(43);
+      estouro.explode(60);
+      itens.push(estouro);
+      VoiceManager.falar(d.titulo, 'narrador');
+      VoiceManager.falar(d.instrucao, 'narrador', true);
+
+      // depois da explicação (pelo menos 3,5 s), o símbolo do poder voa até o botão e o Chico segue
+      const inicio = this.time.now;
+      let fim = false;
+      const terminar = () => {
+        if (fim) return;
+        fim = true;
+        this.time.delayedCall(Math.max(300, 3500 - (this.time.now - inicio)), () => {
+          const destino = this.controles.posicaoPoder;
+          const simbolo = this.add.image(cx, cy - 60, d.botao ? 'btn-poder' : 'brilho').setDepth(44).setScale(d.botao ? 1.3 : 3);
+          itens.push(simbolo);
+          const voar = d.botao && destino.visivel;
+          this.tweens.add({
+            targets: simbolo,
+            x: voar ? destino.x : cx,
+            y: voar ? destino.y : cy - 60,
+            scale: voar ? 1 : 0,
+            duration: 650,
+            ease: 'Quad.easeInOut',
+            onComplete: () => {
+              this.tweens.add({ targets: itens, alpha: 0, duration: 300 });
+              this.time.delayedCall(320, () => {
+                for (const o of itens) o.destroy();
+                this.level.liberarDepoisDoPoder();
+              });
+            },
+          });
+        });
+      };
+      const esperar = () => VoiceManager.quandoAcabar(() => (VoiceManager.estaFalando ? esperar() : terminar()));
+      this.time.delayedCall(300, esperar);
+      this.time.delayedCall(20000, terminar);
+    });
   }
 
   private posicionar() {
