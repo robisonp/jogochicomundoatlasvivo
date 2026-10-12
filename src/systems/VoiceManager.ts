@@ -235,14 +235,17 @@ class VoiceManagerImpl {
         window.clearTimeout(this.relogio);
         this.relogio = window.setTimeout(acabou, a.duration * 1000 + 1500);
       };
-      // arquivo com problema: fala com a voz sintética
-      a.onerror = () => {
-        if (vez === this.vez) this.sintetizar(item, vol, acabou);
+      // arquivo com problema: fala com a voz sintética (uma vez só: o erro do arquivo e a recusa do play
+      // chegam juntos, e cada um pedia a voz sintética, repetindo a frase)
+      let trocou = false;
+      const usarVozSintetica = () => {
+        if (trocou || vez !== this.vez) return;
+        trocou = true;
+        this.sintetizar(item, vol, acabou);
       };
+      a.onerror = usarVozSintetica;
       this.audio = a;
-      a.play().catch(() => {
-        if (vez === this.vez) this.sintetizar(item, vol, acabou);
-      });
+      a.play().catch(usarVozSintetica);
       return;
     }
     this.sintetizar(item, vol, acabou);
